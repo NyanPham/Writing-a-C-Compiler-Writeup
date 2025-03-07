@@ -81,7 +81,7 @@ driver(target, debug, stage, src):
 
 Without any specified stage, it will be Executable stage
 
-# Src code
+# Source code
 The src should contains the following file:
 
 ## Token: 
@@ -165,7 +165,7 @@ type Statement = Return
 Constant(NodeType.Constant, int value)
 Return(NodeType.Return, Expression val)
 FunctionDefinition(NodeType.FunctionDefinition, string name, Statement body)
-Program(NodeType.Program, FunctionDefinition fun_def)
+Program(NodeType.Program, FunctionDefinition fn_def)
 ```
 
 ## Parser
@@ -234,8 +234,8 @@ parse_function_definition():
 
 ```
 parse_program():
-    fun_def = parse_function_definition()
-    return AST.Program(fun_def)
+    fn_def = parse_function_definition()
+    return AST.Program(fn_def)
 ```
 
 ```
@@ -279,13 +279,13 @@ convert_statement(AST.Return stmt):
 		Ret()
 	]
 
-convert_function(AST.FunctionDefinition fun_def):
-	instructions = convert_statement(fun_def.body)
+convert_function(AST.FunctionDefinition fn_def):
+	instructions = convert_statement(fn_def.body)
 	
-	return Assembly.Function(fun_def.name, instructions)
+	return Assembly.Function(fn_def.name, instructions)
 	
 gen(AST.Program prog):
-	return Assembly.Program(convert_function(prog.fun_def))
+	return Assembly.Program(convert_function(prog.fn_def))
 ```
 
 
