@@ -1,3 +1,14 @@
 *.exe
 *.i
 *.s
+
+/progressive_implementation/chapter_1/tests/
+/progressive_implementation/chapter_1/tests/**
+
+/progressive_implementation/chapter_2/tests/
+/progressive_implementation/chapter_2/tests/**
+
+/progressive_implementation/chapter_3/tests/
+/progressive_implementation/chapter_3/tests/**
+
+/code_analysis/template.md

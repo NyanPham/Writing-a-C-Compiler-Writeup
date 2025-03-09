@@ -77,3 +77,33 @@ TEST_CASE(Chapter2InvalidParse, "chapter_2", "--parse")
         }
     }
 }
+
+TEST_CASE(Chapter3InvalidParse, "chapter_3", "--parse")
+{
+    std::vector<std::string> srcFiles = {
+        "tests/chapter_3/invalid_parse/double_operation.c",
+        "tests/chapter_3/invalid_parse/imbalanced_paren.c",
+        "tests/chapter_3/invalid_parse/malformed_paren.c",
+        "tests/chapter_3/invalid_parse/misplaced_semicolon.c",
+        "tests/chapter_3/invalid_parse/missing_first_op.c",
+        "tests/chapter_3/invalid_parse/missing_open_paren.c",
+        "tests/chapter_3/invalid_parse/missing_second_op.c",
+        "tests/chapter_3/invalid_parse/no_semicolon.c",
+    };
+    Settings settings;
+
+    for (const auto &srcFile : srcFiles)
+    {
+        Compiler compiler;
+        try
+        {
+            int status = compiler.compile(Stage::Parsing, srcFile);
+            ASSERT_TRUE(status != 0);
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+            throw;
+        }
+    }
+}

@@ -71,3 +71,40 @@ TEST_CASE(Chapter2ValidParse, "chapter_2", "--parse")
         }
     }
 }
+
+TEST_CASE(Chapter3ValidParse, "chapter_3", "--parse")
+{
+    std::vector<std::string> srcFiles = {
+        "tests/chapter_3/valid/add.c",
+        "tests/chapter_3/valid/associativity.c",
+        "tests/chapter_3/valid/associativity_2.c",
+        "tests/chapter_3/valid/associativity_3.c",
+        "tests/chapter_3/valid/associativity_and_precedence.c",
+        "tests/chapter_3/valid/div_neg.c",
+        "tests/chapter_3/valid/div.c",
+        "tests/chapter_3/valid/mod.c",
+        "tests/chapter_3/valid/mult.c",
+        "tests/chapter_3/valid/parens.c",
+        "tests/chapter_3/valid/precedence.c",
+        "tests/chapter_3/valid/sub_neg.c",
+        "tests/chapter_3/valid/sub.c",
+        "tests/chapter_3/valid/unop_add.c",
+        "tests/chapter_3/valid/unop_parens.c",
+    };
+    Settings settings;
+
+    for (const auto &srcFile : srcFiles)
+    {
+        Compiler compiler;
+        try
+        {
+            int status = compiler.compile(Stage::Parsing, srcFile);
+            ASSERT_TRUE(status == 0);
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+            throw;
+        }
+    }
+}

@@ -274,7 +274,7 @@ We keep a counter, and increment it whenever we use it to create a unique name.
 Example: tmp.0
 This won't conflict with user-defined identifier
 
-### TACKY representation of Unary Expressions **
+### TACKY representation of Unary Expressions
 | AST | TACKY |
 | ----- | ----- |
 | Return(Constant(3)) | Return (Constant(3)) |
@@ -399,3 +399,376 @@ We added one more stage in the compiler: TACKY, our name for TAC IR.
 
 ### Reference implementation Analysis
 [Chapter 2 Code Analysis](./code_analysis/chapter_2.md)
+
+
+---
+
+# Chapter 3: Binary Operators
+
+### Stages of a Compiler
+
+1. **Lexer**
+    - Input: Source code (program.c)
+    - Output: Token list
+2. **Parser**
+    - Input: Token list
+    - Output: Abstract Syntax Tree (AST)
+3. **Tacky Generation**
+	- Input: AST
+	- Output: TAC IR (Tacky)
+4. **Assembly Generation**
+    - Input: Tacky
+    - Output: Assembly code
+	- Passes:
+		1. Converting TACKY to Assembly
+		2. Replacing pseudoregsiters
+		3. Instruction fix-up
+5. **Code Emission**
+    - Input: Assembly code
+    - Output: Final assembly file 
+
+In this chapter, we'll add support for 5 binary operators:
+- Addition
+- Subtraction
+- Multiplication
+- Divison
+- Remainder
+
+Also, we'll explore some reasons to use **Precedence Climbing** method in **Recursive Descent Parser**.
+
+## The Lexer
+
+New tokens to recognize
+| Token | Regular expression |
+| ------- | -------------------- |
+| Plus | + |
+| Star | * |
+| Slash | / |
+| Percent | / |
+
+We already added HYPHEN for *-* operator in the previous chapter.
+The lexing stage doens't need to know the role of the token in grammar.
+
+## The Parser
+
+**AST**
+<pre><code>program = Program(function_definition)
+function_definition = Function(identifier name, statement body)
+statement = Return(exp)
+exp = Constant(int) 
+	| Unary(unary_operator, exp)
+	<strong>| Binary(binary_operator, exp, exp)</strong>
+unary_operator = Complement | Negate
+<strong>binary_operator = Add | Subtract | Multiply | Divide | Remainder</strong></pre></code>
+
+Designing grammar for binary operators in Recursive Descent Parser is tricky.
+Let's say we could naively add the grammar of binary operators in expression like the following:
+```
+<exp> ::= <int> | <unop> <exp> | <exp> <binop> <exp>
+```
+This wouldn't work. Why?
+- Parsing expression `1 + 2 * 3` would become ambigious as we do not specify we should parse them as `(1 + 2) * 3` or `1 + (2 * 3)`
+- It's a left-recursive rule, and in Recursive Descent Parser, we'll be in an unbounded recursion.
+
+There are 2 ways to solve this: 
+- Refactor our grammar to use pure Recursive Descent Parser.
+- Mix Precedence Climbing into Recurisve Descent Parser.
+
+Let's find out which one to use in our project!
+
+### Refactoring the Grammar
+```
+<exp> ::= <term> {("+"|"-") <term>}
+<term> ::= <factor> {("*"|"/"|"%") <factor}
+<factor> ::= <int> | <unop> <factor> | "(" <exp> ")"
+```
+The precedence of operators are represented in the level of non-terminals.
+An expression involves only + and -, so they have the lowest precedence. 
+A term only involves \*, / and %, and they have higher precedence level than expression.
+
+For our problem about, without any parantehesis,  `1 + 2 * 3`, it's parsed as following:
+```
+Step 1. <term> + <term>
+Step 2. <factor> + (<factor> <factor>)
+Step 3. <int> + (<int> * <int>)
+```
+
+This works, but what if we have more operators with more levels of precedence? We'll then need to design several non-terminals for each level.
+And modifying grammar each time means we also have to modify our parsing functions. That's a lot of work to do. 
+How about **Precedence Climbing**?
+
+### Precedence Climbing
+
+**EBNF**
+<pre><code>&lt;program&gt; ::= &lt;function&gt;
+&lt;function&gt; ::= "int" &lt;identifier&gt; "(" "void" ")" "{" &lt;statement&gt; "}"
+&lt;statement&gt; ::= "return" &lt;exp&gt; ";"
+<strong>&lt;exp&gt; ::= &lt;factor&gt; | &lt;exp&gt; &lt;binop&gt; &lt;exp&gt;</strong>
+<strong>&lt;factor&gt; ::= &lt;int&gt; | &lt;unop&gt; &lt;factor&gt; | "(" &lt;exp&gt; ")"</strong>
+&lt;unop&gt; ::= "-" | "~"
+<strong>&lt;binop&gt; :: = "+" | "-" | "\*" | "/" | "%"</strong>
+&lt;identifier&gt; ::= ? An identifier token ?
+&lt;int&gt; ::= ? A constant token ?</pre></code>
+
+
+**Parser**
+
+Unary operators and inner expression in parentheses have higher precedence level than binary operators, so they are in deeper non-terminal.
+The previous parse_exp function will now become parse_factor, with almost no changes, except for we call parse_factor for inner_exp in Unary as 
+unary expressions don't accept rules like `-1 + 2`. 
+
+```
+parse_factor(tokens):
+	next_token = peek(tokens)
+	if next_token is an int:
+		--snip--
+	else if next_token is "~" or "-":
+		operator = parse_unop(tokens)
+		inner_exp = parse_factor(tokens)
+		return Unary(operator, inner_exp)
+	else if next_token is "(":
+		take_token(tokens)
+		inner_exp = parse_exp(tokens)
+		expect(")", tokens)
+		return inner_exp
+	else:
+		fail("Malformed factor")
+```
+If we call parse_exp for inner_exp of unary, we'll parse `-1 + 2` as `-(1 + 2)`. Wrong! So calling parse_factor makes sure that
+`-1 + 2` is parsed as `(-1) + 2`. Factor does have rules for "(" <exp> ")", so if the input is `-(1 + 2)`, it's still correct.
+
+
+For the binary operators themselves, we assign precedence value to each of them and perform the following parsing:
+
+```
+parse_exp(tokens, min_prec):
+	left = parse_factor(tokens)
+	next_token = peek(tokens)
+	
+	while next_token is a binary operator and precedence(next_token) >= min_prec
+		operator = parse_binop(tokens)
+		right = parse_exp(tokens, precedence(next_token) + 1)
+		left = Binary(operator, left, right)
+		next_token = peek(tokens)
+		
+	return left
+```
+
+### Precedence Values of Binary Operators
+
+| Operator | Precedence |
+| -------- | ---------- | 
+| \* | 50 |
+| / | 50 |
+| % | 50 |
+| + | 45 |
+| - | 45 |
+
+The values don't matter as long as higher precedence operators have higher values.
+
+## TACKY Generation
+
+**TACKY**
+<pre><code>
+program = Program(function_definition)
+function_definition = Function(identifier, instruction* body)
+instruction = Return(val) 
+	| Unary(unary_operator, val src, val dst)
+	<strong>| Binary(binary_operator, val src1, val src2, val dst)</strong>
+val = Constant(int) | Var(identifier)
+unary_operator = Complement | Negate
+<strong>binary_operator = Add | Subtract | Mulitply | Divide | Remainder</strong>
+</pre></code>
+
+### Generating TACKY
+```
+emit_tacky(e, instructions):
+	match e with
+	--snip--
+	| Binary(op, e1, e2):
+		v1 = emit_tacky(e1, instructions)
+		v2 = emit_tacky(e2, instructions)
+		dst_name = make_temporary()
+		dst = Var(dst_name)
+		tacky_op = convert_binop(op)
+		instructions.append(Binary(tacky_op, v1, v2, dst))
+		return dst
+```
+
+***Notes:***
+In C standard, subexpressions of e1 and e2 are usually unsequenced. They can be evaluated in any order.
+
+## Assembly Generation
+We need new instructions to represent binary operators in Assembly.
+For add, subtract, multiply, they have the same form:
+
+```
+op	src, dst
+```
+
+However, divide and remainder don't follow the same form as we're dealing with dividend, divisor, quotient and remainder.
+We need to sign extend the *src* into rdx:rax before performing the division using `cdq` instruction.
+So to compute 9 / 2, we do:
+```
+movl	$2, -4(%rbp)
+movl	$9, %eax
+cdq
+idivl 	-4(%rbp)
+```
+The quotient is stored in eax and the remainder is stored in edx.
+
+**Assembly**
+<pre><code>program = Program(function_definition)
+function_definition = Function(identifier name, instruction* instructions)
+instruction = Mov(operand src, operand dst)
+		| Unary(unary_operator, operand dst)
+		<strong>| Binary(binary_operator, operand, operand)</strong>
+		<strong>| Idiv(operand)</strong>
+		<strong>| Cdq</strong>
+		| AllocateStack(int)
+		| Ret
+unary_operator = Neg | Not
+<strong>binary_operator = Add | Sub | Mult</strong>
+operand = Imm(int) | Reg(reg) | Pseudo(identifier) | Stack(int
+reg = AX | <strong>DX</strong> | R10 | <strong>R11</strong></pre></code>
+
+**Converting Top-Level TACKY Constructs to Assembly**
+
+| TACKY top-level construct | Assembly top-level construct |
+| -------- | ------------------ |
+| Program(function_definition) | Program(function_definition) | 
+| Function(name, instructions) | Function(name, instructions) |
+
+**Converting TACKY Instructions to Assembly**
+
+| TACKY instruction | Assembly instructions |
+| -------- | ------------------ |
+| Return(val) | Mov(val, Reg(AX))<br>Ret| 
+| Unary(unary_operator, src, dst) | Mov(src, dst)<br>Unary(unary_operator, dst)  |
+| **Binary(Divide, src1, src2, dst)** | **Mov(src1, Reg(AX))<br>Cdq<br>Idiv(src2)<br>Mov(Reg(AX), dst)** |
+| **Binary(Remainder, src1, src2, dst)** | **Mov(src1, Reg(AX))<br>Cdq<br>Idiv(src2)<br>Mov(Reg(DX), dst)** |
+| **Binary(binary_operator, src1, src2, dst)** | **Mov(src1, dst)<br>Binary(binary_operator, src2, dst)** |
+
+
+**Converting TACKY Arithmetic Operators to Assembly**
+
+| TACKY operator | Assembly operator |
+| -------- | ------------------ |
+| Complement | Not | 
+| Negate | Neg  |
+| **Add** | **Add**  |
+| **Subtract** | **Sub**  |
+| **Multiply** | **Mult** |
+
+**Converting TACKY Operands to Assembly**
+
+| TACKY operand | Assembly operand |
+| -------- | ------------------ |
+| Constant(int) | Imm(int) | 
+| Var(identifier) | Pseudo(identifier) |
+
+### Replacing Pseudoregisters
+We added two instruction that have operands: *Binary* and *Idiv*.
+Treat them like Mov, Unary.
+
+### Fixing Up Instructions
+
+The *idiv* can't take a constant operand, so we copy the constant into our scratch register R10.
+
+So this instruction 
+```
+idivl	$3
+```
+is fixed up into:
+```
+movl 	$3, %r10d
+idivl	%r10d
+```
+
+The *add* and *sub* instructions cannot memory addresses as both operands, similar to the *mov* instruction.
+From this:
+```
+addl	-4(%rbp), -8(%rbp)
+```
+is fixedup into:
+```
+movl 	-4(%rbp), %r10d
+addl	%r10d, -8(%rbp)
+```
+
+The *imul* instruction cannot use memory address as its destination. We'll dedicate R11 to fixup destination, also for later chapters.
+From this:
+```
+imull 	$3, -4(%rbp)
+```
+to this:
+```
+movl 	-4(%rbp), %r11d
+imull 	$3, %r11d
+movl 	%r11d, -4(%rbp)
+```
+
+## Code Emission
+
+**Formatting Top-Level Assembly Constructs**
+
+| Assembly top-level construct | Ouput |
+| --------------------- | ------------ |
+| Program(function_definition) |  Printout the function definition <br> On Linux, add at the end of file <br> nbsp;&&nbsp;&nbsp;&nbsp;*.section .note.GNU-stack,"",@progbits* | 
+| Function(name, instructions) | &nbsp;&nbsp;&nbsp;&nbsp;.globl \<name> <br> \<name>: <br> &nbsp;&nbsp;&nbsp;&nbsp;push&nbsp;&nbsp;&nbsp;&nbsp;%rbp<br>&nbsp;&nbsp;&nbsp;&nbsp;movq&nbsp;&nbsp;&nbsp;&nbsp;%rsp,%rbp<br>&nbsp;&nbsp;&nbsp;&nbsp;\<instructions> |
+
+**Formatting Assembly Instructions**
+
+| Assembly instruction | Output |
+| ------------------ | --------- |
+| Mov(src, dst) | movl&nbsp;&nbsp;&nbsp;&nbsp;\<src>, \<dst> |
+| Ret | ret |
+| Unary(unary_operator, operand) | \<unary_operator>&nbsp;&nbsp;&nbsp;&nbsp;\<operand>|
+| **Binary(binary_operator, src, dst)** | **\<binary_operator>&nbsp;&nbsp;&nbsp;&nbsp;\<src>, \<dst>** |
+| **Idiv(operand)** | **idivl&nbsp;&nbsp;&nbsp;&nbsp;\<operand>** |
+| **Cdq** | **cdq** |
+| AllocateStack(int) | subq&nbsp;&nbsp;&nbsp;&nbsp;$\<int>, %rsp |
+
+**Formatting Names for Assembly Operators**
+
+| Assembly operator | Instruction name |
+| ------------------ | --------- |
+| Neg | negl |
+| Not | notl | 
+| **Add** | **addl** | 
+| **Sub** | **subl** | 
+| **Mult** | **imull** | 
+
+**Formatting Assembly Operands**
+
+| Assembly operand | Output |
+| ------------------ | --------- |
+| Reg(AX) | %eax |
+| **Reg(DX)** | **%eax** |
+| Reg(R10) | %r10d |
+| **Reg(R11)** | **%r11d** |
+| Stack(int) | <int>(%rbp) |
+| Imm(int) | $\<int> | 
+
+## Extra Credit: Bitwise Operators
+Bitwise operators are also binary operators. Add support for:
+- AND (&)
+- OR (|)
+- XOR (^)
+- Left Shift (<<)
+- Right Shift (>>)
+
+## Summary
+We've learned to use precedence climbing method to support 5 binary operators. 
+In the next chapter, we'll implement more unary and binary operators upon the foundation we've just created.
+
+## Additional Resources
+
+**Two's Complement:**
+- [Parsing Expressions by Precedence Climbing](https://eli.thegreenplace.net/2012/08/02/parsing-expressions-by-precedence-climbing)
+- [Some Problems of Recursive Descent Parsers](https://eli.thegreenplace.net/2009/03/14/some-problems-of-recursive-descent-parsers)
+- [Pratt Parsing and Precedence Climbing Are the Same Algorithm](https://www.oilshell.org/blog/2016/11/01.html)
+- [Precedence Climbing Is Widely Used](https://www.oilshell.org/blog/2017/03/30.html)
+
+### Reference implementation Analysis
+[Chapter 3 Code Analysis](./code_analysis/chapter_3.md)
