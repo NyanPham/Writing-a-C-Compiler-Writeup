@@ -108,3 +108,36 @@ TEST_CASE(Chapter3ValidParse, "chapter_3", "--parse")
         }
     }
 }
+
+TEST_CASE(Chapter3ValidParseExtraCredit, "chapter_3", "--parse")
+{
+    std::vector<std::string> srcFiles = {
+        "tests/chapter_3/valid/extra_credit/bitwise_and.c",
+        "tests/chapter_3/valid/extra_credit/bitwise_or.c",
+        "tests/chapter_3/valid/extra_credit/bitwise_precedence.c",
+        "tests/chapter_3/valid/extra_credit/bitwise_shift_associativity.c",
+        "tests/chapter_3/valid/extra_credit/bitwise_shift_associativity_2.c",
+        "tests/chapter_3/valid/extra_credit/bitwise_shift_precedence.c",
+        "tests/chapter_3/valid/extra_credit/bitwise_shiftl.c",
+        "tests/chapter_3/valid/extra_credit/bitwise_shiftr.c",
+        "tests/chapter_3/valid/extra_credit/bitwise_shiftr_negative.c",
+        "tests/chapter_3/valid/extra_credit/bitwise_variable_shift_count.c",
+        "tests/chapter_3/valid/extra_credit/bitwise_xor.c",
+    };
+    Settings settings;
+
+    for (const auto &srcFile : srcFiles)
+    {
+        Compiler compiler;
+        try
+        {
+            int status = compiler.compile(Stage::Parsing, srcFile);
+            ASSERT_TRUE(status == 0);
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+            throw;
+        }
+    }
+}

@@ -1,7 +1,26 @@
 There are several code that is ommited in the first chapter, mainly to set up our own compiler.
-We need to set up our compiler driver to support different stages in command line. For example, we can parse the file with command `compiler.exe program.c --parse`
+
+# Table of Contents
+- [Compiler Driver](#compiler-driver)
+  - [Main driver functions](#main-driver-functions)
+  - [Define stages for the compiler](#define-stages-for-the-compiler)
+- [Source code](#source-code)
+  - [Token](#token)
+  - [Lexer](#lexer)
+  - [AST](#ast)
+  - [Parser](#parser)
+  - [Assembly](#assembly)
+  - [CodeGen](#codegen)
+  - [Emit](#emit)
+  - [Optional](#optional)
+  - [Output](#output)
+
+--- 
 
 # Compiler Driver
+
+We need to set up our compiler driver to support different stages in command line. For example, we can parse the file with command `compiler.exe program.c --parse`
+
 There are some helper functions in compiler driver file named main
 
 ```
@@ -32,7 +51,7 @@ run_command(cmd, arg_list):
 ```
 
 
-### Main driver functions
+## Main driver functions
 
 **Preprocess**
 ```
@@ -73,7 +92,7 @@ driver(target, debug, stage, src):
         assemble_and_link(asm_name, true) // cleanup should be false for debugging
 ```
 
-### Define stages for the compiler
+## Define stages for the compiler
 - Lexing: '--lex'
 - Parsing: '--parse'
 - Code Generation: '--codegen'
@@ -81,13 +100,14 @@ driver(target, debug, stage, src):
 
 Without any specified stage, it will be Executable stage
 
-# Source code
-The src should contains the following file:
+--- 
 
-## Token: 
+# Token: 
 Define an enum of TokenType. Can also have class Token to provide some methods on token, such as getting value, print out the token or get the position
 
-## Lexer: 
+---
+
+# Lexer: 
 - Create a type call token_def with reg as regular expression to recognize a token and convert function to turn string into a Token.
 - Function convert_identifier to check whether it's a keyword, else it's an ordinary identifier. Example:
 ```
@@ -153,7 +173,9 @@ lex(input):
     return tokens
 ```
 
-## AST
+---
+
+# AST
 We have a list tokens from lexer. Before parsing, we need to define the node constructs in AST. The first chapter is simple start with a minimal set of node type.
 
 ```
@@ -168,7 +190,9 @@ FunctionDefinition(NodeType.FunctionDefinition, string name, Statement body)
 Program(NodeType.Program, FunctionDefinition fn_def)
 ```
 
-## Parser
+---
+
+# Parser
 Optionally, we can define some helper functions. For example: 
 **Raise Error**
 ```
@@ -249,7 +273,9 @@ parse(input):
         fail("Unexpected tokens after function definition")
 ```
 
-## Assembly
+---
+
+# Assembly
 
 ```
 enum NodeType = Program, Function, Imm, Register, Mov, Ret
@@ -266,7 +292,9 @@ Function(NodeType.Function, string name, Instruction* instructions)
 Program(NodeType.Program, Function func)
 ```
 
-## CodeGen
+---
+
+# CodeGen
 
 ```
 convert_exp(AST.Constant constant):
@@ -289,7 +317,7 @@ gen(AST.Program prog):
 ```
 
 
-## Emit
+# Emit
 
 ```
 show_operand(Assembly.Operand operand):
@@ -332,11 +360,12 @@ emit_file(Assembly.Program prog):
 	write content to file
 ```
 
-## Optional
+# Optional
 We can make another 2 classes specialized to show LexError and ParseError.
 
+---
 
-## Output
+# Output
 From C:
 ```C
 int main(void) {

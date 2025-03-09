@@ -1,19 +1,43 @@
+# Table of Contents
+- [Compiler Driver](#compiler-driver)
+- [Source code](#source-code)
+  - [Token](#token)
+  - [Lexer](#lexer)
+  - [AST](#ast)
+  - [Parser](#parser)
+  - [TACKY](#tacky)
+  - [TACKYGEN](#tackygen)
+  - [Assembly](#assembly)
+  - [CodeGen](#codegen)
+  - [ReplacePseudo](#replacepseudo)
+  - [Instruction Fixup](#instruction-fixup)
+  - [Emit](#emit)
+  - [Output](#output)
+
+---
+
 # Compiler Driver
 We add one more stage in the compiler driver, so let's add one more command line option: `compiler.exe program.c --tacky`
 
-# Source code
+---
+
+# Source code structure
 In structure of the code, we create a separate folder for backend. While we do not dedicate another folder for the frontend,
 any source files outside the backend folder are considered of frontend.
 
 The backend folder includes: CodeGen, ReplacePseudo and InstructionFixup
 
-## Token
+---
+
+# Token
 BOOK_NOTES references are sufficient for this file in this chapter.
 - `-` -> hyphen
 - `--` -> double hyphen
 - `~` -> tilde
 
-## Lexer
+---
+
+# Lexer
 BOOK_NOTES references are sufficient for this file in this chapter.
 Treat them the same as other tokens such as semicolon, parentheses.
 
@@ -22,10 +46,14 @@ This is relatively simple, in both functions:
 - Before tokenize the input to get the next token, save the current position.
 - Before return the token or list of tokens, restore the position.
 
-## AST
+---
+
+# AST
 BOOK_NOTES references are sufficient for this file in this chapter.
 
-## Parser
+---
+
+# Parser
 The core change is in the `parseExp` function, and the BOOK_NOTES captures this very well. 
 
 ```
@@ -40,11 +68,15 @@ parse_unop():
 			return raise_error("a unary operator", token's type)
 ```
 
-## TACKY
+---
+
+# TACKY
 BOOK_NOTES references are sufficient for this file.
 We can follow the same strategy as Assembly constructs.
 
-## TACKYGEN
+---
+
+# TACKYGEN
 The main function is `emit_tacky_for_exp` (emit_tacky), whose pseudocode is already provided in the BOOK_NOTES.
 There are 2 ways to actually how to emit instructions and return the `dst`.
 - [ ] Pass instructions list into recursive call and append in it, return `dst` only. Or 
@@ -72,7 +104,9 @@ gen(AST.Program prog):
 	return Tacky.Program(emit_tacky_for_function(prog.fn_def))
 ```
 
-## Assembly
+---
+
+# Assembly
 In chapter 1, we only have one type of Register, which is then emitted into `ax` register. 
 Now, we need to add support for another register, r10.
 
@@ -94,7 +128,9 @@ type Operand = Imm | Reg | Pseudo | Stack
 
 Add more constructs like Unary and AllocateStack as in BOOK_NOTES.
 
-## CodeGen
+---
+
+# CodeGen
 
 ```
 convert_val(Tacky.Val val):
@@ -142,7 +178,9 @@ gen(Tacky.Program prog):
 	return Assembly.Program(convert_function(prog.fn_def))
 ```
 
-## ReplacePseudo
+---
+
+# ReplacePseudo
 
 We'll need a map to keep track of what stack slots we've assigned
 
@@ -207,7 +245,9 @@ replace_pseudos(Assembly.Program prog):
 	return Assembly.Program(fixed_fn_def), last_stack_slot
 ```
 
-## Instruction Fixup
+---
+
+# Instruction Fixup
 
 ```
 fixup_instruction(Assembly.Instruction inst):
@@ -234,9 +274,11 @@ fixup_program(Assembly.Program prog, int last_stack_slot):
 	return Assembly.Program(fixup_function(prog.fn_def, last_stack_slot))
 ```
 
-## Emit
+---
 
-### Update show_operand
+# Emit
+
+## Update show_operand
 Previous
 ```
 show_operand(Assembly.Operand operand):
@@ -264,7 +306,7 @@ show_operand(Assembly.Operand operand):
 			return "{operand.name}" // For debugging only
 ```
 
-### Show operator
+## Show operator
 We added unary construct, so we need a separate converter function for it
 ```
 show_unary_operator(Assembly.UnaryOperator op):
@@ -275,7 +317,7 @@ show_unary_operator(Assembly.UnaryOperator op):
 			return "notl"
 ```
 
-### Update emit_instruction
+## Update emit_instruction
 Previous
 ```
 emit_instruction(Assembly.Instruction inst):
@@ -304,7 +346,7 @@ emit_instruction(Assembly.Instruction inst):
 			"""
 ```
 
-### Update emit_function
+## Update emit_function
 Previous:
 ```
 emit_function(Assembly.Function func):
@@ -331,7 +373,9 @@ emit_function(Assembly.Function func):
 """
 ```
 
-## Output
+---
+
+# Output
 From C:
 ```C
 int main(void) {

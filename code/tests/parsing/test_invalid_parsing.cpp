@@ -107,3 +107,26 @@ TEST_CASE(Chapter3InvalidParse, "chapter_3", "--parse")
         }
     }
 }
+
+TEST_CASE(Chapter3InvalidParseExtraCredit, "chapter_3", "--parse")
+{
+    std::vector<std::string> srcFiles = {
+        "tests/chapter_3/invalid_parse/extra_credit/bitwise_double_operator.c",
+    };
+    Settings settings;
+
+    for (const auto &srcFile : srcFiles)
+    {
+        Compiler compiler;
+        try
+        {
+            int status = compiler.compile(Stage::Parsing, srcFile);
+            ASSERT_TRUE(status != 0);
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+            throw;
+        }
+    }
+}

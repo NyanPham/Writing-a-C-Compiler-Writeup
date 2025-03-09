@@ -14,11 +14,12 @@ EBNF for a subset of C:
 <program> ::= <function>
 <function> ::= "int" <identifier> "(" "void" ")" "{" <statement> "}"
 <statement> ::= "return" <exp> ";"
-<exp> ::= <int> | <unop> <exp> | "(" <exp> ")"
+<exp> ::= <factor> | <exp> <binop> <exp>
+<factor> ::= <int> | <unop> <factor> | "(" <exp> ")"
 <unop> ::= "-" | "~"
+<binop> ::= "+" | "-" | "*" | "/" | "%"
 <int> ::= ? An integer token ?
 <identifier> ::= ? An identifier token ?
-
 */
 
 int Parser::getPrecedence(TokenType tokenType)
