@@ -49,7 +49,7 @@ This is relatively simple, in both functions:
 ---
 
 # AST
-BOOK_NOTES references are sufficient for this file in this chapter.
+The BOOK_NOTES guide is sufficient to update this file for the chapter.
 
 ---
 
@@ -71,7 +71,7 @@ parse_unop():
 ---
 
 # TACKY
-BOOK_NOTES references are sufficient for this file.
+The BOOK_NOTES guide is sufficient to update this file for the chapter.
 We can follow the same strategy as Assembly constructs.
 
 ---

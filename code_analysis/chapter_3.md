@@ -27,13 +27,13 @@
 ---
 
 # Token
-Please referecence to the BOOK_NOTES for updates.
+The BOOK_NOTES guide is sufficient to update this file for the chapter.
 
 # Lexer
-Please referecence to the BOOK_NOTES for updates.
+The BOOK_NOTES guide is sufficient to update this file for the chapter.
 
 # AST
-Please referecence to the BOOK_NOTES for updates.
+The BOOK_NOTES guide is sufficient to update this file for the chapter.
 
 # Parser
 ```
@@ -70,7 +70,7 @@ We change the function name parse_exp into parse_factor, and recreate the parse_
 
 
 # TACKY
-Please referecence to the BOOK_NOTES for updates.
+The BOOK_NOTES guide is sufficient to update this file for the chapter.
 
 # TACKYGEN
 ```
@@ -89,7 +89,7 @@ convert_binop(Ast.Binop op):
 ```
 
 # Assembly
-Please referecence to the BOOK_NOTES for updates.
+The BOOK_NOTES guide is sufficient to update this file for the chapter.
 
 # CodeGen
 Please referecence to the BOOK_NOTES for updates.

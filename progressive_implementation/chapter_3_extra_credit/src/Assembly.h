@@ -10,7 +10,7 @@ program = Program(function_definition)
 function_definition = Function(identifier name, instruction* instructions)
 instruction = Mov(operand src, operand dst)
     | Unary(unary_operator, operand dst)
-    | Binary(binary_operator, operand dst)
+    | Binary(binary_operator, operand src, operand dst)
     | Idiv(operand)
     | Cdq
     | AllocateStack(int)

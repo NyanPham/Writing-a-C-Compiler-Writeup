@@ -164,7 +164,7 @@ In the next chapter, we'll support unary operators, add a new IR to the compiler
 2. **Parser**
     - Input: Token list
     - Output: Abstract Syntax Tree (AST)
-3. **Tacky Generation**
+3. **TACKY Generation**
 	- Input: AST
 	- Output: TAC IR (Tacky)
 4. **Assembly Generation**
@@ -172,7 +172,7 @@ In the next chapter, we'll support unary operators, add a new IR to the compiler
     - Output: Assembly code
 	- Passes:
 		1. Converting TACKY to Assembly
-		2. Replacing pseudoregsiters
+		2. Replacing pseudoregisters
 		3. Instruction fix-up
 5. **Code Emission**
     - Input: Assembly code
@@ -413,7 +413,7 @@ We added one more stage in the compiler: TACKY, our name for TAC IR.
 2. **Parser**
     - Input: Token list
     - Output: Abstract Syntax Tree (AST)
-3. **Tacky Generation**
+3. **TACKY Generation**
 	- Input: AST
 	- Output: TAC IR (Tacky)
 4. **Assembly Generation**
@@ -421,7 +421,7 @@ We added one more stage in the compiler: TACKY, our name for TAC IR.
     - Output: Assembly code
 	- Passes:
 		1. Converting TACKY to Assembly
-		2. Replacing pseudoregsiters
+		2. Replacing pseudoregisters
 		3. Instruction fix-up
 5. **Code Emission**
     - Input: Assembly code
@@ -629,7 +629,7 @@ instruction = Mov(operand src, operand dst)
 		| Ret
 unary_operator = Neg | Not
 <strong>binary_operator = Add | Sub | Mult</strong>
-operand = Imm(int) | Reg(reg) | Pseudo(identifier) | Stack(int
+operand = Imm(int) | Reg(reg) | Pseudo(identifier) | Stack(int)
 reg = AX | <strong>DX</strong> | R10 | <strong>R11</strong></pre></code>
 
 **Converting Top-Level TACKY Constructs to Assembly**
@@ -696,7 +696,7 @@ movl 	-4(%rbp), %r10d
 addl	%r10d, -8(%rbp)
 ```
 
-The *imul* instruction cannot use memory address as its destination. We'll dedicate R11 to fixup destination, also for later chapters.
+The *imul* instruction cannot use memory address as its destination. We'll dedicate R11 to fix up destination, also for later chapters.
 From this:
 ```
 imull 	$3, -4(%rbp)
@@ -772,3 +772,339 @@ In the next chapter, we'll implement more unary and binary operators upon the fo
 
 ### Reference implementation Analysis
 [Chapter 3 Code Analysis](./code_analysis/chapter_3.md)
+
+---
+
+# Chapter 4: Logical and Relational Operators
+
+### Stages of a Compiler
+
+1. **Lexer**
+    - Input: Source code (program.c)
+    - Output: Token list
+2. **Parser**
+    - Input: Token list
+    - Output: Abstract Syntax Tree (AST)
+3. **TACKY Generation**
+	- Input: AST
+	- Output: TAC IR (Tacky)
+4. **Assembly Generation**
+    - Input: Tacky
+    - Output: Assembly code
+	- Passes:
+		1. Converting TACKY to Assembly
+		2. Replacing pseudoregisters
+		3. Instruction fix-up
+5. **Code Emission**
+    - Input: Assembly code
+    - Output: Final assembly file 
+
+We'll add three logical operators:
+- Not (!)
+- And (&&)
+- Or  (\|\|)
+
+and relational operators: ==, !=, < , > , <=, >=
+
+## The Lexer
+
+New tokens to recognize
+| Token | Regular expression |
+| ------- | -------------------- |
+| Bang | ! |
+| LogicalAnd | && |
+| LogicalOr | \|\| |
+| DoubleEqual | == |
+| NotEqual | != |
+| LessThan | < |
+| GreaterThan | > |
+| LessOrEqual | <= |
+| GreaterOrEqual | >= |
+
+
+## The Parser
+
+**AST**
+
+<pre><code>program = Program(function_definition)
+function_definition = Function(identifier name, statement body)
+statement = Return(exp)
+exp = Constant(int) 
+	| Unary(unary_operator, exp)
+	| Binary(binary_operator, exp, exp)
+unary_operator = Complement | Negate <strong>| Not </strong>
+binary_operator = Add | Subtract | Multiply | Divide | Remainder <strong>| And | Or</strong>
+				<strong>| Equal | NotEqual | LessThan | LessOrEqual</strong>
+				<strong>| GreaterThan | GreaterOrEqual</strong></pre></code>
+
+**Parser**
+
+First, update parse_factor to handle the new ! operator, which should be parsed the similarly to Negate and Complement.
+Then, update parse_exp to handle new binary operators. 
+
+### Precedence Values of Binary Operators
+
+| Operator | Precedence |
+| -------- | ---------- | 
+| \* | 50 |
+| / | 50 |
+| % | 50 |
+| + | 45 |
+| - | 45 |
+| < | 35 |
+| <= | 35 |
+| > | 35 |
+| >= | 35 |
+| == | 30 |
+| != | 30 |
+| && | 10 |
+| \|\| | 5 |
+
+This table is spaced enough for other binary operators implemented in Extra Credit section in chapter 3.
+Extend both parse_unop and parse_binop.
+
+## TACKY Generation
+
+Relational operators are converted to TACKY the same way as implemented binary operators.
+However, for && and \|\|, we cannot do this as our TACKY evaluates both expressions in binary, while && and \|\| sometimes allow to skip the 2nd expression.
+That's why we're going to add *unconditional jump* and *conditional jump* to support the two *short-circuit* operators.
+
+**TACKY**
+<pre><code>
+program = Program(function_definition)
+function_definition = Function(identifier, instruction* body)
+instruction = Return(val) 
+	| Unary(unary_operator, val src, val dst)
+	| Binary(binary_operator, val src1, val src2, val dst)
+	<strong>|Copy(val src, val dst)</strong>
+	<strong>|Jump(identifier target)</strong>
+	<strong>|JumpIfZero(val condition, identifier target)</strong>
+	<strong>|JumpIfNotZero(val condition, identifier target)</strong>
+	<strong>|Label(identifier)</strong>
+val = Constant(int) | Var(identifier)
+unary_operator = Complement | Negate <strong>| Not</strong>
+binary_operator = Add | Subtract | Mulitply | Divide | Remainder <strong>| Equal | Not Equal</strong>
+				<strong>| LessThan | LessOrEaual | GreaterThan | GreaterOrEqual</strong>
+</pre></code>
+
+- **Jump** instruction works in goto in C.
+- **JumpIfZero** evaluates the condition, if condition is 0, then jump to the target, skip to the next instruction otherwise.
+- **JumpIfNotZero** does the opposite to the *JumpIfZero*
+- **Copy** to move 1, or 0 based on the results of && and ||, into a destination
+
+### Generating TACKY
+
+**Convert Short-Circuiting Operators to TACKY**
+
+For &&
+```
+<instructions for e1>
+v1 = <result of e1>
+JumpIfZero(v1, false_label)
+<instructions for e2>
+v2 = <result of e2>
+JumpIfZero(v2, false_label)
+result = 1
+Jump(end)
+Label(false_label)
+result = 0
+Label(end)
+```
+
+For ||, it's the same, except we change the JumpIfZero(value, false_label) into JumpIfNotZero(value, true_label)
+
+**Generating Labels**
+
+Unlike temporary variables, labels will appear in the final assembly program, so the names generated for labels must be valid.
+Label names accept letters, digits, periods and underscores.
+
+It's ok if our autogenerated labels conflict with user-defined names, we'll mangle them during code emission stage.
+
+## Assembly Generation
+
+**Assembly**
+<pre><code>program = Program(function_definition)
+function_definition = Function(identifier name, instruction* instructions)
+instruction = Mov(operand src, operand dst)
+		| Unary(unary_operator, operand dst)
+		| Binary(binary_operator, operand, operand)
+		<strong>| Cmp(operand, operand)</strong>
+		| Idiv(operand)
+		| Cdq
+		<strong>| Jmp(identifier)</strong>
+		<strong>| JmpCC(cond_code, identifier)</strong>
+		<strong>| SetCC(cond_code, operand)</strong>
+		<strong>| Label(identifier)</strong>
+		| AllocateStack(int)
+		| Ret
+unary_operator = Neg | Not
+binary_operator = Add | Sub | Mult
+operand = Imm(int) | Reg(reg) | Pseudo(identifier) | Stack(int)
+<strong>cond_code = E | NE | G | GE | L | LE</strong>
+reg = AX | DX | R10 | R11</pre></code>
+
+All conditional jumps have the same form, and differ only at the condition code. So we represent them using the same construct, but with different cond_code member.
+We do the same for Set instructions.
+
+**Converting Top-Level TACKY Constructs to Assembly**
+
+| TACKY top-level construct | Assembly top-level construct |
+| -------- | ------------------ |
+| Program(function_definition) | Program(function_definition) | 
+| Function(name, instructions) | Function(name, instructions) |
+
+**Converting TACKY Instructions to Assembly**
+
+| TACKY instruction | Assembly instructions |
+| -------- | ------------------ |
+| Return(val) | Mov(val, Reg(AX))<br>Ret| 
+| Unary(unary_operator, src, dst) | Mov(src, dst)<br>Unary(unary_operator, dst) |
+| **Unary(Not, src, dst)** | **Cmp(Imm(0), src)<br>Mov(Imm(0), dst)<br>SetCC(E, dst)** |
+| Binary(Divide, src1, src2, dst) | Mov(src1, Reg(AX))<br>Cdq<br>Idiv(src2)<br>Mov(Reg(AX), dst) |
+| Binary(Remainder, src1, src2, dst) | Mov(src1, Reg(AX))<br>Cdq<br>Idiv(src2)<br>Mov(Reg(DX), dst) |
+| Binary(binary_operator, src1, src2, dst) | Mov(src1, dst)<br>Binary(binary_operator, src2, dst) |
+| **Binary(relational_operator, src1, src2, dst)** | **Cmp(src1, src2)<br>Mov(Imm(0), dst)<br>SetCC(relational_operator, dst)** |
+| **Jump(target)** | **Jmp(target)** |
+| **JumpIfZero(condition, target)** | **Cmp(Imm(0), condition)<br>SetCC(E, target)** |
+| **JumpIfNotZero(condition, target)** | **Cmp(Imm(0), condition)<br>SetCC(NE, target)** |
+| **Copy(src, dst)** | **Mov(src, dst)** |
+| **Label(identifier)** | **Label(identifier)** |
+
+**Converting TACKY Arithmetic Operators to Assembly**
+
+| TACKY operator | Assembly operator |
+| -------- | ------------------ |
+| Complement | Not | 
+| Negate | Neg  |
+| Add | Add  |
+| Subtract | Sub  |
+| Multiply | Mult |
+
+**Converting TACKY Comparisons to Assembly**
+| TACKY comparison | Assembly condition code |
+| -------- | ------------------ |
+| **Equal** | **E** | 
+| **NotEqual** | **NE**  |
+| **LessThan** | **L**  |
+| **LessOrEqual** | **LE**  |
+| **GreaterThan** | **G** |
+| **GreaterOrEqual** | **GE** |
+
+**Converting TACKY Operands to Assembly**
+
+| TACKY operand | Assembly operand |
+| -------- | ------------------ |
+| Constant(int) | Imm(int) | 
+| Var(identifier) | Pseudo(identifier) |
+
+### Replacing Pseudoregisters
+We added two instruction that have operands: *Cmp* and *SetCC*.
+Update this pass to replace any pseudoregisters used in these.
+
+### Fixing Up Instructions
+
+The *cmp* instructions, like *mov*, *add* and *sub*, cannot have memory addresses for both operands.
+So the instruction
+```
+cmpl	-4(%rbp), -8(%rbp)
+```
+is fixed up into
+```
+movl 	-4(%bp), %r10d
+cmpl	%r10d, -8(%rbp)
+```
+
+Also, *cmp*, similarly to *sub*, cannot have destination as constant.
+The instruction:
+```
+cmpl	%eax, $5
+```
+is fixed up into
+```
+movl 	%5, %r11d
+cmpl	%eax, %r11d
+```
+
+From the convention of the previous chapter, we use R10 to fix the first operand (source) and R11 to fix the second operand (destination)
+
+## Code Emission
+
+As mentioned in the TACKY stage, we'll mangle the conflicts between labels and user-defined identifiers by adding local prefix to our labels.
+The prefix is .L on linux and L on MacOS. 
+
+**Formatting Top-Level Assembly Constructs**
+
+| Assembly top-level construct | Ouput |
+| --------------------- | ------------ |
+| Program(function_definition) |  Printout the function definition <br> On Linux, add at the end of file <br> &nbsp;&nbsp;&nbsp;&nbsp;*.section .note.GNU-stack,"",@progbits* | 
+| Function(name, instructions) | &nbsp;&nbsp;&nbsp;&nbsp;.globl \<name> <br> \<name>: <br> &nbsp;&nbsp;&nbsp;&nbsp;push&nbsp;&nbsp;&nbsp;&nbsp;%rbp<br>&nbsp;&nbsp;&nbsp;&nbsp;movq&nbsp;&nbsp;&nbsp;&nbsp;%rsp,%rbp<br>&nbsp;&nbsp;&nbsp;&nbsp;\<instructions> |
+
+**Formatting Assembly Instructions**
+
+| Assembly instruction | Output |
+| ------------------ | --------- |
+| Mov(src, dst) | movl&nbsp;&nbsp;&nbsp;&nbsp;\<src>, \<dst> |
+| Ret | ret |
+| Unary(unary_operator, operand) | \<unary_operator>&nbsp;&nbsp;&nbsp;&nbsp;\<operand>|
+| Binary(binary_operator, src, dst) | \<binary_operator>&nbsp;&nbsp;&nbsp;&nbsp;\<src>, \<dst> |
+| Idiv(operand) | idivl&nbsp;&nbsp;&nbsp;&nbsp;\<operand> |
+| Cdq | cdq |
+| AllocateStack(int) | subq&nbsp;&nbsp;&nbsp;&nbsp;$\<int>, %rsp |
+| **Cmp(operand, operand)** | **cmpl&nbsp;&nbsp;&nbsp;&nbsp;\<operand>, \<operand>** |
+| **Jmp(label)** | **jmp&nbsp;&nbsp;&nbsp;&nbsp;.L\<label>** |
+| **JmpCC(cond_code, label)** | **j\<cond_code>&nbsp;&nbsp;&nbsp;&nbsp;.L\<label>** |
+| **SetCC(cond_code, operand)** | **set\<cond_code>&nbsp;&nbsp;&nbsp;&nbsp;\<operand>** |
+| **Label(label)** | **.L\<label>:** |
+
+**Notes**:
+- *jmp* and *.L\<label>* don't have size suffixes as they don't take operands.
+- *jmpcc* and *setcc* do need suffixes to indicate the size of the condition they test.
+
+**Formatting Names for Assembly Operators**
+
+| Assembly operator | Instruction name |
+| ------------------ | --------- |
+| Neg | negl |
+| Not | notl | 
+| Add | addl | 
+| Sub | subl | 
+| Mult | imull | 
+
+**Instruction Suffixes for Condition Codes**
+
+| Condition code | Instruction suffix |
+| ------------------ | --------- |
+| **E** | **e** |
+| **NE** | **ne** | 
+| **L** | **l** | 
+| **LE** | **le** | 
+| **G** | **g** | 
+| **GE** | **ge** | 
+
+**Formatting Assembly Operands**
+
+| Assembly operand | Output |
+| ------------------ | --------- |
+| Reg(AX) 4-byte | %eax |
+| **Reg(AX) 1-byte** | **%al**|
+| Reg(DX) 4-byte | %eax |
+| **Reg(DX) 1-byte** | **%dl** |
+| Reg(R10) 4-byte | %r10d |
+| **Reg(R10) 1-byte** | **%r10b** |
+| Reg(R11) 4-byte | %r11d |
+| **Reg(R11) 1-byte** | **%r11b** |
+| Stack(int) | <int>(%rbp) |
+| Imm(int) | $\<int> | 
+
+
+## Summary
+Relational and short-circuiting operators are important to let programs branch and make decisions.
+The implementation of this step is a foundation for our *if* statement and loops later chapters.
+
+## Additional Resources
+
+- [A Guide to Undefined Behavior in C and C++, Part 1](https://blog.regehr.org/archives/213)
+- [With Undefined Behavior, Anything Is Possible](https://raphlinus.github.io/programming/rust/2018/08/17/undefined-behavior.html)
+
+### Reference implementation Analysis
+[Chapter 4 Code Analysis](./code_analysis/chapter_4.md)

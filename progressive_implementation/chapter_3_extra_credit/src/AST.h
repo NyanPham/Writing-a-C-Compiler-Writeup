@@ -19,7 +19,7 @@ namespace AST
 {
     class Node;
     class Constant;
-    class Binayr;
+    class Binary;
     class Unary;
     class Return;
     class Expression;

@@ -141,3 +141,84 @@ TEST_CASE(Chapter3ValidParseExtraCredit, "chapter_3", "--parse")
         }
     }
 }
+
+TEST_CASE(Chapter4ValidParse, "chapter_4", "--parse")
+{
+    std::vector<std::string> srcFiles = {
+        "tests/chapter_4/valid/and_false.c",
+        "tests/chapter_4/valid/and_short_circuit.c",
+        "tests/chapter_4/valid/and_true.c",
+        "tests/chapter_4/valid/associativity.c",
+        "tests/chapter_4/valid/compare_arithmetic_results.c",
+        "tests/chapter_4/valid/eq_false.c",
+        "tests/chapter_4/valid/eq_precedence.c",
+        "tests/chapter_4/valid/eq_true.c",
+        "tests/chapter_4/valid/ge_false.c",
+        "tests/chapter_4/valid/ge_true.c",
+        "tests/chapter_4/valid/gt_false.c",
+        "tests/chapter_4/valid/gt_true.c",
+        "tests/chapter_4/valid/le_false.c",
+        "tests/chapter_4/valid/le_true.c",
+        "tests/chapter_4/valid/lt_false.c",
+        "tests/chapter_4/valid/lt_true.c",
+        "tests/chapter_4/valid/multi_short_circuit.c",
+        "tests/chapter_4/valid/ne_false.c",
+        "tests/chapter_4/valid/ne_true.c",
+        "tests/chapter_4/valid/nested_ops.c",
+        "tests/chapter_4/valid/not_sum_2.c",
+        "tests/chapter_4/valid/not_sum.c",
+        "tests/chapter_4/valid/not_zero.c",
+        "tests/chapter_4/valid/not.c",
+        "tests/chapter_4/valid/operate_on_booleans.c",
+        "tests/chapter_4/valid/or_false.c",
+        "tests/chapter_4/valid/or_short_circuit.c",
+        "tests/chapter_4/valid/or_true.c",
+        "tests/chapter_4/valid/precedence_2.c",
+        "tests/chapter_4/valid/precedence_3.c",
+        "tests/chapter_4/valid/precedence_4.c",
+        "tests/chapter_4/valid/precedence_5.c",
+        "tests/chapter_4/valid/precedence.c",
+    };
+    Settings settings;
+
+    for (const auto &srcFile : srcFiles)
+    {
+        Compiler compiler;
+        try
+        {
+            int status = compiler.compile(Stage::Parsing, srcFile);
+            ASSERT_TRUE(status == 0);
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+            throw;
+        }
+    }
+}
+
+TEST_CASE(Chapter4ValidParseExtraCredit, "chapter_4", "--parse")
+{
+    std::vector<std::string> srcFiles = {
+        "tests/chapter_4/valid/extra_credit/bitwise_and_precedence.c",
+        "tests/chapter_4/valid/extra_credit/bitwise_or_precedence.c",
+        "tests/chapter_4/valid/extra_credit/bitwise_shift_precedence.c",
+        "tests/chapter_4/valid/extra_credit/bitwise_xor_precedence.c",
+    };
+    Settings settings;
+
+    for (const auto &srcFile : srcFiles)
+    {
+        Compiler compiler;
+        try
+        {
+            int status = compiler.compile(Stage::Parsing, srcFile);
+            ASSERT_TRUE(status == 0);
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+            throw;
+        }
+    }
+}

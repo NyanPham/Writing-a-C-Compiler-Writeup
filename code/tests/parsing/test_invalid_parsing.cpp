@@ -130,3 +130,31 @@ TEST_CASE(Chapter3InvalidParseExtraCredit, "chapter_3", "--parse")
         }
     }
 }
+
+TEST_CASE(Chapter4InvalidParse, "chapter_4", "--parse")
+{
+    std::vector<std::string> srcFiles = {
+        "tests/chapter_4/invalid_parse/missing_const.c",
+        "tests/chapter_4/invalid_parse/missing_first_op.c",
+        "tests/chapter_4/invalid_parse/missing_operand.c",
+        "tests/chapter_4/invalid_parse/missing_second_op.c",
+        "tests/chapter_4/invalid_parse/missing_semicolon.c",
+        "tests/chapter_4/invalid_parse/unary_missing_semicolon.c",
+    };
+    Settings settings;
+
+    for (const auto &srcFile : srcFiles)
+    {
+        Compiler compiler;
+        try
+        {
+            int status = compiler.compile(Stage::Parsing, srcFile);
+            ASSERT_TRUE(status != 0);
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+            throw;
+        }
+    }
+}
