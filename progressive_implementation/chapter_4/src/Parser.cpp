@@ -124,17 +124,16 @@ std::vector<Token> Parser::peekTokens(int n)
 
 void Parser::expect(TokenType type)
 {
-    std::optional<Token> tokPtr{takeToken()};
+    std::optional<Token> token{takeToken()};
 
-    if (!tokPtr.has_value())
+    if (!token.has_value())
     {
         raiseError(tokenTypeToString(type), "empty token");
     }
 
-    Token tok{*tokPtr};
-    if (tok.getType() != type)
+    if (token->getType() != type)
     {
-        raiseError(tokenTypeToString(type), tokenTypeToString(tok.getType()));
+        raiseError(tokenTypeToString(type), tokenTypeToString(token->getType()));
     }
 }
 
@@ -215,19 +214,18 @@ AST::BinaryOp Parser::parseBinop()
 
 std::shared_ptr<AST::Constant> Parser::parseConst()
 {
-    std::optional<Token> tokPtr{takeToken()};
+    std::optional<Token> token{takeToken()};
 
-    if (tokPtr.has_value())
+    if (token.has_value())
     {
-        Token tok{*tokPtr};
-        if (tok.getType() != TokenType::CONSTANT)
+        if (token->getType() != TokenType::CONSTANT)
         {
-            raiseError("a constant", tokenTypeToString(tok.getType()));
+            raiseError("a constant", tokenTypeToString(token->getType()));
         }
 
-        if (std::holds_alternative<int>(tok.getValue()))
+        if (std::holds_alternative<int>(token->getValue()))
         {
-            int value{std::get<int>(tok.getValue())};
+            int value{std::get<int>(token->getValue())};
             return std::make_shared<AST::Constant>(value);
         }
 
@@ -240,22 +238,21 @@ std::shared_ptr<AST::Constant> Parser::parseConst()
 
 std::string Parser::parseIdentifier()
 {
-    std::optional<Token> tokPtr{takeToken()};
+    std::optional<Token> token{takeToken()};
 
-    if (tokPtr.has_value())
+    if (token.has_value())
     {
-        Token tok{*tokPtr};
-        if (tok.getType() != TokenType::IDENTIFIER)
+        if (token->getType() != TokenType::IDENTIFIER)
         {
-            raiseError("an identifier", tokenTypeToString(tok.getType()));
+            raiseError("an identifier", tokenTypeToString(token->getType()));
         }
 
-        if (std::holds_alternative<std::string>(tok.getValue()))
+        if (std::holds_alternative<std::string>(token->getValue()))
         {
-            return std::get<std::string>(tok.getValue());
+            return std::get<std::string>(token->getValue());
         }
 
-        raiseError("an identifier", tokenTypeToString(tok.getType()));
+        raiseError("an identifier", tokenTypeToString(token->getType()));
     }
 
     raiseError("an identifier", "empty token");

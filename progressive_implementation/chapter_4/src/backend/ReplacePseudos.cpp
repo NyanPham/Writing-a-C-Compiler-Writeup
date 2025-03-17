@@ -65,7 +65,8 @@ ReplaceInstPair ReplacePseudos::replacePseudosInInstruction(const std::shared_pt
 
         return {
             newMov,
-            state2};
+            state2,
+        };
     }
     case Assembly::NodeType::Unary:
     {
@@ -77,7 +78,8 @@ ReplaceInstPair ReplacePseudos::replacePseudosInInstruction(const std::shared_pt
 
         return {
             newUnary,
-            state1};
+            state1,
+        };
     }
     case Assembly::NodeType::Binary:
     {
@@ -96,8 +98,10 @@ ReplaceInstPair ReplacePseudos::replacePseudosInInstruction(const std::shared_pt
     case Assembly::NodeType::Cmp:
     {
         auto cmp = std::dynamic_pointer_cast<Assembly::Cmp>(inst);
+
         auto [newSrc, state1] = replaceOperand(cmp->getSrc(), state);
         auto [newDst, state2] = replaceOperand(cmp->getDst(), state1);
+
         auto newCmp = std::make_shared<Assembly::Cmp>(newSrc, newDst);
 
         return {
@@ -110,17 +114,20 @@ ReplaceInstPair ReplacePseudos::replacePseudosInInstruction(const std::shared_pt
         auto idiv = std::dynamic_pointer_cast<Assembly::Idiv>(inst);
 
         auto [newOperand, state1] = replaceOperand(idiv->getOperand(), state);
+
         auto newIdiv = std::make_shared<Assembly::Idiv>(newOperand);
 
         return {
             newIdiv,
-            state1};
+            state1,
+        };
     }
     case Assembly::NodeType::SetCC:
     {
         auto setCC = std::dynamic_pointer_cast<Assembly::SetCC>(inst);
 
         auto [newOperand, state1] = replaceOperand(setCC->getOperand(), state);
+
         auto newSetCC = std::make_shared<Assembly::SetCC>(setCC->getCondCode(), newOperand);
 
         return {

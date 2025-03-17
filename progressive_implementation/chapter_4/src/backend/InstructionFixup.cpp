@@ -29,7 +29,8 @@ InstructionFixup::fixupInstruction(const std::shared_ptr<Assembly::Instruction> 
         else
         {
             return {
-                inst};
+                inst,
+            };
         }
     }
     case Assembly::NodeType::Idiv:
@@ -49,7 +50,8 @@ InstructionFixup::fixupInstruction(const std::shared_ptr<Assembly::Instruction> 
         else
         {
             return {
-                inst};
+                inst,
+            };
         }
     }
     case Assembly::NodeType::Binary:
@@ -72,7 +74,8 @@ InstructionFixup::fixupInstruction(const std::shared_ptr<Assembly::Instruction> 
 
                 return {
                     std::make_shared<Assembly::Mov>(binary->getSrc(), RegR10),
-                    std::make_shared<Assembly::Binary>(binary->getOp(), RegR10, binary->getDst())};
+                    std::make_shared<Assembly::Binary>(binary->getOp(), RegR10, binary->getDst()),
+                };
             }
             else
             {
