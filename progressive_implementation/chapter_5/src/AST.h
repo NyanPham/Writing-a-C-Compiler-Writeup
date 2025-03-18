@@ -10,7 +10,7 @@
 program = Program(function_definition)
 function_definition = Function(identifier name, block_item* body)
 block_item = S(Statement) | D(Declaration)
-declaration = Declaration(identifier name, exp? ini)
+declaration = Declaration(identifier name, exp? init)
 statement = Return(exp) | Expression(exp) | Null
 exp = Constant(int)
     | Var(identifier)

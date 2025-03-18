@@ -206,9 +206,9 @@ TackyGen::emitTackyForExp(const std::shared_ptr<AST::Expression> &exp)
         }
 
         auto [rhsInsts, rhsResult] = emitTackyForExp(assignment->getRightExp());
-        auto copyInst = std::make_shared<TACKY::Var>(std::dynamic_pointer_cast<AST::Var>(assignment->getLeftExp())->getName());
+        auto lhsVar = std::make_shared<TACKY::Var>(std::dynamic_pointer_cast<AST::Var>(assignment->getLeftExp())->getName());
         rhsInsts.push_back(
-            std::make_shared<TACKY::Copy>(rhsResult, copyInst));
+            std::make_shared<TACKY::Copy>(rhsResult, lhsVar));
 
         return {
             rhsInsts,

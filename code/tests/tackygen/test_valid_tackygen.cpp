@@ -239,50 +239,50 @@ TEST_CASE(Chapter5ValidTackyGen, "chapter_5", "--tacky")
     }
 }
 
-// TEST_CASE(Chapter5ValidTackyGenExtraCredit, "chapter_5", "--tacky")
-// {
-//     std::vector<std::string> srcFiles = {
-//         "tests/chapter_5/valid/extra_credit/bitwise_in_initializer.c",
-//         "tests/chapter_5/valid/extra_credit/bitwise_ops_vars.c",
-//         "tests/chapter_5/valid/extra_credit/bitwise_shiftl_variable.c",
-//         "tests/chapter_5/valid/extra_credit/bitwise_shiftr_assign.c",
-//         "tests/chapter_5/valid/extra_credit/compound_assignment_chained.c",
-//         "tests/chapter_5/valid/extra_credit/compound_assignment_lowest_precedence.c",
-//         "tests/chapter_5/valid/extra_credit/compound_assignment_use_result.c",
-//         "tests/chapter_5/valid/extra_credit/compound_bitwise_and.c",
-//         "tests/chapter_5/valid/extra_credit/compound_bitwise_assignment_lowest_precedence.c",
-//         "tests/chapter_5/valid/extra_credit/compound_bitwise_chained.c",
-//         "tests/chapter_5/valid/extra_credit/compound_bitwise_or.c",
-//         "tests/chapter_5/valid/extra_credit/compound_bitwise_shiftl.c",
-//         "tests/chapter_5/valid/extra_credit/compound_bitwise_shiftr.c",
-//         "tests/chapter_5/valid/extra_credit/compound_bitwise_xor.c",
-//         "tests/chapter_5/valid/extra_credit/compound_divide.c",
-//         "tests/chapter_5/valid/extra_credit/compound_minus.c",
-//         "tests/chapter_5/valid/extra_credit/compound_mod.c",
-//         "tests/chapter_5/valid/extra_credit/compound_multiply.c",
-//         "tests/chapter_5/valid/extra_credit/compound_plus.c",
-//         "tests/chapter_5/valid/extra_credit/incr_expression_statement.c",
-//         "tests/chapter_5/valid/extra_credit/incr_in_binary_expr.c",
-//         "tests/chapter_5/valid/extra_credit/incr_parenthesized.c",
-//         "tests/chapter_5/valid/extra_credit/postfix_incr_and_decr.c",
-//         "tests/chapter_5/valid/extra_credit/postfix_precedence.c",
-//         "tests/chapter_5/valid/extra_credit/prefix_incr_and_decr.c",
-//     };
-//     Settings settings;
+TEST_CASE(Chapter5ValidTackyGenExtraCredit, "chapter_5", "--tacky")
+{
+    std::vector<std::string> srcFiles = {
+        "tests/chapter_5/valid/extra_credit/bitwise_in_initializer.c",
+        "tests/chapter_5/valid/extra_credit/bitwise_ops_vars.c",
+        "tests/chapter_5/valid/extra_credit/bitwise_shiftl_variable.c",
+        "tests/chapter_5/valid/extra_credit/bitwise_shiftr_assign.c",
+        "tests/chapter_5/valid/extra_credit/compound_assignment_chained.c",
+        "tests/chapter_5/valid/extra_credit/compound_assignment_lowest_precedence.c",
+        "tests/chapter_5/valid/extra_credit/compound_assignment_use_result.c",
+        "tests/chapter_5/valid/extra_credit/compound_bitwise_and.c",
+        "tests/chapter_5/valid/extra_credit/compound_bitwise_assignment_lowest_precedence.c",
+        "tests/chapter_5/valid/extra_credit/compound_bitwise_chained.c",
+        "tests/chapter_5/valid/extra_credit/compound_bitwise_or.c",
+        "tests/chapter_5/valid/extra_credit/compound_bitwise_shiftl.c",
+        "tests/chapter_5/valid/extra_credit/compound_bitwise_shiftr.c",
+        "tests/chapter_5/valid/extra_credit/compound_bitwise_xor.c",
+        "tests/chapter_5/valid/extra_credit/compound_divide.c",
+        "tests/chapter_5/valid/extra_credit/compound_minus.c",
+        "tests/chapter_5/valid/extra_credit/compound_mod.c",
+        "tests/chapter_5/valid/extra_credit/compound_multiply.c",
+        "tests/chapter_5/valid/extra_credit/compound_plus.c",
+        "tests/chapter_5/valid/extra_credit/incr_expression_statement.c",
+        "tests/chapter_5/valid/extra_credit/incr_in_binary_expr.c",
+        "tests/chapter_5/valid/extra_credit/incr_parenthesized.c",
+        "tests/chapter_5/valid/extra_credit/postfix_incr_and_decr.c",
+        "tests/chapter_5/valid/extra_credit/postfix_precedence.c",
+        "tests/chapter_5/valid/extra_credit/prefix_incr_and_decr.c",
+    };
+    Settings settings;
 
-//     for (const auto &srcFile : srcFiles)
-//     {
-//         Compiler compiler;
-//         try
-//         {
-//             int status = compiler.compile(Stage::Tacky, srcFile);
-//             // Check that the compilation succeeded
-//             ASSERT_TRUE(status == 0);
-//         }
-//         catch (const std::exception &e)
-//         {
-//             std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
-//             throw;
-//         }
-//     }
-// }
+    for (const auto &srcFile : srcFiles)
+    {
+        Compiler compiler;
+        try
+        {
+            int status = compiler.compile(Stage::Tacky, srcFile);
+            // Check that the compilation succeeded
+            ASSERT_TRUE(status == 0);
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+            throw;
+        }
+    }
+}

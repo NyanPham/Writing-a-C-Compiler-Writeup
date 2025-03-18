@@ -12,16 +12,19 @@
 EBNF for a subset of C:
 
 <program> ::= <function>
-<function> ::= "int" <identifier> "(" "void" ")" "{" <statement> "}"
-<statement> ::= "return" <exp> ";"
+<function> ::= "int" <identifier> "(" "void" ")" "{" { <block-item> } "}"
+<block-item> ::= <statement> | <declaration>
+<declaration> ::= "int" <identifier> [ "=" <exp> ] ";"
+<statement> ::= "return" <exp> ";" | <exp> ";" | ";"
 <exp> ::= <factor> | <exp> <binop> <exp>
-<factor> ::= <int> | <unop> <factor> | "(" <exp> ")"
+<factor> ::= <int> | <identifier> | <unop> <factor> | "(" <exp> ")"
 <unop> ::= "-" | "~" | "!"
 <binop> ::= "+" | "-" | "*" | "/" | "%"
         | "&&" | "||"
         | "==" | "!=" | "<" | "<="
         | ">" | ">="
         | "&" | "^" | "|" | "<<" | ">>"
+        | "="
 <int> ::= ? An integer token ?
 <identifier> ::= ? An identifier token ?
 */
@@ -320,11 +323,6 @@ std::shared_ptr<AST::Expression> Parser::parseExp(int minPrec)
     {
         if (nextToken->getType() == TokenType::EQUAL_SIGN)
         {
-            // if (left->getType() == AST::NodeType::Var)
-            // {
-            //     std::cout << (std::dynamic_pointer_cast<AST::Var>(left)->getName()) << '\n';
-            // }
-
             takeToken();
             auto right{parseExp(getPrecedence(nextToken->getType()))};
             left = std::make_shared<AST::Assignment>(left, right);
