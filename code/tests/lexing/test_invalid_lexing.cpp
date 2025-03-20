@@ -37,3 +37,29 @@ TEST_CASE(Chapter1InvalidLex, "chapter_1", "--lex")
         }
     }
 }
+
+TEST_CASE(Chapter6InvalidLexExtraCredit, "chapter_6", "--lex")
+{
+    std::vector<std::string> srcFiles = {
+        "tests/chapter_6/invalid_lex/extra_credit/bad_label.c"};
+    Settings settings;
+
+    for (const auto &srcFile : srcFiles)
+    {
+        Compiler compiler;
+        try
+        {
+            int status = compiler.compile(Stage::Lexing, srcFile);
+            if (status == 0)
+            {
+                std::cerr << "Expected error compiling file " << srcFile << std::endl;
+            }
+            ASSERT_TRUE(status != 0);
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+            throw;
+        }
+    }
+}

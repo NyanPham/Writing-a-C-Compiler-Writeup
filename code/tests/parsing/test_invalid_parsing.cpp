@@ -218,3 +218,63 @@ TEST_CASE(Chapter5InvalidParseExtraCredit, "chapter_5", "--parse")
         }
     }
 }
+
+TEST_CASE(Chapter6InvalidParse, "chapter_6", "--parse")
+{
+    std::vector<std::string> srcFiles = {
+        "tests/chapter_6/invalid_parse/declaration_as_statement.c",
+        "tests/chapter_6/invalid_parse/empty_if_body.c",
+        "tests/chapter_6/invalid_parse/if_assignment.c",
+        "tests/chapter_6/invalid_parse/if_no_parens.c",
+        "tests/chapter_6/invalid_parse/incomplete_ternary.c",
+        "tests/chapter_6/invalid_parse/malformed_ternary.c",
+        "tests/chapter_6/invalid_parse/malformed_ternary_2.c",
+        "tests/chapter_6/invalid_parse/mismatched_nesting.c",
+        "tests/chapter_6/invalid_parse/wrong_ternary_delimiter.c",
+    };
+    Settings settings;
+
+    for (const auto &srcFile : srcFiles)
+    {
+        Compiler compiler;
+        try
+        {
+            int status = compiler.compile(Stage::Parsing, srcFile);
+            ASSERT_TRUE(status != 0);
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+            throw;
+        }
+    }
+}
+
+// TEST_CASE(Chapter6InvalidParseExtraCredit, "chapter_6", "--parse")
+// {
+//     std::vector<std::string> srcFiles = {
+//         "tests/chapter_6/invalid_parse/extra_credit/goto_without_label.c",
+//         "tests/chapter_6/invalid_parse/extra_credit/kw_label.c",
+//         "tests/chapter_6/invalid_parse/extra_credit/label_declaration.c",
+//         "tests/chapter_6/invalid_parse/extra_credit/label_expression_clause.c",
+//         "tests/chapter_6/invalid_parse/extra_credit/label_outside_function.c",
+//         "tests/chapter_6/invalid_parse/extra_credit/label_without_statement.c",
+//         "tests/chapter_6/invalid_parse/extra_credit/parenthesized_label.c",
+//     };
+//     Settings settings;
+
+//     for (const auto &srcFile : srcFiles)
+//     {
+//         Compiler compiler;
+//         try
+//         {
+//             int status = compiler.compile(Stage::Parsing, srcFile);
+//             ASSERT_TRUE(status != 0);
+//         }
+//         catch (const std::exception &e)
+//         {
+//             std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+//             throw;
+//         }
+//     }
+// }

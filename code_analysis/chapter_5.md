@@ -131,6 +131,7 @@ parse_function_definition(tokens):
 
 # VarResolution
 A more complete resolve_exp for clarity of how to implement it:
+
 ```
 resolve_exp(exp, var_map):
 	match e with

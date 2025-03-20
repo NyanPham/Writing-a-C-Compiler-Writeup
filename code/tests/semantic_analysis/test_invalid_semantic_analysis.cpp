@@ -73,3 +73,57 @@ TEST_CASE(Chapter5InvalidSemanticExtraCredit, "chapter_5", "--validate")
         }
     }
 }
+
+TEST_CASE(Chapter6InvalidSemantic, "chapter_6", "--validate")
+{
+    std::vector<std::string> srcFiles = {
+        "tests/chapter_6/invalid_semantics/invalid_var_in_if.c",
+        "tests/chapter_6/invalid_semantics/ternary_assign.c",
+        "tests/chapter_6/invalid_semantics/undeclared_var_in_ternary.c",
+    };
+    Settings settings;
+
+    for (const auto &srcFile : srcFiles)
+    {
+        Compiler compiler;
+        try
+        {
+            int status = compiler.compile(Stage::Validate, srcFile);
+            // Check that the compilation succeeded
+            ASSERT_TRUE(status != 0);
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+            throw;
+        }
+    }
+}
+
+// TEST_CASE(Chapter6InvalidSemanticExtraCredit, "chapter_6", "--validate")
+// {
+//     std::vector<std::string> srcFiles = {
+//         "tests/chapter_6/invalid_semantics/extra_credit/duplicate_labels.c",
+//         "tests/chapter_6/invalid_semantics/extra_credit/goto_missing_label.c",
+//         "tests/chapter_6/invalid_semantics/extra_credit/goto_variable.c",
+//         "tests/chapter_6/invalid_semantics/extra_credit/undeclared_var_in_labeled_statement.c",
+//         "tests/chapter_6/invalid_semantics/extra_credit/use_label_as_variable.c",
+//     };
+//     Settings settings;
+
+//     for (const auto &srcFile : srcFiles)
+//     {
+//         Compiler compiler;
+//         try
+//         {
+//             int status = compiler.compile(Stage::Validate, srcFile);
+//             // Check that the compilation succeeded
+//             ASSERT_TRUE(status != 0);
+//         }
+//         catch (const std::exception &e)
+//         {
+//             std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+//             throw;
+//         }
+//     }
+// }

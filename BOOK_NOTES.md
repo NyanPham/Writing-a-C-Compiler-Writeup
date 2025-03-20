@@ -1476,3 +1476,246 @@ Also the Semantic Analysis stage is implemented to make sure the program makes s
 
 ### Reference implementation Analysis
 [Chapter 5 Code Analysis](./code_analysis/chapter_5.md)
+
+---
+
+# Chapter 6: If Statements and Conditional Expressions
+
+## Stages of a Compiler
+
+1. **Lexer**
+    - Input: Source code (program.c)
+    - Output: Token list
+2. **Parser**
+    - Input: Token list
+    - Output: Abstract Syntax Tree (AST)
+3. **Semantic Analysis**
+    - Input: AST
+    - Output: Transformed AST
+	- Passes:
+		1. Variable resolution
+4. **TACKY Generation**
+    - Input: Transformed AST
+    - Output: TAC IR (Tacky)
+5. **Assembly Generation**
+    - Input: Tacky
+    - Output: Assembly code
+    - Passes:
+        1. Converting TACKY to Assembly
+        2. Replacing pseudoregisters
+        3. Instruction fix-up
+6. **Code Emission**
+    - Input: Assembly code
+    - Output: Final assembly file 
+
+Control flow lets a program decide what statements to execute at runtime based on the current state of the program.
+We'll support **If Statements** and **Conditional Expressions** in this chapter.
+
+## The Lexer
+
+New tokens to recognize
+| Token | Regular expression |
+| ------- | -------------------- |
+| KeywordIf | if |
+| KeywordElse | else |
+| QuestionMark | ? |
+| Colon | \: |
+
+## The Parser
+
+### AST
+<pre><code>program = Program(function_definition)
+function_definition = Function(identifier name, block_item* body)
+block_item = S(statement) | D(declaration)
+declaration = Declaration(identifier name, exp? init)
+statement = Return(exp) 
+	| Expression(exp) 
+	<strong>| If(exp condition, statement then, statement? else)</strong>
+	| Null 
+exp = Constant(int) 
+	| Var(identifier) 
+    | Unary(unary_operator, exp)
+    | Binary(binary_operator, exp, exp)
+	| Assignment(exp, exp) 
+	<strong>| Conditional(exp condition, exp, exp)</strong>
+unary_operator = Complement | Negate | Not
+binary_operator = Add | Subtract | Multiply | Divide | Remainder | And | Or
+                | Equal | NotEqual | LessThan | LessOrEqual
+                | GreaterThan | GreaterOrEqual</pre></code>
+
+
+### EBNF
+<pre><code>&lt;program&gt; ::= &lt;function&gt;
+&lt;function&gt; ::= "int" &lt;identifier&gt; "(" "void" ")" "{" { &lt;block-item&gt; } "}"
+&lt;block-item&gt; ::= &lt;statement&gt; | &lt;declaration&gt;
+&lt;declaration&gt; ::= "int" &lt;identifier&gt; [ "=" &lt;exp&gt; ] ";"
+&lt;statement&gt; ::= "return" &lt;exp&gt; ";" 
+	| &lt;exp&gt; ";" 
+	<strong>| "if" "(" &lt;exp&gt; ")" &lt;statement&gt; ["else" &lt;statement&gt;]</strong>
+	| ";"
+&lt;exp&gt; ::= &lt;factor&gt; | &lt;exp&gt; &lt;binop&gt; &lt;exp&gt; <strong>| &lt;exp&gt "?" &lt;exp&gt ":" &lt;exp&gt</strong>
+&lt;factor&gt; ::= &lt;int&gt; | &lt;identifier&gt; | &lt;unop&gt; &lt;factor&gt; | "(" &lt;exp&gt; ")"
+&lt;unop&gt; ::= "-" | "~" 
+&lt;binop&gt; :: = "+" | "-" | "\*" | "/" | "%" | "&&" | "||"
+				| "==" | "!=" | "<" | "<=" | ">" | ">=" | "="
+&lt;identifier&gt; ::= ? An identifier token ?
+&lt;int&gt; ::= ? A constant token ?</pre></code>
+
+
+Firstly, let's tackle the **If** construct.
+We've not implemented compound statements yet, so we can only compile the following example:
+
+```
+if (a == 3)
+	return a;
+else
+	b = 8;
+```
+
+AST definition of the **If** construct doesn't include *else if* because an if statement can have at most one else clause. An else if clause is an else with another if statement.
+
+So this example:
+```
+if (a):
+	return 0;
+else if (b):
+	return 1;
+else:
+	return 2;
+```
+
+is similar to this:
+```
+if (a):
+	return 0;
+else:
+	if (b):
+		return 1;
+	else:
+		return 2;
+```
+
+Interestingly, the grammar to parse the if-else is also ambiguous.
+```
+"if" "(" <exp> ")" <statement> ["else" <statement>]
+```
+If the statement right after the if(condition) is another if statement, then the else statement, if exists, belongs to which if?
+The grammar itself doesn't tell this. Luckily, this is a famous quirk that has it own name: *dangling else ambiguity*.
+
+The dangling else ambiguity cause problems for parser generators, not our handwritten recursive descent parser. 
+When we parse the if statement, if we see an else statement right after it, attach it the the closest if.
+
+Now, how about **condition expression**?
+The expression has its form: `condition ? exp : exp`
+We treat it as a binary expression, whose operator is the whole *? exp :*.
+Such operator has higher precedence than assignments, but lower than anything else.
+Condition expressions are right associative.
+
+### Parser
+
+```
+parse_exp(tokens, min_prec):
+	left = parse_factor(tokens)
+	next_token = peek(tokens)
+	
+	while next_token is a binary operator and precedence(next_token) >= min_prec:
+		if next_token is "=":
+			take_token(tokens) // remove "=" from list of tokens
+			right = parse_exp(tokens, precedence(next_token))
+			left = Assignment(left, right)
+		else if next_token is "?":
+			middle = parse_condition_middle(tokens)
+			right = parse_exp(tokens, precedence(next_token))
+			left = Conditional(left, middle, right)
+		else:
+			operator = parse_binop(tokens)
+			right = parse_exp(tokens, precedence(next_token) + 1)
+			left = Binary(operator, left, right)
+		next_token = peek(tokens)
+	return left
+```
+
+### Precedence Values of Binary Operators
+
+| Operator | Precedence |
+| -------- | ---------- | 
+| \* | 50 |
+| / | 50 |
+| % | 50 |
+| + | 45 |
+| - | 45 |
+| < | 35 |
+| <= | 35 |
+| > | 35 |
+| >= | 35 |
+| == | 30 |
+| != | 30 |
+| && | 10 |
+| \|\| | 5 |
+| **?** | **3** |
+| =  | 1 |
+
+## Semantic Analysis
+
+### Variable Resolution
+Extend the *resolve_statement* and *resolve_exp* to handle new constructs. 
+
+## TACKY Generation
+
+### TACKY
+We leverage the constructs used to support && and || operator in chapter 4 for if statements and conditional expressions.
+So we do not make any changes to the TACKY for now.
+
+### Generating TACKY
+
+To **convert If Statements to TACKY**, we do the following:
+```
+<instructions for condition>
+c = <result of condition>
+JumpIfZero(c, end)
+<instructions for statement>
+Label(end)
+```
+
+With an else, add a few more instructions:
+```
+<instructions for condition>
+c = <result of condition>
+JumpIfZero(c, else_label)
+<instructions for statement1>
+Jump(end)
+Label(else_label)
+<instructions for statement2>
+Label(end)
+```
+
+**Converting Conditional Expressions to TACKY** is very similar, except for that we need to copy which result to the destination.
+```
+<instructions for condition>
+c = <result of condition>
+JumpIfZero(c, e2_label)
+<instructions to calculate e1>
+v1 = <result of e1>
+result = v1
+Jump(end)
+Label(e2_label)
+<instructions to calculate e2>
+v2 = <result of e2>
+result = v2
+Label(end)
+```
+
+## Assembly Generation
+We do not change our TACKY AST, so Assembly stage stays intact.
+
+## Extra Credit: Labeled Statements and Goto
+If we can support *If Statements* and *Conditional Expressions*, we can move forward to add support for **Goto** and **Labeled Statements**.
+Goto is like Jump in Assembly, whereas Labeled Statements specify the target for Goto.
+A new pass in Semantic Analysis is needed to check for the errors like using the same label for two labeled statements. 
+
+## Summary
+Congratulations! We've just implemented the first control structures in our compiler. However, we are limited by having a single statement in each clause.
+We'll extend to use compound statement, which is also a single statement but contains several inner statements in the next chapter.
+
+### Reference implementation Analysis
+[Chapter 6 Code Analysis](./code_analysis/chapter_6.md)
