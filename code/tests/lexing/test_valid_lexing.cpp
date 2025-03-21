@@ -491,3 +491,77 @@ TEST_CASE(Chapter6ValidLexExtraCredit, "chapter_6", "--lex")
         }
     }
 }
+
+TEST_CASE(Chapter7ValidLex, "chapter_7", "--lex")
+{
+    std::vector<std::string> srcFiles = {
+        "tests/chapter_7/valid/assign_to_self.c",
+        "tests/chapter_7/valid/assign_to_self_2.c",
+        "tests/chapter_7/valid/declaration_only.c",
+        "tests/chapter_7/valid/empty_blocks.c",
+        "tests/chapter_7/valid/hidden_then_visible.c",
+        "tests/chapter_7/valid/hidden_variable.c",
+        "tests/chapter_7/valid/inner_uninitialized.c",
+        "tests/chapter_7/valid/multiple_vars_same_name.c",
+        "tests/chapter_7/valid/nested_if.c",
+        "tests/chapter_7/valid/similar_var_names.c",
+        "tests/chapter_7/valid/use_in_inner_scope.c",
+
+        "tests/chapter_7/invalid_parse/extra_brace.c",
+        "tests/chapter_7/invalid_parse/missing_brace.c",
+        "tests/chapter_7/invalid_parse/missing_semicolon.c",
+        "tests/chapter_7/invalid_parse/ternary_blocks.c",
+
+        "tests/chapter_7/invalid_semantics/double_define.c",
+        "tests/chapter_7/invalid_semantics/double_define_after_scope.c",
+        "tests/chapter_7/invalid_semantics/out_of_scope.c",
+        "tests/chapter_7/invalid_semantics/use_before_declare.c",
+    };
+    Settings settings;
+
+    for (const auto &srcFile : srcFiles)
+    {
+        Compiler compiler;
+        try
+        {
+            int status = compiler.compile(Stage::Lexing, srcFile);
+            ASSERT_TRUE(status == 0);
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+            throw;
+        }
+    }
+}
+
+TEST_CASE(Chapter7ValidLexExtraCredit, "chapter_7", "--lex")
+{
+    std::vector<std::string> srcFiles = {
+        "tests/chapter_7/valid/extra_credit/compound_subtract_in_block.c",
+        "tests/chapter_7/valid/extra_credit/goto_before_declaration.c",
+        "tests/chapter_7/valid/extra_credit/goto_inner_scope.c",
+        "tests/chapter_7/valid/extra_credit/goto_outer_scope.c",
+        "tests/chapter_7/valid/extra_credit/goto_sibling_scope.c",
+
+        "tests/chapter_7/invalid_semantics/extra_credit/different_labels_same_scope.c",
+        "tests/chapter_7/invalid_semantics/extra_credit/duplicate_labels_different_scopes.c",
+        "tests/chapter_7/invalid_semantics/extra_credit/goto_use_before_declare.c",
+    };
+    Settings settings;
+
+    for (const auto &srcFile : srcFiles)
+    {
+        Compiler compiler;
+        try
+        {
+            int status = compiler.compile(Stage::Lexing, srcFile);
+            ASSERT_TRUE(status == 0);
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+            throw;
+        }
+    }
+}

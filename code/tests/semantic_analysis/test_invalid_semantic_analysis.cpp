@@ -117,7 +117,57 @@ TEST_CASE(Chapter6InvalidSemanticExtraCredit, "chapter_6", "--validate")
         try
         {
             int status = compiler.compile(Stage::Validate, srcFile);
-            // Check that the compilation succeeded
+            ASSERT_TRUE(status != 0);
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+            throw;
+        }
+    }
+}
+
+TEST_CASE(Chapter7InvalidSemantic, "chapter_7", "--validate")
+{
+    std::vector<std::string> srcFiles = {
+        "tests/chapter_7/invalid_semantics/double_define.c",
+        "tests/chapter_7/invalid_semantics/double_define_after_scope.c",
+        "tests/chapter_7/invalid_semantics/out_of_scope.c",
+        "tests/chapter_7/invalid_semantics/use_before_declare.c",
+    };
+    Settings settings;
+
+    for (const auto &srcFile : srcFiles)
+    {
+        Compiler compiler;
+        try
+        {
+            int status = compiler.compile(Stage::Validate, srcFile);
+            ASSERT_TRUE(status != 0);
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+            throw;
+        }
+    }
+}
+
+TEST_CASE(Chapter7InvalidSemanticExtraCredit, "chapter_7", "--validate")
+{
+    std::vector<std::string> srcFiles = {
+        "tests/chapter_7/invalid_semantics/extra_credit/different_labels_same_scope.c",
+        "tests/chapter_7/invalid_semantics/extra_credit/duplicate_labels_different_scopes.c",
+        "tests/chapter_7/invalid_semantics/extra_credit/goto_use_before_declare.c",
+    };
+    Settings settings;
+
+    for (const auto &srcFile : srcFiles)
+    {
+        Compiler compiler;
+        try
+        {
+            int status = compiler.compile(Stage::Validate, srcFile);
             ASSERT_TRUE(status != 0);
         }
         catch (const std::exception &e)

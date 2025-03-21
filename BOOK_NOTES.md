@@ -1719,3 +1719,133 @@ We'll extend to use compound statement, which is also a single statement but con
 
 ### Reference implementation Analysis
 [Chapter 6 Code Analysis](./code_analysis/chapter_6.md)
+
+---
+
+# Chapter 7: Compound Statements
+
+## Stages of a Compiler
+
+1. **Lexer**
+    - Input: Source code (program.c)
+    - Output: Token list
+2. **Parser**
+    - Input: Token list
+    - Output: Abstract Syntax Tree (AST)
+3. **Semantic Analysis**
+    - Input: AST
+    - Output: Transformed AST
+	- Passes:
+		1. Variable resolution
+4. **TACKY Generation**
+    - Input: Transformed AST
+    - Output: TAC IR (Tacky)
+5. **Assembly Generation**
+    - Input: Tacky
+    - Output: Assembly code
+    - Passes:
+        1. Converting TACKY to Assembly
+        2. Replacing pseudoregisters
+        3. Instruction fix-up
+6. **Code Emission**
+    - Input: Assembly code
+    - Output: Final assembly file 
+
+We will only change the **Parser**, **Variable Resolution** and a bit of **TackyGen** to support **compound statements**.
+We won't touch *Lexer* or the **CodeGen** stages at all.
+
+Compound statements are to:
+- Group statements and declarations into a single unit.
+- Delineate the different *scopes* within a function.
+
+## The Parser
+
+### AST
+<pre><code>program = Program(function_definition)
+function_definition = Function(identifier name, <strong>block body</strong>)
+block_item = S(statement) | D(declaration)
+<strong>block = Block(block_item*)</strong>
+declaration = Declaration(identifier name, exp? init)
+statement = Return(exp) 
+	| Expression(exp) 
+	| If(exp condition, statement then, statement? else)
+	<strong>| Compound(block)</strong>
+	| Null 
+exp = Constant(int) 
+	| Var(identifier) 
+    | Unary(unary_operator, exp)
+    | Binary(binary_operator, exp, exp)
+	| Assignment(exp, exp) 
+	| Conditional(exp condition, exp, exp)
+unary_operator = Complement | Negate | Not
+binary_operator = Add | Subtract | Multiply | Divide | Remainder | And | Or
+                | Equal | NotEqual | LessThan | LessOrEqual
+                | GreaterThan | GreaterOrEqual</pre></code>
+
+
+### EBNF
+<pre><code>&lt;program&gt; ::= &lt;function&gt;
+&lt;function&gt; ::= "int" &lt;identifier&gt; "(" "void" ")" <strong>&lt;block&gt;</strong>
+<strong>&lt;block&gt; ::= "{" { &lt;block-item&gt; } "}"</strong>
+&lt;block-item&gt; ::= &lt;statement&gt; | &lt;declaration&gt;
+&lt;declaration&gt; ::= "int" &lt;identifier&gt; [ "=" &lt;exp&gt; ] ";"
+&lt;statement&gt; ::= "return" &lt;exp&gt; ";" 
+	| &lt;exp&gt; ";" 
+	| "if" "(" &lt;exp&gt; ")" &lt;statement&gt; ["else" &lt;statement&gt;]
+	<strong>| &lt;block&gt;</strong>
+	| ";"
+&lt;exp&gt; ::= &lt;factor&gt; | &lt;exp&gt; &lt;binop&gt; &lt;exp&gt; | &lt;exp&gt "?" &lt;exp&gt ":" &lt;exp&gt
+&lt;factor&gt; ::= &lt;int&gt; | &lt;identifier&gt; | &lt;unop&gt; &lt;factor&gt; | "(" &lt;exp&gt; ")"
+&lt;unop&gt; ::= "-" | "~" 
+&lt;binop&gt; :: = "+" | "-" | "\*" | "/" | "%" | "&&" | "||"
+				| "==" | "!=" | "<" | "<=" | ">" | ">=" | "="
+&lt;identifier&gt; ::= ? An identifier token ?
+&lt;int&gt; ::= ? A constant token ?</pre></code>
+
+### Parser
+When we parse a \<statement>, a "{" token tells us that we've hit a compound statement. 
+
+## Semantic Analysis
+
+### Variable Resolution
+
+```
+resolve_declaration(Declaration(name, init), variable_map):
+	if name is in variable_map and variable_map.get(name).from_current_block:
+		fail("Duplicate variable declaration!")
+	unique_name = make_temporary()
+	variable_map.add(name, MapEntry(new_name=unique_name, from_current_block=true))
+	if init is not null:
+		init = resolve_exp(init, variable_map)
+	return Declaration(unique_name, init)
+```
+
+```
+resolve_statement(statement, variable_map):
+	match statement with
+	| Return(e) -> return Return(resolve_exp(e, variable_map))
+	| Expression(e) -> return Expression(resolve_exp(e, variable_map))
+	| Compound(block) -> 
+		new_variable_map = copy_variable_map(variable_map)
+		return Compound(resolve_block(block, variable_map)
+	| Null -> return Null
+```
+
+Finally, the function *copy_variable_map* simply copies the whole variable map, but set from_current_block to false to each entry.
+
+## TACKY Generation
+
+### TACKY
+No modifications needed!
+
+### Generating TACKY
+Straightforwardly, to emit TACKY for a compound statement, we emit TACKY for each block item in it. This should use the same function with the function body.
+
+## Assembly Generation
+We do not change our TACKY AST, so Assembly stage stays intact.
+
+## Summary
+We've supported a new kind of statements and extended our Variable Resolution pass to be a little more sophisticated. It's important for us to implement loops in the next chapter. 
+
+### Reference implementation Analysis
+[Chapter 7 Code Analysis](./code_analysis/chapter_7.md)

@@ -278,3 +278,29 @@ TEST_CASE(Chapter6InvalidParseExtraCredit, "chapter_6", "--parse")
         }
     }
 }
+
+TEST_CASE(Chapter7InvalidParse, "chapter_7", "--parse")
+{
+    std::vector<std::string> srcFiles = {
+        "tests/chapter_7/invalid_parse/extra_brace.c",
+        "tests/chapter_7/invalid_parse/missing_brace.c",
+        "tests/chapter_7/invalid_parse/missing_semicolon.c",
+        "tests/chapter_7/invalid_parse/ternary_blocks.c",
+    };
+    Settings settings;
+
+    for (const auto &srcFile : srcFiles)
+    {
+        Compiler compiler;
+        try
+        {
+            int status = compiler.compile(Stage::Parsing, srcFile);
+            ASSERT_TRUE(status != 0);
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+            throw;
+        }
+    }
+}

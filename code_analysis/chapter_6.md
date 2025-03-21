@@ -295,7 +295,6 @@ binary_operator = Add | Subtract | Multiply | Divide | Remainder | And | Or
                 | Equal | NotEqual | LessThan | LessOrEqual
                 | GreaterThan | GreaterOrEqual</pre></code>
 
-
 ## Parser
 
 ### EBNF
