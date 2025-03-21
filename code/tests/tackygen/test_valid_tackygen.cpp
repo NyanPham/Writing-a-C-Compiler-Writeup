@@ -334,44 +334,44 @@ TEST_CASE(Chapter6ValidTackyGen, "chapter_6", "--tacky")
     }
 }
 
-// TEST_CASE(Chapter6ValidTackyGenExtraCredit, "chapter_6", "--tacky")
-// {
-//     std::vector<std::string> srcFiles = {
-//         "tests/chapter_6/valid/extra_credit/bitwise_ternary.c",
-//         "tests/chapter_6/valid/extra_credit/compound_assign_ternary.c",
-//         "tests/chapter_6/valid/extra_credit/compound_if_expression.c",
-//         "tests/chapter_6/valid/extra_credit/goto_after_declaration.c",
-//         "tests/chapter_6/valid/extra_credit/goto_backwards.c",
-//         "tests/chapter_6/valid/extra_credit/goto_label.c",
-//         "tests/chapter_6/valid/extra_credit/goto_label_and_var.c",
-//         "tests/chapter_6/valid/extra_credit/goto_label_main.c",
-//         "tests/chapter_6/valid/extra_credit/goto_label_main_2.c",
-//         "tests/chapter_6/valid/extra_credit/goto_nested_label.c",
-//         "tests/chapter_6/valid/extra_credit/label_all_statements.c",
-//         "tests/chapter_6/valid/extra_credit/label_token.c",
-//         "tests/chapter_6/valid/extra_credit/lh_compound_assignment.c",
-//         "tests/chapter_6/valid/extra_credit/postfix_if.c",
-//         "tests/chapter_6/valid/extra_credit/postfix_in_ternary.c",
-//         "tests/chapter_6/valid/extra_credit/prefix_if.c",
-//         "tests/chapter_6/valid/extra_credit/prefix_in_ternary.c",
-//         "tests/chapter_6/valid/extra_credit/unused_label.c",
-//         "tests/chapter_6/valid/extra_credit/whitespace_after_label.c",
-//     };
-//     Settings settings;
+TEST_CASE(Chapter6ValidTackyGenExtraCredit, "chapter_6", "--tacky")
+{
+    std::vector<std::string> srcFiles = {
+        "tests/chapter_6/valid/extra_credit/bitwise_ternary.c",
+        "tests/chapter_6/valid/extra_credit/compound_assign_ternary.c",
+        "tests/chapter_6/valid/extra_credit/compound_if_expression.c",
+        "tests/chapter_6/valid/extra_credit/goto_after_declaration.c",
+        "tests/chapter_6/valid/extra_credit/goto_backwards.c",
+        "tests/chapter_6/valid/extra_credit/goto_label.c",
+        "tests/chapter_6/valid/extra_credit/goto_label_and_var.c",
+        "tests/chapter_6/valid/extra_credit/goto_label_main.c",
+        "tests/chapter_6/valid/extra_credit/goto_label_main_2.c",
+        "tests/chapter_6/valid/extra_credit/goto_nested_label.c",
+        "tests/chapter_6/valid/extra_credit/label_all_statements.c",
+        "tests/chapter_6/valid/extra_credit/label_token.c",
+        "tests/chapter_6/valid/extra_credit/lh_compound_assignment.c",
+        "tests/chapter_6/valid/extra_credit/postfix_if.c",
+        "tests/chapter_6/valid/extra_credit/postfix_in_ternary.c",
+        "tests/chapter_6/valid/extra_credit/prefix_if.c",
+        "tests/chapter_6/valid/extra_credit/prefix_in_ternary.c",
+        "tests/chapter_6/valid/extra_credit/unused_label.c",
+        "tests/chapter_6/valid/extra_credit/whitespace_after_label.c",
+    };
+    Settings settings;
 
-//     for (const auto &srcFile : srcFiles)
-//     {
-//         Compiler compiler;
-//         try
-//         {
-//             int status = compiler.compile(Stage::Tacky, srcFile);
-//             // Check that the compilation succeeded
-//             ASSERT_TRUE(status == 0);
-//         }
-//         catch (const std::exception &e)
-//         {
-//             std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
-//             throw;
-//         }
-//     }
-// }
+    for (const auto &srcFile : srcFiles)
+    {
+        Compiler compiler;
+        try
+        {
+            int status = compiler.compile(Stage::Tacky, srcFile);
+            // Check that the compilation succeeded
+            ASSERT_TRUE(status == 0);
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+            throw;
+        }
+    }
+}

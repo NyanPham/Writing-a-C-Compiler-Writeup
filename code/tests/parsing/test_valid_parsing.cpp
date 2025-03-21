@@ -384,49 +384,49 @@ TEST_CASE(Chapter6ValidParse, "chapter_6", "--parse")
     }
 }
 
-// TEST_CASE(Chapter6ValidParseExtraCredit, "chapter_6", "--parse")
-// {
-//     std::vector<std::string> srcFiles = {
-//         "tests/chapter_6/invalid_semantics/extra_credit/duplicate_labels.c",
-//         "tests/chapter_6/invalid_semantics/extra_credit/goto_missing_label.c",
-//         "tests/chapter_6/invalid_semantics/extra_credit/goto_variable.c",
-//         "tests/chapter_6/invalid_semantics/extra_credit/undeclared_var_in_labeled_statement.c",
-//         "tests/chapter_6/invalid_semantics/extra_credit/use_label_as_variable.c",
+TEST_CASE(Chapter6ValidParseExtraCredit, "chapter_6", "--parse")
+{
+    std::vector<std::string> srcFiles = {
+        "tests/chapter_6/invalid_semantics/extra_credit/duplicate_labels.c",
+        "tests/chapter_6/invalid_semantics/extra_credit/goto_missing_label.c",
+        "tests/chapter_6/invalid_semantics/extra_credit/goto_variable.c",
+        "tests/chapter_6/invalid_semantics/extra_credit/undeclared_var_in_labeled_statement.c",
+        "tests/chapter_6/invalid_semantics/extra_credit/use_label_as_variable.c",
 
-//         "tests/chapter_6/valid/extra_credit/bitwise_ternary.c",
-//         "tests/chapter_6/valid/extra_credit/compound_assign_ternary.c",
-//         "tests/chapter_6/valid/extra_credit/compound_if_expression.c",
-//         "tests/chapter_6/valid/extra_credit/goto_after_declaration.c",
-//         "tests/chapter_6/valid/extra_credit/goto_backwards.c",
-//         "tests/chapter_6/valid/extra_credit/goto_label.c",
-//         "tests/chapter_6/valid/extra_credit/goto_label_and_var.c",
-//         "tests/chapter_6/valid/extra_credit/goto_label_main.c",
-//         "tests/chapter_6/valid/extra_credit/goto_label_main_2.c",
-//         "tests/chapter_6/valid/extra_credit/goto_nested_label.c",
-//         "tests/chapter_6/valid/extra_credit/label_all_statements.c",
-//         "tests/chapter_6/valid/extra_credit/label_token.c",
-//         "tests/chapter_6/valid/extra_credit/lh_compound_assignment.c",
-//         "tests/chapter_6/valid/extra_credit/postfix_if.c",
-//         "tests/chapter_6/valid/extra_credit/postfix_in_ternary.c",
-//         "tests/chapter_6/valid/extra_credit/prefix_if.c",
-//         "tests/chapter_6/valid/extra_credit/prefix_in_ternary.c",
-//         "tests/chapter_6/valid/extra_credit/unused_label.c",
-//         "tests/chapter_6/valid/extra_credit/whitespace_after_label.c",
-//     };
-//     Settings settings;
+        "tests/chapter_6/valid/extra_credit/bitwise_ternary.c",
+        "tests/chapter_6/valid/extra_credit/compound_assign_ternary.c",
+        "tests/chapter_6/valid/extra_credit/compound_if_expression.c",
+        "tests/chapter_6/valid/extra_credit/goto_after_declaration.c",
+        "tests/chapter_6/valid/extra_credit/goto_backwards.c",
+        "tests/chapter_6/valid/extra_credit/goto_label.c",
+        "tests/chapter_6/valid/extra_credit/goto_label_and_var.c",
+        "tests/chapter_6/valid/extra_credit/goto_label_main.c",
+        "tests/chapter_6/valid/extra_credit/goto_label_main_2.c",
+        "tests/chapter_6/valid/extra_credit/goto_nested_label.c",
+        "tests/chapter_6/valid/extra_credit/label_all_statements.c",
+        "tests/chapter_6/valid/extra_credit/label_token.c",
+        "tests/chapter_6/valid/extra_credit/lh_compound_assignment.c",
+        "tests/chapter_6/valid/extra_credit/postfix_if.c",
+        "tests/chapter_6/valid/extra_credit/postfix_in_ternary.c",
+        "tests/chapter_6/valid/extra_credit/prefix_if.c",
+        "tests/chapter_6/valid/extra_credit/prefix_in_ternary.c",
+        "tests/chapter_6/valid/extra_credit/unused_label.c",
+        "tests/chapter_6/valid/extra_credit/whitespace_after_label.c",
+    };
+    Settings settings;
 
-//     for (const auto &srcFile : srcFiles)
-//     {
-//         Compiler compiler;
-//         try
-//         {
-//             int status = compiler.compile(Stage::Parsing, srcFile);
-//             ASSERT_TRUE(status == 0);
-//         }
-//         catch (const std::exception &e)
-//         {
-//             std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
-//             throw;
-//         }
-//     }
-// }
+    for (const auto &srcFile : srcFiles)
+    {
+        Compiler compiler;
+        try
+        {
+            int status = compiler.compile(Stage::Parsing, srcFile);
+            ASSERT_TRUE(status == 0);
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+            throw;
+        }
+    }
+}

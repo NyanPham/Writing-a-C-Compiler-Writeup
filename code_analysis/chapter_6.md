@@ -6,6 +6,15 @@
 - [TackyGen](#tackygen)
 - [Assembly, CodeGen, ReplacePseudo, Instruction Fixup, Emit](#assembly-codegen-replacepseudo-instruction-fixup-emit)
 - [Output](#output)
+- [Extra Credit: Labeled Statements and Goto](#extra-credit-labeled-statements-and-goto)
+  - [Token & Lexer](#token-and-lexer)
+  - [AST](#ast-1)
+  - [Parser](#parser-1)
+  - [Tacky](#tacky-1)
+  - [TackyGen](#tackygen-1)
+  - [Assembly, CodeGen, ReplacePseudo, Instruction Fixup, Emit](#assembly-codegen-replacepseudo-instruction-fixup-emit-1)
+  - [Output](#output-1)
+ 
 ---
 
 # Token, Lexer, AST
@@ -241,6 +250,247 @@ main:
 .Lif_end.4:
 .Lif_end.1:
 	movl	-4(%rbp), %eax
+	movq	%rbp, %rsp
+	popq	%rbp
+	ret
+	movl	$0, %eax
+	movq	%rbp, %rsp
+	popq	%rbp
+	ret
+
+	.section .note.GNU-stack,"",@progbits
+```
+
+# Extra Credit: Labeled Statements and Goto
+
+## Token and Lexer:
+
+New tokens to recognize
+| Token | Regular expression |
+| ------- | -------------------- |
+| KeywordGoto | goto |
+
+## AST:
+<pre><code>program = Program(function_definition)
+function_definition = Function(identifier name, block_item*body)
+block_item = S(statement) | D(declaration)
+declaration = Declaration(identifier name, exp? init)
+statement = Return(exp) 
+	| Expression(exp) 
+	| If(exp condition, statement then, statement else)
+	| Null 
+	<strong>| LabeledStatement(identifier lbl, statement)
+	| Goto(identifier lbl) </strong>
+exp = Constant(int) 
+	| Var(identifier)
+    | Unary(unary_operator, exp)
+    | Binary(binary_operator, exp, exp)
+	| Assignment(exp, exp)
+	| CompoundAssignment(binary_operator, exp, exp)
+	| PostfixIncr(exp)
+	| PostfixDecr(exp)
+	| Conditional(exp condition, exp then, exp else) 
+unary_operator = Complement | Negate | Not | Incr | Decr 
+binary_operator = Add | Subtract | Multiply | Divide | Remainder | And | Or
+                | Equal | NotEqual | LessThan | LessOrEqual
+                | GreaterThan | GreaterOrEqual</pre></code>
+
+
+## Parser
+
+### EBNF
+
+**Updated EBNF**
+<pre><code>&lt;program&gt; ::= &lt;function&gt;
+&lt;function&gt; ::= "int" &lt;identifier&gt; "(" "void" ")" "{" { &lt;block-item&gt; } "}"
+&lt;block-item&gt; ::= &lt;statement&gt; | &lt;declaration&gt;
+&lt;declaration&gt; ::= "int" &lt;identifier&gt; [ "=" &lt;exp&gt; ] ";"
+&lt;statement&gt; ::= "return" &lt;exp&gt; ";" 
+	| &lt;exp&gt; ";" 
+	| "if" "(" &lt;exp&gt; ")" &lt;statement&gt; ["else" &lt;statement&gt;]
+	| ";"
+	<strong>|  &lt;label&gt; ":"  &lt;statement&gt;
+	| "goto"  &lt;label&gt; ";"</strong>
+&lt;exp&gt; ::= &lt;factor&gt; | &lt;exp&gt; &lt;binop&gt; &lt;exp&gt; | &lt;exp&gt "?" &lt;exp&gt ":" &lt;exp&gt
+&lt;factor&gt; ::= &lt;unop&gt; &lt;factor&gt; | &lt;postfix-exp&gt;
+&lt;postfix-exp&gt; ::= &lt;primary-exp&gt; { "++" | "--" } 
+&lt;primary-exp&gt; ::= &lt;int&gt; | &lt;identifier&gt; | "(" &lt;exp&gt; ")"
+&lt;unop&gt; ::= "-" | "~" | "++" | "--" 
+&lt;binop&gt; :: = "+" | "-" | "\*" | "/" | "%" | "&&" | "||"
+				| "==" | "!=" | "<" | "<=" | ">" | ">=" 
+				| "=" | "+=" | "-=" | "*=" | "/=" | "%=" | "&=" | "|=" | "^=" | "<<=" | ">>="
+&lt;identifier&gt; ::= ? An identifier token ?
+&lt;int&gt; ::= ? A constant token ?</pre></code>
+
+### Parse
+```
+parse_statement(tokens):
+	token1, token2 = npeek(2, tokens)
+	match token1 type:
+		case "return":
+			--snip--
+		case ";":
+			-snip--
+		case "if":
+			take_token(tokens)
+			expect(TokenType.OpenParen, tokens)
+			condition = parse_exp(0, tokens)
+			expect(TokenType.CloseParent, tokens)
+			then_clause = parse_statement(tokens)
+			else_clause = none
+			
+			if peek_token(tokens) is "else":
+				take_token(tokens)
+				else_clause = parse_statement(tokens)
+			
+			return AST.If(condition, then_clause, else_clause)
+		case "goto":
+			take_token(tokens)
+			lbl = parse_identifier(tokens)
+			expect(";", tokens)
+			
+			return Goto(lbl)
+			
+		case Identifier:
+			if token2 is ":":
+				take_token(tokens)
+				take_token(tokens)
+				stmt = parse_statement(tokens)
+				return LabeledStatement(identifier.value, stmt)
+			else:
+				return parse_exp(0, tokens)
+				expect(";", tokens)
+		default:
+			-snip--
+```
+
+## VarResolution
+```
+resolve_statement(statement, var_map):
+	match statement with
+		case Return(e) -> return Return(resolve_exp(e, variable_map))
+		case Expression(e) -> return Expression(resolve_exp(e, variable_map))
+		case If(condition, then_clause, else_clause):
+			return If(
+				resolve_exp(condition, var_map),
+				resolve_statement(then_clause, var_map),
+				else_clause != None ? resolve_statement(else_clause, var_map) : None
+			)
+		case LabeledStatement(lbl, stmt):
+			return LabeledStatement(lbl, resolve_statement(stmt, var_map))
+		case Goto(lbl):
+			return statement
+		case Null -> return Null
+```
+
+## ValidateLabels
+```
+collect_labels_from_statement(Set<string> defined, Set<string> used, statement):
+	match statement type:
+		case Goto:
+			used.add(statement.lbl)
+		case LabeledStatement:
+			if defined already has statement.lbl:
+				fail("Duplicate label: " + statement.lbl)
+			defined.add(statement.lbl)
+			collect_labels_from_statement(defined, used, statement.statement)
+		case If:
+			collect_labels_from_statement(defined, used,  statement.thenClause)
+			if statement has elseClause:
+				collect_labels_from_statement(statement.elseClause)
+		default:
+			return
+```
+
+```
+collect_labels_from_block_item(defined, used, block_item)
+	if block_item type is a Statement:
+		collect_labels_from_statement(defined, used, block_item)
+	else:
+		return
+```
+
+```
+validate_labels_in_fun(fun_def):
+	labels_defined = []
+	labels_used = []
+	
+	for block_item in fun_def.body:
+		collect_labels_from_block_item(labels_defined, labels_used, block_item)
+	
+	undefined_labels = []
+	for label in labels_used:
+		if label_defined doesn't has label:
+			undefined_labels.append(label)
+	
+	if undefined_labels is not empty:
+		errMsg = "Found labels that are used but not defined: "
+		
+		for label in undefined_labels:
+			errMsg += label + ", "
+		
+		fail(errMsg) 
+```
+
+```
+validate_labels(AST.Program prog):
+	validate_labels_in_fun(prog.funDef)
+```
+
+
+## Tacky
+Our TACKY constructs are sufficient to support Goto and Labeled Statement.
+
+## TackyGen
+We added 2 new constructs for statement, so we only need to update the emit_tacky_for_statement.
+
+```
+emit_tacky_for_statement(statement):
+	match statement type:
+		--snip--
+		case If:
+			return emit_tacky_for_if_statement(statement)
+		case LabeledStatement:
+			return [
+				Label(statement.label),
+				...emit_tacky_for_statement(statement.statement)
+			]
+		case Goto:
+			return [
+				Jump(statement.label)
+			]
+		case Null:
+			return []
+```
+
+# Assembly, CodeGen, ReplacePseudo, Instruction Fixup, Emit
+After the TACKY stage, we don't make any modification as we haven't changed any constructs in TACKY AST.
+
+# Output
+From C:
+```C
+int main(void) {
+    goto label;
+    return 0;
+label:
+    return 1;
+}
+```
+
+To x64 Assembly on Linux:
+```asm
+	.globl main
+main:
+	pushq	%rbp
+	movq	%rsp, %rbp
+	subq	0, %rsp
+	jmp	.Llabel
+	movl	$0, %eax
+	movq	%rbp, %rsp
+	popq	%rbp
+	ret
+.Llabel:
+	movl	$1, %eax
 	movq	%rbp, %rsp
 	popq	%rbp
 	ret
