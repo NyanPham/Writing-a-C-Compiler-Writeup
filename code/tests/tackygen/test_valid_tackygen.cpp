@@ -437,3 +437,104 @@ TEST_CASE(Chapter7ValidTackyGenExtraCredit, "chapter_7", "--tacky")
         }
     }
 }
+
+TEST_CASE(Chapter8ValidTackyGen, "chapter_8", "--tacky")
+{
+    std::vector<std::string> srcFiles = {
+        "tests/chapter_8/valid/break.c",
+        "tests/chapter_8/valid/break_immediate.c",
+        "tests/chapter_8/valid/continue.c",
+        "tests/chapter_8/valid/continue_empty_post.c",
+        "tests/chapter_8/valid/do_while.c",
+        "tests/chapter_8/valid/do_while_break_immediate.c",
+        "tests/chapter_8/valid/empty_expression.c",
+        "tests/chapter_8/valid/empty_loop_body.c",
+        "tests/chapter_8/valid/for.c",
+        "tests/chapter_8/valid/for_absent_condition.c",
+        "tests/chapter_8/valid/for_absent_post.c",
+        "tests/chapter_8/valid/for_decl.c",
+        "tests/chapter_8/valid/for_nested_shadow.c",
+        "tests/chapter_8/valid/for_shadow.c",
+        "tests/chapter_8/valid/multi_break.c",
+        "tests/chapter_8/valid/multi_continue_same_loop.c",
+        "tests/chapter_8/valid/nested_break.c",
+        "tests/chapter_8/valid/nested_continue.c",
+        "tests/chapter_8/valid/nested_loop.c",
+        "tests/chapter_8/valid/null_for_header.c",
+        "tests/chapter_8/valid/while.c",
+
+    };
+    Settings settings;
+
+    for (const auto &srcFile : srcFiles)
+    {
+        Compiler compiler;
+        try
+        {
+            int status = compiler.compile(Stage::Tacky, srcFile);
+            // Check that the compilation succeeded
+            ASSERT_TRUE(status == 0);
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+            throw;
+        }
+    }
+}
+
+// TEST_CASE(Chapter8ValidTackyGenExtraCredit, "chapter_8", "--tacky")
+// {
+//     std::vector<std::string> srcFiles = {
+//         "tests/chapter_8/valid/extra_credit/case_block.c",
+//         "tests/chapter_8/valid/extra_credit/compound_assignment_controlling_expression.c",
+//         "tests/chapter_8/valid/extra_credit/compound_assignment_for_loop.c",
+//         "tests/chapter_8/valid/extra_credit/duffs_device.c",
+//         "tests/chapter_8/valid/extra_credit/goto_bypass_condition.c",
+//         "tests/chapter_8/valid/extra_credit/goto_bypass_init_exp.c",
+//         "tests/chapter_8/valid/extra_credit/goto_bypass_post_exp.c",
+//         "tests/chapter_8/valid/extra_credit/label_loops_breaks_and_continues.c",
+//         "tests/chapter_8/valid/extra_credit/label_loop_body.c",
+//         "tests/chapter_8/valid/extra_credit/loop_header_postfix_and_prefix.c",
+//         "tests/chapter_8/valid/extra_credit/loop_in_switch.c",
+//         "tests/chapter_8/valid/extra_credit/post_exp_incr.c",
+//         "tests/chapter_8/valid/extra_credit/switch.c",
+//         "tests/chapter_8/valid/extra_credit/switch_assign_in_condition.c",
+//         "tests/chapter_8/valid/extra_credit/switch_break.c",
+//         "tests/chapter_8/valid/extra_credit/switch_decl.c",
+//         "tests/chapter_8/valid/extra_credit/switch_default.c",
+//         "tests/chapter_8/valid/extra_credit/switch_default_fallthrough.c",
+//         "tests/chapter_8/valid/extra_credit/switch_default_not_last.c",
+//         "tests/chapter_8/valid/extra_credit/switch_default_only.c",
+//         "tests/chapter_8/valid/extra_credit/switch_empty.c",
+//         "tests/chapter_8/valid/extra_credit/switch_fallthrough.c",
+//         "tests/chapter_8/valid/extra_credit/switch_goto_mid_case.c",
+//         "tests/chapter_8/valid/extra_credit/switch_in_loop.c",
+//         "tests/chapter_8/valid/extra_credit/switch_nested_cases.c",
+//         "tests/chapter_8/valid/extra_credit/switch_nested_not_taken.c",
+//         "tests/chapter_8/valid/extra_credit/switch_nested_switch.c",
+//         "tests/chapter_8/valid/extra_credit/switch_not_taken.c",
+//         "tests/chapter_8/valid/extra_credit/switch_no_case.c",
+//         "tests/chapter_8/valid/extra_credit/switch_single_case.c",
+//         "tests/chapter_8/valid/extra_credit/switch_with_continue.c",
+//         "tests/chapter_8/valid/extra_credit/switch_with_continue_2.c",
+
+//     };
+//     Settings settings;
+
+//     for (const auto &srcFile : srcFiles)
+//     {
+//         Compiler compiler;
+//         try
+//         {
+//             int status = compiler.compile(Stage::Tacky, srcFile);
+//             // Check that the compilation succeeded
+//             ASSERT_TRUE(status == 0);
+//         }
+//         catch (const std::exception &e)
+//         {
+//             std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+//             throw;
+//         }
+//     }
+// }

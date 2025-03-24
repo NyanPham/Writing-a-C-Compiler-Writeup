@@ -1849,3 +1849,227 @@ We've supported a new kind of statements and extended our Variable Resolution pa
 
 ### Reference implementation Analysis
 [Chapter 7 Code Analysis](./code_analysis/chapter_7.md)
+
+---
+
+# Chapter 8: Loops
+
+## Stages of a Compiler
+
+1. **Lexer**
+	- Input: Source code (program.c)
+	- Output: Token list
+2. **Parser**
+	- Input: Token list
+	- Output: Abstract Syntax Tree (AST)
+3. **Semantic Analysis**
+	- Input: AST
+	- Output: Transformed AST
+	- Passes:
+		1. Variable resolution
+		2. Loop Labeling
+4. **TACKY Generation**
+	- Input: Transformed AST
+	- Output: TAC IR (Tacky)
+5. **Assembly Generation**
+	- Input: Tacky
+	- Output: Assembly code
+	- Passes:
+		1. Converting TACKY to Assembly
+		2. Replacing pseudoregisters
+		3. Instruction fix-up
+6. **Code Emission**
+	- Input: Assembly code
+	- Output: Final assembly file 
+
+In this chapter, we'll add support for:
+- While loop
+- DoWhile loop
+- ForLoop
+- Break
+- Continue
+
+We need to update our lexer, parser to support all 5 new statements and add a new semantic analysis pass called *loop labeling*.
+
+## The Lexer
+
+New tokens to recognize
+| Token | Regular expression |
+| ------- | -------------------- |
+| KeywordDo | do |
+| KeywordWhile | while |
+| KeywordFor | for |
+| KeywordBreak | break |
+| KeywordContinue | continue |
+
+## The Parser
+
+### AST
+<pre><code>program = Program(function_definition)
+function_definition = Function(identifier name, block body)
+block_item = S(statement) | D(declaration)
+block = Block(block_item*)
+declaration = Declaration(identifier name, exp? init)
+<strong>for_init = InitDecl(declaration) | InitExp(exp?)</strong>
+statement = Return(exp) 
+	| Expression(exp) 
+	| If(exp condition, statement then, statement? else)
+	| Compound(block)
+	<strong>| Break
+	| Continue
+	| While(exp condition, statement body)
+	| DoWhile(statement body, exp condition)
+	| For(for_init init, exp? condition, exp? post, statement body)</strong>
+	| Null 
+exp = Constant(int) 
+	| Var(identifier) 
+	| Unary(unary_operator, exp)
+	| Binary(binary_operator, exp, exp)
+	| Assignment(exp, exp) 
+	| Conditional(exp condition, exp, exp)
+unary_operator = Complement | Negate | Not
+binary_operator = Add | Subtract | Multiply | Divide | Remainder | And | Or
+				| Equal | NotEqual | LessThan | LessOrEqual
+				| GreaterThan | GreaterOrEqual</pre></code>
+
+### EBNF
+<pre><code>&lt;program&gt; ::= &lt;function&gt;
+&lt;function&gt; ::= "int" &lt;identifier&gt; "(" "void" ")" &lt;block&gt;
+&lt;block&gt; ::= "{" { &lt;block-item&gt; } "}"
+&lt;block-item&gt; ::= &lt;statement&gt; | &lt;declaration&gt;
+&lt;declaration&gt; ::= "int" &lt;identifier&gt; [ "=" &lt;exp&gt; ] ";"
+<strong>&lt;for-init&gt; ::= &lt;declaration&gt; | [ &lt;exp&gt; ] ";"</strong>
+&lt;statement&gt; ::= "return" &lt;exp&gt; ";" 
+	| &lt;exp&gt; ";" 
+	| "if" "(" &lt;exp&gt; ")" &lt;statement&gt; ["else" &lt;statement&gt;]
+	| &lt;block&gt;
+	<strong>| "break" ";"
+	| "continue" ";"
+	| "while" "(" &lt;exp&gt; ")" &lt;statement&gt;
+	| "do" &lt;statement&gt; "while" "(" &lt;exp&gt; ")" ";"
+	| "for" "(" &lt;for-init&gt; [ &lt;exp&gt; ] ";" [ &lt;exp&gt; ] ")" &lt;statement&gt;</strong>
+	| ";"
+&lt;exp&gt; ::= &lt;factor&gt; | &lt;exp&gt; &lt;binop&gt; &lt;exp&gt; | &lt;exp&gt; "?" &lt;exp&gt; ":" &lt;exp&gt;
+&lt;factor&gt; ::= &lt;int&gt; | &lt;identifier&gt; | &lt;unop&gt; &lt;factor&gt; | "(" &lt;exp&gt; ")"
+&lt;unop&gt; ::= "-" | "~" 
+&lt;binop&gt; :: = "+" | "-" | "\*" | "/" | "%" | "&&" | "||"
+				| "==" | "!=" | "&lt;" | "&lt;=" | "&gt;" | "&gt;=" | "="
+&lt;identifier&gt; ::= ? An identifier token ?
+&lt;int&gt; ::= ? A constant token ?</pre></code>
+
+### Parser
+We can write helper function to parse optional expressions, specifically two optional expressions in a *for* loop header.
+
+## Semantic Analysis
+
+### Variable Resolution
+
+For *while* and *do* loops, we can simply recursively resolve_statement of their substatements and subexpressions.
+For *break* and *continue*, we don't do anything to them as they have no substatements nor subexpressions.
+
+The *for* loop is more complicated as its header introduces a new variable scope.
+
+```
+resolve_statement(statement, variable_map):
+	match statement with
+	| --snip-- // While, do, break and continue are simple to implement here as well.
+	| For(init, condition, post, body) -> 
+		new_variable_map = copy_variable_map(variable_map)
+		init = resolve_for_init(init, new_variable_map)
+		condition = resolve_optional_exp(condition, new_variable_map)
+		post = resolve_optional_exp(post, new_variable_map)
+		body = resolve_statement(body, new_variable_map)
+		return For(init, condition, post, body)
+```
+```
+resolve_for_init(init, variable_map):
+	match init with
+	| InitExp(e) -> return InitExp(resolve_optional_exp(e, variable_map))
+	| InitDecl(d) -> return InitDecl(resolve_declaration(d, variable_map))
+```
+
+*resolve_optional_exp* is omitted, as it's simple as: it calls *resolve_exp* if the expression is present, does nothing otherwise.
+
+### Loop Labeling
+We traverse the AST tree again. This time, whenever we encounter a loop statement, we generate a unique ID and annotate to the ID to it.
+We then traverse deeply into its statements to see if it uses any break or continue, if yes we also annotate the ID to the break/continue.
+
+```
+label_statement(statement, current_label)
+	match statement with:
+	| Break -> 
+		if current_label is null:
+			fail("break statement outside of loop")
+		return annotate(break, current_label)
+	| Continue ->
+		if current_label is null:
+			fail("continue statement outside of loop")
+		return annotate(continue, current_label)
+	| While(condition, body) -> 
+		new_label = make_label()
+		labeled_body = label_statement(body, new_label)
+		labeled_statement = While(condition, labeled_body)
+		return annotate(labeled_statement, new_label)
+	| --snip-- 
+	// For DoWhile and For loop are processed  the same way as While.
+```
+
+
+## TACKY Generation
+
+### TACKY
+No modifications needed!
+
+### Generating TACKY
+Both *break* and *continue* are just jump instructions in TACKY (and Assembly). Question is where to jump to!
+Generally, the label to break is always the last instructions of the total loop, outside the scope of the loop iterations; the label to continue is put right after the last instructions of the loop body.
+
+**DoWhile**
+```
+Label(start)
+<instructions for body>
+Label(continue_label)
+<instructions for condition>
+v = <result of condition>
+JumpIfNotZero(v, start)
+Label(break_label)
+```
+
+**While**
+```
+Label(continue_label)
+<instructions for condition>
+v = <result of condition>
+JumpIfZero(v, break_label)
+<instructions for body>
+Jump(continue_label)
+Label(break_label)
+```
+
+**For**
+```
+<instructions for init>
+Label(start)
+<instructions for condition>
+v = <result of condition>
+JumpIfZero(v, break_label)
+<instructions for body>
+Label(continue_label)
+<instructions for post>
+Jump(Start)
+Label(break_label)
+```
+
+## Assembly Generation
+We do not change our TACKY AST, so Assembly stage stays intact.
+
+## Extra Credit: Switch Statements
+To support switch case statements, we're required to significantly change the Loop Labeling pass.
+*break* can be used to break out of a switch, while *continue* is only for loops.
+Let's create another pass in the Semantic Analysis stage to collect all the cases in a switch statements.
+
+## Summary
+We added three loop statements, break and continue statements. We also had a new Semantic Analysis pass to associate each *break* and *continue* to their enclosing loops.
+
+### Reference implementation Analysis
+[Chapter 8 Code Analysis](./code_analysis/chapter_8.md)

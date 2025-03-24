@@ -565,3 +565,145 @@ TEST_CASE(Chapter7ValidLexExtraCredit, "chapter_7", "--lex")
         }
     }
 }
+
+TEST_CASE(Chapter8ValidLex, "chapter_8", "--lex")
+{
+    std::vector<std::string> srcFiles = {
+        "tests/chapter_8/valid/break.c",
+        "tests/chapter_8/valid/break_immediate.c",
+        "tests/chapter_8/valid/continue.c",
+        "tests/chapter_8/valid/continue_empty_post.c",
+        "tests/chapter_8/valid/do_while.c",
+        "tests/chapter_8/valid/do_while_break_immediate.c",
+        "tests/chapter_8/valid/empty_expression.c",
+        "tests/chapter_8/valid/empty_loop_body.c",
+        "tests/chapter_8/valid/for.c",
+        "tests/chapter_8/valid/for_absent_condition.c",
+        "tests/chapter_8/valid/for_absent_post.c",
+        "tests/chapter_8/valid/for_decl.c",
+        "tests/chapter_8/valid/for_nested_shadow.c",
+        "tests/chapter_8/valid/for_shadow.c",
+        "tests/chapter_8/valid/multi_break.c",
+        "tests/chapter_8/valid/multi_continue_same_loop.c",
+        "tests/chapter_8/valid/nested_break.c",
+        "tests/chapter_8/valid/nested_continue.c",
+        "tests/chapter_8/valid/nested_loop.c",
+        "tests/chapter_8/valid/null_for_header.c",
+        "tests/chapter_8/valid/while.c",
+
+        "tests/chapter_8/invalid_parse/decl_as_loop_body.c",
+        "tests/chapter_8/invalid_parse/do_extra_semicolon.c",
+        "tests/chapter_8/invalid_parse/do_missing_semicolon.c",
+        "tests/chapter_8/invalid_parse/do_while_empty_parens.c",
+        "tests/chapter_8/invalid_parse/extra_for_header_clause.c",
+        "tests/chapter_8/invalid_parse/invalid_for_declaration.c",
+        "tests/chapter_8/invalid_parse/missing_for_header_clause.c",
+        "tests/chapter_8/invalid_parse/paren_mismatch.c",
+        "tests/chapter_8/invalid_parse/statement_in_condition.c",
+        "tests/chapter_8/invalid_parse/while_missing_paren.c",
+
+        "tests/chapter_8/invalid_semantics/break_not_in_loop.c",
+        "tests/chapter_8/invalid_semantics/continue_not_in_loop.c",
+        "tests/chapter_8/invalid_semantics/out_of_scope_do_loop.c",
+        "tests/chapter_8/invalid_semantics/out_of_scope_loop_variable.c",
+
+    };
+    Settings settings;
+
+    for (const auto &srcFile : srcFiles)
+    {
+        Compiler compiler;
+        try
+        {
+            int status = compiler.compile(Stage::Lexing, srcFile);
+            ASSERT_TRUE(status == 0);
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+            throw;
+        }
+    }
+}
+
+// TEST_CASE(Chapter8ValidLexExtraCredit, "chapter_8", "--lex")
+// {
+//     std::vector<std::string> srcFiles = {
+//         "tests/chapter_8/valid/extra_credit/case_block.c",
+//         "tests/chapter_8/valid/extra_credit/compound_assignment_controlling_expression.c",
+//         "tests/chapter_8/valid/extra_credit/compound_assignment_for_loop.c",
+//         "tests/chapter_8/valid/extra_credit/duffs_device.c",
+//         "tests/chapter_8/valid/extra_credit/goto_bypass_condition.c",
+//         "tests/chapter_8/valid/extra_credit/goto_bypass_init_exp.c",
+//         "tests/chapter_8/valid/extra_credit/goto_bypass_post_exp.c",
+//         "tests/chapter_8/valid/extra_credit/label_loops_breaks_and_continues.c",
+//         "tests/chapter_8/valid/extra_credit/label_loop_body.c",
+//         "tests/chapter_8/valid/extra_credit/loop_header_postfix_and_prefix.c",
+//         "tests/chapter_8/valid/extra_credit/loop_in_switch.c",
+//         "tests/chapter_8/valid/extra_credit/post_exp_incr.c",
+//         "tests/chapter_8/valid/extra_credit/switch.c",
+//         "tests/chapter_8/valid/extra_credit/switch_assign_in_condition.c",
+//         "tests/chapter_8/valid/extra_credit/switch_break.c",
+//         "tests/chapter_8/valid/extra_credit/switch_decl.c",
+//         "tests/chapter_8/valid/extra_credit/switch_default.c",
+//         "tests/chapter_8/valid/extra_credit/switch_default_fallthrough.c",
+//         "tests/chapter_8/valid/extra_credit/switch_default_not_last.c",
+//         "tests/chapter_8/valid/extra_credit/switch_default_only.c",
+//         "tests/chapter_8/valid/extra_credit/switch_empty.c",
+//         "tests/chapter_8/valid/extra_credit/switch_fallthrough.c",
+//         "tests/chapter_8/valid/extra_credit/switch_goto_mid_case.c",
+//         "tests/chapter_8/valid/extra_credit/switch_in_loop.c",
+//         "tests/chapter_8/valid/extra_credit/switch_nested_cases.c",
+//         "tests/chapter_8/valid/extra_credit/switch_nested_not_taken.c",
+//         "tests/chapter_8/valid/extra_credit/switch_nested_switch.c",
+//         "tests/chapter_8/valid/extra_credit/switch_not_taken.c",
+//         "tests/chapter_8/valid/extra_credit/switch_no_case.c",
+//         "tests/chapter_8/valid/extra_credit/switch_single_case.c",
+//         "tests/chapter_8/valid/extra_credit/switch_with_continue.c",
+//         "tests/chapter_8/valid/extra_credit/switch_with_continue_2.c",
+//         "tests/chapter_8/invalid_parse/extra_credit/compound_assignment_invalid_decl.c",
+//         "tests/chapter_8/invalid_parse/extra_credit/label_in_loop_header.c",
+//         "tests/chapter_8/invalid_parse/extra_credit/label_is_not_block.c",
+//         "tests/chapter_8/invalid_parse/extra_credit/switch_case_declaration.c",
+//         "tests/chapter_8/invalid_parse/extra_credit/switch_goto_case.c",
+//         "tests/chapter_8/invalid_parse/extra_credit/switch_missing_case_value.c",
+//         "tests/chapter_8/invalid_parse/extra_credit/switch_missing_paren.c",
+//         "tests/chapter_8/invalid_parse/extra_credit/switch_no_condition.c",
+//         "tests/chapter_8/invalid_semantics/extra_credit/case_continue.c",
+//         "tests/chapter_8/invalid_semantics/extra_credit/case_outside_switch.c",
+//         "tests/chapter_8/invalid_semantics/extra_credit/default_continue.c",
+//         "tests/chapter_8/invalid_semantics/extra_credit/default_outside_switch.c",
+//         "tests/chapter_8/invalid_semantics/extra_credit/different_cases_same_scope.c",
+//         "tests/chapter_8/invalid_semantics/extra_credit/duplicate_case.c",
+//         "tests/chapter_8/invalid_semantics/extra_credit/duplicate_case_in_labeled_switch.c",
+//         "tests/chapter_8/invalid_semantics/extra_credit/duplicate_case_in_nested_statement.c",
+//         "tests/chapter_8/invalid_semantics/extra_credit/duplicate_default.c",
+//         "tests/chapter_8/invalid_semantics/extra_credit/duplicate_default_in_nested_statement.c",
+//         "tests/chapter_8/invalid_semantics/extra_credit/duplicate_label_in_default.c",
+//         "tests/chapter_8/invalid_semantics/extra_credit/duplicate_label_in_loop.c",
+//         "tests/chapter_8/invalid_semantics/extra_credit/duplicate_variable_in_switch.c",
+//         "tests/chapter_8/invalid_semantics/extra_credit/labeled_break_outside_loop.c",
+//         "tests/chapter_8/invalid_semantics/extra_credit/non_constant_case.c",
+//         "tests/chapter_8/invalid_semantics/extra_credit/switch_continue.c",
+//         "tests/chapter_8/invalid_semantics/extra_credit/undeclared_variable_in_case.c",
+//         "tests/chapter_8/invalid_semantics/extra_credit/undeclared_variable_in_default.c",
+//         "tests/chapter_8/invalid_semantics/extra_credit/undeclared_var_switch_expression.c",
+//         "tests/chapter_8/invalid_semantics/extra_credit/undefined_label_in_case.c",
+//     };
+//     Settings settings;
+
+//     for (const auto &srcFile : srcFiles)
+//     {
+//         Compiler compiler;
+//         try
+//         {
+//             int status = compiler.compile(Stage::Lexing, srcFile);
+//             ASSERT_TRUE(status == 0);
+//         }
+//         catch (const std::exception &e)
+//         {
+//             std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+//             throw;
+//         }
+//     }
+// }
