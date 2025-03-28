@@ -204,44 +204,44 @@ TEST_CASE(Chapter8InvalidSemantic, "chapter_8", "--validate")
     }
 }
 
-// TEST_CASE(Chapter8InvalidSemanticExtraCredit, "chapter_8", "--validate")
-// {
-//     std::vector<std::string> srcFiles = {
-//         "tests/chapter_8/invalid_semantics/extra_credit/case_continue.c",
-//         "tests/chapter_8/invalid_semantics/extra_credit/case_outside_switch.c",
-//         "tests/chapter_8/invalid_semantics/extra_credit/default_continue.c",
-//         "tests/chapter_8/invalid_semantics/extra_credit/default_outside_switch.c",
-//         "tests/chapter_8/invalid_semantics/extra_credit/different_cases_same_scope.c",
-//         "tests/chapter_8/invalid_semantics/extra_credit/duplicate_case.c",
-//         "tests/chapter_8/invalid_semantics/extra_credit/duplicate_case_in_labeled_switch.c",
-//         "tests/chapter_8/invalid_semantics/extra_credit/duplicate_case_in_nested_statement.c",
-//         "tests/chapter_8/invalid_semantics/extra_credit/duplicate_default.c",
-//         "tests/chapter_8/invalid_semantics/extra_credit/duplicate_default_in_nested_statement.c",
-//         "tests/chapter_8/invalid_semantics/extra_credit/duplicate_label_in_default.c",
-//         "tests/chapter_8/invalid_semantics/extra_credit/duplicate_label_in_loop.c",
-//         "tests/chapter_8/invalid_semantics/extra_credit/duplicate_variable_in_switch.c",
-//         "tests/chapter_8/invalid_semantics/extra_credit/labeled_break_outside_loop.c",
-//         "tests/chapter_8/invalid_semantics/extra_credit/non_constant_case.c",
-//         "tests/chapter_8/invalid_semantics/extra_credit/switch_continue.c",
-//         "tests/chapter_8/invalid_semantics/extra_credit/undeclared_variable_in_case.c",
-//         "tests/chapter_8/invalid_semantics/extra_credit/undeclared_variable_in_default.c",
-//         "tests/chapter_8/invalid_semantics/extra_credit/undeclared_var_switch_expression.c",
-//         "tests/chapter_8/invalid_semantics/extra_credit/undefined_label_in_case.c",
-//     };
-//     Settings settings;
+TEST_CASE(Chapter8InvalidSemanticExtraCredit, "chapter_8", "--validate")
+{
+    std::vector<std::string> srcFiles = {
+        "tests/chapter_8/invalid_semantics/extra_credit/case_continue.c",
+        "tests/chapter_8/invalid_semantics/extra_credit/case_outside_switch.c",
+        "tests/chapter_8/invalid_semantics/extra_credit/default_continue.c",
+        "tests/chapter_8/invalid_semantics/extra_credit/default_outside_switch.c",
+        "tests/chapter_8/invalid_semantics/extra_credit/different_cases_same_scope.c",
+        "tests/chapter_8/invalid_semantics/extra_credit/duplicate_case.c",
+        "tests/chapter_8/invalid_semantics/extra_credit/duplicate_case_in_labeled_switch.c",
+        "tests/chapter_8/invalid_semantics/extra_credit/duplicate_case_in_nested_statement.c",
+        "tests/chapter_8/invalid_semantics/extra_credit/duplicate_default.c",
+        "tests/chapter_8/invalid_semantics/extra_credit/duplicate_default_in_nested_statement.c",
+        "tests/chapter_8/invalid_semantics/extra_credit/duplicate_label_in_default.c",
+        "tests/chapter_8/invalid_semantics/extra_credit/duplicate_label_in_loop.c",
+        "tests/chapter_8/invalid_semantics/extra_credit/duplicate_variable_in_switch.c",
+        "tests/chapter_8/invalid_semantics/extra_credit/labeled_break_outside_loop.c",
+        "tests/chapter_8/invalid_semantics/extra_credit/non_constant_case.c",
+        "tests/chapter_8/invalid_semantics/extra_credit/switch_continue.c",
+        "tests/chapter_8/invalid_semantics/extra_credit/undeclared_variable_in_case.c",
+        "tests/chapter_8/invalid_semantics/extra_credit/undeclared_variable_in_default.c",
+        "tests/chapter_8/invalid_semantics/extra_credit/undeclared_var_switch_expression.c",
+        "tests/chapter_8/invalid_semantics/extra_credit/undefined_label_in_case.c",
+    };
+    Settings settings;
 
-//     for (const auto &srcFile : srcFiles)
-//     {
-//         Compiler compiler;
-//         try
-//         {
-//             int status = compiler.compile(Stage::Validate, srcFile);
-//             ASSERT_TRUE(status != 0);
-//         }
-//         catch (const std::exception &e)
-//         {
-//             std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
-//             throw;
-//         }
-//     }
-// }
+    for (const auto &srcFile : srcFiles)
+    {
+        Compiler compiler;
+        try
+        {
+            int status = compiler.compile(Stage::Validate, srcFile);
+            ASSERT_TRUE(status != 0);
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+            throw;
+        }
+    }
+}

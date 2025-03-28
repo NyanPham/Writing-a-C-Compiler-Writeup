@@ -49,6 +49,11 @@ public:
                 std::cout << "\033[31m[FAILED]\033[0m " << test.name << ": " << e.what() << '\n'; // Red color for failed tests
                 ++failed;
             }
+            catch (...)
+            {
+                std::cout << "\033[31m[FAILED]\033 " << test.name << ": Unknown exception\n"; // Red color for failed tests 
+                ++failed;
+            }   
         }
         std::cout << "\nTotal: " << passed + failed << ", \033[32mPassed: " << passed << "\033[0m, \033[31mFailed: " << failed << "\033[0m\n";
     }

@@ -337,33 +337,33 @@ TEST_CASE(Chapter8InvalidParse, "chapter_8", "--parse")
     }
 }
 
-// TEST_CASE(Chapter8InvalidParseExtraCredit, "chapter_8", "--parse")
-// {
-//     std::vector<std::string> srcFiles = {
-//         "tests/chapter_8/invalid_parse/extra_credit/compound_assignment_invalid_decl.c",
-//         "tests/chapter_8/invalid_parse/extra_credit/label_in_loop_header.c",
-//         "tests/chapter_8/invalid_parse/extra_credit/label_is_not_block.c",
-//         "tests/chapter_8/invalid_parse/extra_credit/switch_case_declaration.c",
-//         "tests/chapter_8/invalid_parse/extra_credit/switch_goto_case.c",
-//         "tests/chapter_8/invalid_parse/extra_credit/switch_missing_case_value.c",
-//         "tests/chapter_8/invalid_parse/extra_credit/switch_missing_paren.c",
-//         "tests/chapter_8/invalid_parse/extra_credit/switch_no_condition.c",
+TEST_CASE(Chapter8InvalidParseExtraCredit, "chapter_8", "--parse")
+{
+    std::vector<std::string> srcFiles = {
+        "tests/chapter_8/invalid_parse/extra_credit/compound_assignment_invalid_decl.c",
+        "tests/chapter_8/invalid_parse/extra_credit/label_in_loop_header.c",
+        "tests/chapter_8/invalid_parse/extra_credit/label_is_not_block.c",
+        "tests/chapter_8/invalid_parse/extra_credit/switch_case_declaration.c",
+        "tests/chapter_8/invalid_parse/extra_credit/switch_goto_case.c",
+        "tests/chapter_8/invalid_parse/extra_credit/switch_missing_case_value.c",
+        "tests/chapter_8/invalid_parse/extra_credit/switch_missing_paren.c",
+        "tests/chapter_8/invalid_parse/extra_credit/switch_no_condition.c",
 
-//     };
-//     Settings settings;
+    };
+    Settings settings;
 
-//     for (const auto &srcFile : srcFiles)
-//     {
-//         Compiler compiler;
-//         try
-//         {
-//             int status = compiler.compile(Stage::Parsing, srcFile);
-//             ASSERT_TRUE(status != 0);
-//         }
-//         catch (const std::exception &e)
-//         {
-//             std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
-//             throw;
-//         }
-//     }
-// }
+    for (const auto &srcFile : srcFiles)
+    {
+        Compiler compiler;
+        try
+        {
+            int status = compiler.compile(Stage::Parsing, srcFile);
+            ASSERT_TRUE(status != 0);
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+            throw;
+        }
+    }
+}

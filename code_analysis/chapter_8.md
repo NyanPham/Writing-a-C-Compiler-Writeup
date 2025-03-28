@@ -2,11 +2,22 @@
 - [Token, Lexer, AST](#token-lexer-ast)
 - [Parser](#parser)
 - [Variable Resolution](#varresolution)
-- [Loop Labeling](#looplabeling)
+- [Loop Labeling](#loop-labeling)
 - [TACKY](#tacky)
 - [TackyGen](#tackygen)
 - [Assembly, CodeGen, ReplacePseudo, Instruction Fixup, Emit](#assembly-codegen-replacepseudo-instruction-fixup-emit)
 - [Output](#output)
+- [Extra Credit: Switch Statements](#extra-credit-switch-statements)
+  - [Token & Lexer](#token-lexer)
+  - [AST](#ast)
+  - [Parser](#parser-1)
+  - [VarResolution](#varresolution)
+  - [ValidateLabels](#validatelabels)
+  - [LoopLabeling](#looplabeling)
+  - [CollectSwitchCases](#collectswitchcases)
+  - [TackyGen](#tackygen-1)
+  - [Assembly, CodeGen, ReplacePseudo, Instruction Fixup, Emit](#assembly-codegen-replacepseudo-instruction-fixup-emit-1)
+  - [Output](#output-1)
 
 ---
 
@@ -179,7 +190,7 @@ collect_labels_from_statement(Set<string> defined, Set<string> used, statement):
 			return
 ```
 
-# LoopLabeling
+# Loop Labeling
 
 ```
 label_statement(stmt, curr_label):
@@ -559,6 +570,607 @@ main:
 	movl	$1, -68(%rbp)
 .Lor_end.24:
 	movl	-68(%rbp), %eax
+	movq	%rbp, %rsp
+	popq	%rbp
+	ret
+	movl	$0, %eax
+	movq	%rbp, %rsp
+	popq	%rbp
+	ret
+
+	.section .note.GNU-stack,"",@progbits
+```
+
+# Extra Credit: Switch Statements
+
+## Token, Lexer:
+
+New tokens to support
+| Token | Regular expression |
+| ------- | -------------------- |
+| KeywordSwitch | switch |
+| KeywordCase | case |
+| KeywordDefault | default |
+
+## AST
+
+<pre><code>program = Program(function_definition)
+function_definition = Function(identifier name, block body)
+block_item = S(statement) | D(declaration)
+block = Block(block_item*)
+declaration = Declaration(identifier name, exp? init)
+for_init = InitDecl(declaration) | InitExp(exp?)
+statement = Return(exp) 
+	| Expression(exp) 
+	| If(exp condition, statement then, statement? else)
+    | Compound(block)
+	| Break
+	| Continue
+	| While(exp condition, statement body)
+	| DoWhile(statement body, exp condition)
+	| For(for_init init, exp? condition, exp? post, statement body)
+	| Null 
+	| LabeledStatement(identifier lbl, statement)
+	| Goto(identifier lbl) 
+    <strong>| Switch(exp control, statement body, string* cases,  identifier id)
+    | Case(exp, statement body, identifier id)  // exp must be a constant, validate during semantic analysis 
+    | Default(statement body, identifier id)</strong>
+exp = Constant(int) 
+	| Var(identifier)
+    | Unary(unary_operator, exp)
+    | Binary(binary_operator, exp, exp)
+	| Assignment(exp, exp)
+	| CompoundAssignment(binary_operator, exp, exp)
+	| PostfixIncr(exp)
+	| PostfixDecr(exp)
+	| Conditional(exp condition, exp then, exp else) 
+unary_operator = Complement | Negate | Not | Incr | Decr 
+binary_operator = Add | Subtract | Multiply | Divide | Remainder | And | Or
+                | Equal | NotEqual | LessThan | LessOrEqual
+                | GreaterThan | GreaterOrEqual</pre></code>
+
+## EBNF
+
+**Updated EBNF**
+<pre><code>&lt;program&gt; ::= &lt;function&gt;
+&lt;function&gt; ::= "int" &lt;identifier&gt; "(" "void" ")" &lt;block&gt;
+&lt;block&gt; ::= "{" { &lt;block-item&gt; } "}"
+&lt;block-item&gt; ::= &lt;statement&gt; | &lt;declaration&gt;
+&lt;declaration&gt; ::= "int" &lt;identifier&gt; [ "=" &lt;exp&gt; ] ";"
+&lt;for-init&gt; ::= &lt;declaration&gt; | [ &lt;exp&gt; ] ";"
+&lt;statement&gt; ::= "return" &lt;exp&gt; ";" 
+	| &lt;exp&gt; ";" 
+	| "if" "(" &lt;exp&gt; ")" &lt;statement&gt; ["else" &lt;statement&gt;]
+	| &lt;block&gt;
+	| "break" ";"
+	| "continue" ";"
+	| "while" "(" &lt;exp&gt; ")" &lt;statement&gt;
+	| "do" &lt;statement&gt; "while" "(" &lt;exp&gt; ")" ";"
+	| "for" "(" &lt;for-init&gt; [ &lt;exp&gt; ] ";" [ &lt;exp&gt; ] ")" &lt;statement&gt;
+	| ";"
+	|  &lt;label&gt; ":"  &lt;statement&gt;
+	| "goto"  &lt;label&gt; ";"
+	<strong>| "switch" "(" &lt;exp&gt; ")" &lt;statement&gt;
+	| "case" &lt;exp&gt; ":" &lt;statement&gt;
+	| "default" ":" &lt;statement&gt;</strong>
+&lt;exp&gt; ::= &lt;factor&gt; | &lt;exp&gt; &lt;binop&gt; &lt;exp&gt; | &lt;exp&gt; "?" &lt;exp&gt; ":" &lt;exp&gt;
+&lt;factor&gt; ::= &lt;unop&gt; &lt;factor&gt; | &lt;postfix-exp&gt;
+&lt;postfix-exp&gt; ::= &lt;primary-exp&gt; { "++" | "--" } 
+&lt;primary-exp&gt; ::= &lt;int&gt; | &lt;identifier&gt; | "(" &lt;exp&gt; ")"
+&lt;unop&gt; ::= "-" | "~" | "++" | "--" 
+&lt;binop&gt; :: = "+" | "-" | "\*" | "/" | "%" | "&&" | "||"
+				| "==" | "!=" | "&lt;" | "&lt;=" | "&gt;" | "&gt;=" 
+				| "=" | "+=" | "-=" | "*=" | "/=" | "%=" | "&=" | "|=" | "^=" | "&lt;&lt;=" | "&gt;&gt;="
+&lt;identifier&gt; ::= ? An identifier token ?
+&lt;int&gt; ::= ? A constant token ?</pre></code>
+
+
+## Parser
+
+```
+parse_statement(tokens):
+    --snip--
+    case "switch":
+        return parse_switch_statement(tokens)
+    case "case":
+        take_token(tokens)
+        case_val = parse_exp(0, tokens)
+        expect(":", tokens)
+        stmt = parse_statement(tokens)
+        return Case(case_val, stmt, id="")
+    case "default":
+        take_token(tokens)
+        expect(":", tokens)
+        stmt = parse_statement(tokens)
+        return Default(stmt, id="")
+```
+
+```
+parse_switch_statement(tokens):
+    expect("switch", tokens)
+    expect("(", tokens)
+    control = parse_exp(0, tokens)
+    expect(")", tokens)
+    body = parse_statement(tokens)
+    return Switch(control, body, id="", cases=[])
+```
+
+## VarResolution
+
+```
+resolve_statement(statement, var_map):
+	match statement with
+    --snip--
+	case Switch(control, body, id, cases):
+        return Switch(
+            control=resolve_exp(control, var_map),
+            body=resolve_statement(body, var_map),
+            id,
+            cases
+        )
+    case Case(v, body, id):
+        return Case(
+            v,
+            body=resolve_statement(body, var_map),
+            id
+        )
+    case Default(body, id):
+        return Default(
+            resolve_statement(body, var_map),
+            id
+        )
+```
+
+## ValidateLabels
+
+```
+collect_labels_from_statement(Set<string> defined, Set<string> used, statement):
+	match statement type:
+		--snip--
+        case Switch:
+            collect_labels_from_statement(defined, used, statement.body)
+        case Case:
+            collect_labels_from_statement(defined, used, statement.body)
+        case Default:
+            collect_labels_from_statement(defined, used, statement.body)
+		default:
+			return
+```
+
+## LoopLabeling
+
+Break and continue now can be pointing to different enclosing statement. Break can be either associated to either Switch or Loop, while Continue is only for Loop. We separate them in the LabelLoop pass.
+
+```
+label_statement(stmt, curr_break_id, curr_continue_id):
+    match stmt type:
+        case Break:
+            if curr_break_id is null:
+                fail("Break outside of loop or switch")
+            return Break(id=curr_break_id)
+        case Continue:
+            if curr_continue_id is null:
+                fail("Continue outside of loop")
+            return Continue(id=curr_continue_id)
+        case While:
+            new_id = UniqueIds.make_label("while")
+            return While(
+                condition,
+                label_statement(body, new_id, new_id),
+                id=new_id
+            )
+        case DoWhile(body, condition, id=""):
+            new_id = UniqueIds.make_label("do_while")
+            return DoWhile(
+                label_statement(body, new_id, new_id)
+                condition,
+                id=new_id
+            )
+        case For(init, condition, post, body, id="")
+            new_id = UniqueIds.make_label("for")
+            return For(
+                init,
+                condition,
+                post,
+                label_statement(body, new_id, new_id),
+                id=new_id
+            )
+        case Compound(block):
+            return Compound(label_block(block, curr_break_id, curr_continue_id))
+        case If(condition, then_clause, else_clause):
+            return If(
+                condition,
+                label_statement(then_clause, curr_break_id, curr_continue_id),
+                else_clause ? label_statement(else_clause, curr_break_id, curr_continue_id) : null
+            )
+        case LabeledStatement(lbl, stmt):
+            return LabeledStatement(
+                lbl,
+                label_statement(stmt, curr_break_id, curr_continue_id)
+            )
+        case Default(stmt, id):
+            return Default(
+                label_statement(stmt, curr_break_id, curr_continue_id),
+                id
+            )
+        case Case(v, stmt, id):
+            return Case(
+                v,
+                label_statement(stmt, curr_break_id, curr_continue_id),
+                id
+            )
+        case Switch(control, body, cases, id):
+            new_break_id = UniqueIds.makeLabel("switch")
+            labeled_body = label_statement(body, new_break_id, curr_continue_id)
+
+            return Switch(
+                control,
+                labeled_body,
+                cases,
+                id=new_break_id
+            )
+        case Null:
+        case Return:
+        case Expression:
+        case Goto:
+            return stmt
+```
+
+```
+label_block_item(block_item, curr_break_id, curr_continue_id):
+    if block_item is a statement:
+        return label_statement(block_item, curr_break_id, curr_continue_id)
+    else:
+        return block_item as declaration
+```
+
+```
+label_block(block, curr_break_id, curr_continue_id):
+    labeled_blocks = []
+
+    for block_item in block:
+        labeled_block = label_block_item(block_item, curr_break_id, curr_continue_id)
+        labeled_blocks.append(labeled_block)
+
+    return labeled_blocks
+```
+
+```
+label_function_def(AST.FunctionDef funDef):
+    return AST.FunctionDef(
+        funDef.name,
+        label_block(funDef.body, null, null)
+    )
+```
+
+## CollectSwitchCases
+
+We have a new pass in to collect all the cases in the switch so in TACKY, we know which Case statement we jump to.
+
+```
+analyze_case_or_default(key, opt_case_map, lbl, inner_stmt):
+    // First, make sure we're in a switch statement
+    if opt_case_map is null:
+        fail("Found case statement outside of switch")
+
+    case_map = opt_case_map
+
+    // Check for duplicates
+    if case_map already has key:
+        if key is not null:
+            fail("Duplicate case in switch statement: {key}")
+        else:
+            fail("Duplicate default in switch statement")
+
+    // Generate new ID - lbl should be "case" or "default"
+    case_id = UniqueIds.make_label(lbl)
+    updated_map = case_map.set(key, case_id)
+
+    // Analyze inner statement
+    final_map, new_inner_statement = analyze_statement(updated_map, inner_statement)
+
+    return final_map, new_inner_statement, case_id
+```
+
+```
+analyze_statement(stmt, opt_case_map):
+    switch stmt type:
+        case Default(stmt, id):
+            new_map, new_stmt, default_id = analyze_case_or_default(null, opt_case_map, "default", stmt)
+            return (new_map, Default(new_stmt, default_id))
+        case Case(v, stmt, id):
+            // Get integer value of this case
+            if v is not a Constant(c):
+                fail("Non-constant label in case statement")
+
+            key = v.c
+            new_map, new_stmt, case_id = analyze_case_or_default(key, opt_case_map, "case", stmt)
+
+            return (new_map, Case(v, new_stmt, case_id))
+        case Switch(control, body, cases, id):
+            // Use fresh map when traversing body
+            new_case_map, new_body = analyze_statement(body, {})
+            // annotate switch with new case map; dont' pass new case map to caller
+            return (opt_case_map, Switch(control, new_body, cases=new_case_map, id))
+
+        // Just pass case_map through to substatements
+        case If(condition, then_clause, else_clause):
+            case_map1, new_then_clause = analyze_statement(then_clause, opt_case_map)
+            
+            case_map2 = case_map1
+            new_else_clause = null
+
+            if else_clause is not null:
+                case_map2, new_else_clause = analyze_statement(else_clause, case_map1)
+    
+            return (case_map2, If(condition, new_then_clause, new_else_clause))
+        case Compound(block):
+            new_case_map, new_block = analyze_block(opt_case_map, block)
+            return (new_case_map, Compound(new_block))
+        case While(condition, body, id):
+            new_map, new_body = analyze_statement(opt_case_map, body)
+            return (new_map, While(condition, new_body, id))
+        case DoWhile(body, condition, id):
+            new_map, new_body = analyze_statement(opt_case_map, body)
+            return (new_map, DoWhile(new_body, condition, id))
+        case For(init, condition, post, body, id):
+            new_map, new_body = analyze_statement(opt_case_map, body)
+            return (new_map, For(init, condition, post, new_body, id))
+        case LabeledStatement(lbl, stmt):
+            new_case_map, new_stmt = analyze_statement(opt_case_map, stmt)
+            return (new_case_map, LabeledStatement(lbl, new_stmt))
+        // These don't include sub-statements
+        case Return:
+        case Null:
+        case Expression:
+        case Break:
+        case Continue:
+        case Goto:
+            return stmt
+```
+
+```
+analyze_block_item(opt_case_map, blk_item):
+    if blk_item is a statement:
+        new_opt_case_map, new_stmt = analyze_statement(opt_case_map, blk_item)
+
+        return (new_opt_case_map, new_stmt)
+    else:
+        return (opt_case_map, blk_item) // don't need to change or traverse declaration
+
+analyze_block(opt_case_map, blk):
+    new_opt_case_map = opt_case_map
+    new_blk = []
+
+    for item in blk:
+        updated_case_map, new_item = analyze_block_item(new_opt_case_map, item)
+        new_opt_case_map = updated_case_map
+        new_blk.append(new_item)
+    
+    return (new_opt_case_map, new_blk)
+
+analyze_function_def(FunctionDef fun_def):
+    _, blk = analyze_block(null, fun_def.body)
+    return FunctionDef(fun_def.name, blk)
+
+analyze_switches(Program fun_def):
+    return Program(analyze_function_def(fun_def))
+```
+
+## TackyGen
+```
+emit_tacky_for_statement(statement):
+	match statement type:
+		case Return:
+			--snip--
+		case Expression:
+			--snip--
+		case If:
+			--snip--
+        case LabeledStatement:
+            --snip--
+        case Goto:
+            --snip--
+		case Compound:
+			--snip--
+        case Break:
+            --snip--
+        case Continue:
+            --snip--
+        case DoWhile:
+            --snip--
+        case While:
+            --snip--
+        case For:
+            --snip--
+        case Case:
+            return [
+                Label(statement.id),
+                ...emit_tacky_for_statement(statement.statement)
+            ]
+        case Default:
+            return [
+                Label(statement.id),
+                ...emit_tacky_for_statement(statement.statement)
+            ]
+        case Switch:
+            return emit_tacky_for_switch(statement)
+		case Null:
+			return []
+```
+
+```
+emit_tacky_for_switch(switch_stmt):
+    br_label = break_label(switch_stmt.id)
+    eval_control, c = emit_tacky_for_exp(switch_stmt.control)
+    cmp_result = Tacky.Var(UniqueId.make_temporary())
+
+    jump_to_cases = []
+    for case in switch_stmt.cases:
+        if case.key is not null:    // It's a case statement
+            insts = [
+                Binary(Equal, src1=Constant(case.key), src2=c, dst=cmp_result),
+                JumpIfNotZero(cmp_result, case.id)
+            ]
+
+            jump_to_cases.append(...insts)
+        else: // It's a default statement, handle later
+            // do nothing
+
+    default_tacky = []
+    if switch_stmt.cases has key that is null:
+        default_id = switch_stmt.cases.find(null).id
+        default_tacky = [
+            Jump(default_id)
+        ]
+    
+    body_tacky = emit_tacky_for_statement(switch_stmt.body)
+
+    insts = [
+        ...eval_control,
+        ...jump_to_cases, 
+        ...default_tacky,
+        Jump(br_label),
+        ...body_tacky,
+        Label(br_label),
+    ]
+```
+
+# Assembly, CodeGen, ReplacePseudo, Instruction Fixup, Emit
+After the TACKY stage, we don't make any modification as we haven't changed any constructs in TACKY AST.
+
+# Output
+From C:
+```C
+int main(void)
+{
+    int acc = 0;
+    int ctr = 0;
+    for (int i = 0; i < 10; i = i + 1)
+    {
+        switch (i)
+        {
+        case 0:
+            acc = 2;
+            break;
+        case 1:
+            acc = acc * 3;
+            break;
+        case 2:
+            acc = acc * 4;
+            break;
+        case 3:
+            continue;
+        default:
+            acc = acc + 1;
+        }
+        ctr = ctr + 1;
+    }
+
+    return ctr == 10 && acc == 31;
+}
+```
+
+To x64 Assembly on Linux:
+```asm
+	.globl main
+main:
+	pushq	%rbp
+	movq	%rsp, %rbp
+	subq	52, %rsp
+	movl	$0, -4(%rbp)
+	movl	$0, -8(%rbp)
+	movl	$0, -12(%rbp)
+.Lfor_start.10:
+	movl	$10, %r11d
+	cmpl	-12(%rbp), %r11d
+	movl	$0, -16(%rbp)
+	setl	-16(%rbp)
+	cmpl	$0, -16(%rbp)
+	je	.Lbreak.for.3
+	cmpl	$0, -12(%rbp)
+	movl	$0, -20(%rbp)
+	sete	-20(%rbp)
+	cmpl	$0, -20(%rbp)
+	jne	.Lcase.5
+	cmpl	$1, -12(%rbp)
+	movl	$0, -20(%rbp)
+	sete	-20(%rbp)
+	cmpl	$0, -20(%rbp)
+	jne	.Lcase.6
+	cmpl	$2, -12(%rbp)
+	movl	$0, -20(%rbp)
+	sete	-20(%rbp)
+	cmpl	$0, -20(%rbp)
+	jne	.Lcase.7
+	cmpl	$3, -12(%rbp)
+	movl	$0, -20(%rbp)
+	sete	-20(%rbp)
+	cmpl	$0, -20(%rbp)
+	jne	.Lcase.8
+	jmp	.Ldefault.9
+	jmp	.Lbreak.switch.4
+.Lcase.5:
+	movl	$2, -4(%rbp)
+	jmp	.Lbreak.switch.4
+.Lcase.6:
+	movl	-4(%rbp), %r10d
+	movl	%r10d, -24(%rbp)
+	movl	-24(%rbp), %r11d
+	imull	$3, %r11d
+	movl	%r11d, -24(%rbp)
+	movl	-24(%rbp), %r10d
+	movl	%r10d, -4(%rbp)
+	jmp	.Lbreak.switch.4
+.Lcase.7:
+	movl	-4(%rbp), %r10d
+	movl	%r10d, -28(%rbp)
+	movl	-28(%rbp), %r11d
+	imull	$4, %r11d
+	movl	%r11d, -28(%rbp)
+	movl	-28(%rbp), %r10d
+	movl	%r10d, -4(%rbp)
+	jmp	.Lbreak.switch.4
+.Lcase.8:
+	jmp	.Lcontinue.for.3
+.Ldefault.9:
+	movl	-4(%rbp), %r10d
+	movl	%r10d, -32(%rbp)
+	addl	$1, -32(%rbp)
+	movl	-32(%rbp), %r10d
+	movl	%r10d, -4(%rbp)
+.Lbreak.switch.4:
+	movl	-8(%rbp), %r10d
+	movl	%r10d, -36(%rbp)
+	addl	$1, -36(%rbp)
+	movl	-36(%rbp), %r10d
+	movl	%r10d, -8(%rbp)
+.Lcontinue.for.3:
+	movl	-12(%rbp), %r10d
+	movl	%r10d, -40(%rbp)
+	addl	$1, -40(%rbp)
+	movl	-40(%rbp), %r10d
+	movl	%r10d, -12(%rbp)
+	jmp	.Lfor_start.10
+.Lbreak.for.3:
+	movl	$10, %r11d
+	cmpl	-8(%rbp), %r11d
+	movl	$0, -44(%rbp)
+	sete	-44(%rbp)
+	cmpl	$0, -44(%rbp)
+	je	.Land_false.20
+	movl	$31, %r11d
+	cmpl	-4(%rbp), %r11d
+	movl	$0, -48(%rbp)
+	sete	-48(%rbp)
+	cmpl	$0, -48(%rbp)
+	je	.Land_false.20
+	movl	$1, -52(%rbp)
+	jmp	.Land_end.21
+.Land_false.20:
+	movl	$0, -52(%rbp)
+.Land_end.21:
+	movl	-52(%rbp), %eax
 	movq	%rbp, %rsp
 	popq	%rbp
 	ret
