@@ -537,3 +537,90 @@ TEST_CASE(Chapter8ValidTackyGenExtraCredit, "chapter_8", "--tacky")
         }
     }
 }
+
+TEST_CASE(Chapter9ValidTackyGen, "chapter_9", "--tacky")
+{
+    std::vector<std::string> srcFiles = {
+        "tests/chapter_9/valid/arguments_in_registers/dont_clobber_edx.c",
+        "tests/chapter_9/valid/arguments_in_registers/expression_args.c",
+        "tests/chapter_9/valid/arguments_in_registers/fibonacci.c",
+        "tests/chapter_9/valid/arguments_in_registers/forward_decl_multi_arg.c",
+        "tests/chapter_9/valid/arguments_in_registers/hello_world.c",
+        "tests/chapter_9/valid/arguments_in_registers/parameters_are_preserved.c",
+        "tests/chapter_9/valid/arguments_in_registers/parameter_shadows_function.c",
+        "tests/chapter_9/valid/arguments_in_registers/parameter_shadows_own_function.c",
+        "tests/chapter_9/valid/arguments_in_registers/param_shadows_local_var.c",
+        "tests/chapter_9/valid/arguments_in_registers/single_arg.c",
+
+        "tests/chapter_9/valid/libraries/addition.c",
+        "tests/chapter_9/valid/libraries/addition_client.c",
+        "tests/chapter_9/valid/libraries/many_args.c",
+        "tests/chapter_9/valid/libraries/many_args_client.c",
+        "tests/chapter_9/valid/libraries/system_call.c",
+        "tests/chapter_9/valid/libraries/system_call_client.c",
+        "tests/chapter_9/valid/libraries/no_function_calls/division.c",
+        "tests/chapter_9/valid/libraries/no_function_calls/division_client.c",
+        "tests/chapter_9/valid/libraries/no_function_calls/local_stack_variables.c",
+        "tests/chapter_9/valid/libraries/no_function_calls/local_stack_variables_client.c",
+
+        "tests/chapter_9/valid/no_arguments/forward_decl.c",
+        "tests/chapter_9/valid/no_arguments/function_shadows_variable.c",
+        "tests/chapter_9/valid/no_arguments/multiple_declarations.c",
+        "tests/chapter_9/valid/no_arguments/no_return_value.c",
+        "tests/chapter_9/valid/no_arguments/precedence.c",
+        "tests/chapter_9/valid/no_arguments/use_function_in_expression.c",
+        "tests/chapter_9/valid/no_arguments/variable_shadows_function.c",
+
+        "tests/chapter_9/valid/stack_arguments/call_putchar.c",
+        "tests/chapter_9/valid/stack_arguments/lots_of_arguments.c",
+        "tests/chapter_9/valid/stack_arguments/stack_alignment.c",
+        //"tests/chapter_9/valid/stack_arguments/stack_alignment_check_linux.s",
+        //"tests/chapter_9/valid/stack_arguments/stack_alignment_check_osx.s",
+        "tests/chapter_9/valid/stack_arguments/test_for_memory_leaks.c",
+    };
+    Settings settings;
+
+    for (const auto &srcFile : srcFiles)
+    {
+        Compiler compiler;
+        try
+        {
+            int status = compiler.compile(Stage::Tacky, srcFile);
+            // Check that the compilation succeeded
+            ASSERT_TRUE(status == 0);
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+            throw;
+        }
+    }
+}
+
+TEST_CASE(Chapter9ValidTackyGenExtraCredit, "chapter_9", "--tacky")
+{
+    std::vector<std::string> srcFiles = {
+        "tests/chapter_9/valid/extra_credit/compound_assign_function_result.c",
+        "tests/chapter_9/valid/extra_credit/dont_clobber_ecx.c",
+        "tests/chapter_9/valid/extra_credit/goto_label_multiple_functions.c",
+        "tests/chapter_9/valid/extra_credit/goto_shared_name.c",
+        "tests/chapter_9/valid/extra_credit/label_naming_scheme.c",
+    };
+    Settings settings;
+
+    for (const auto &srcFile : srcFiles)
+    {
+        Compiler compiler;
+        try
+        {
+            int status = compiler.compile(Stage::Tacky, srcFile);
+            // Check that the compilation succeeded
+            ASSERT_TRUE(status == 0);
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+            throw;
+        }
+    }
+}

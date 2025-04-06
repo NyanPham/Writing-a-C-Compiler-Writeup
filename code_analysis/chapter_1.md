@@ -43,13 +43,11 @@ replace_extension(filename, new_ext):
     return base + new_ext
 ```
 
-
 ```
 run_command(cmd, arg_list):
     command_string = combine 'cmd' with 'args_list' into a single command
     execute the command_string
 ```
-
 
 ## Main driver functions
 

@@ -2,6 +2,8 @@
 *.i
 *.s
 
+/progressive_implementation_backup
+
 /progressive_implementation/chapter_*/tests/
 /progressive_implementation/chapter_*/tests/**
 

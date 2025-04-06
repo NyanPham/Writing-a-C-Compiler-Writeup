@@ -630,3 +630,132 @@ TEST_CASE(Chapter8ValidParseExtraCredit, "chapter_8", "--parse")
         }
     }
 }
+
+TEST_CASE(Chapter9ValidParse, "chapter_9", "--parse")
+{
+    std::vector<std::string> srcFiles = {
+        "tests/chapter_9/invalid_declarations/assign_to_fun_call.c",
+        "tests/chapter_9/invalid_declarations/decl_params_with_same_name.c",
+        "tests/chapter_9/invalid_declarations/nested_function_definition.c",
+        "tests/chapter_9/invalid_declarations/params_with_same_name.c",
+        "tests/chapter_9/invalid_declarations/redefine_fun_as_var.c",
+        "tests/chapter_9/invalid_declarations/redefine_parameter.c",
+        "tests/chapter_9/invalid_declarations/redefine_var_as_fun.c",
+        "tests/chapter_9/invalid_declarations/undeclared_fun.c",
+        "tests/chapter_9/invalid_declarations/wrong_parameter_names.c",
+
+        "tests/chapter_9/invalid_types/assign_fun_to_variable.c",
+        "tests/chapter_9/invalid_types/assign_value_to_function.c",
+        "tests/chapter_9/invalid_types/call_variable_as_function.c",
+        "tests/chapter_9/invalid_types/conflicting_function_declarations.c",
+        "tests/chapter_9/invalid_types/conflicting_local_function_declaration.c",
+        "tests/chapter_9/invalid_types/divide_by_function.c",
+        "tests/chapter_9/invalid_types/multiple_function_definitions.c",
+        "tests/chapter_9/invalid_types/multiple_function_definitions_2.c",
+        "tests/chapter_9/invalid_types/too_few_args.c",
+        "tests/chapter_9/invalid_types/too_many_args.c",
+
+        "tests/chapter_9/valid/arguments_in_registers/dont_clobber_edx.c",
+        "tests/chapter_9/valid/arguments_in_registers/expression_args.c",
+        "tests/chapter_9/valid/arguments_in_registers/fibonacci.c",
+        "tests/chapter_9/valid/arguments_in_registers/forward_decl_multi_arg.c",
+        "tests/chapter_9/valid/arguments_in_registers/hello_world.c",
+        "tests/chapter_9/valid/arguments_in_registers/parameters_are_preserved.c",
+        "tests/chapter_9/valid/arguments_in_registers/parameter_shadows_function.c",
+        "tests/chapter_9/valid/arguments_in_registers/parameter_shadows_own_function.c",
+        "tests/chapter_9/valid/arguments_in_registers/param_shadows_local_var.c",
+        "tests/chapter_9/valid/arguments_in_registers/single_arg.c",
+
+        "tests/chapter_9/valid/libraries/addition.c",
+        "tests/chapter_9/valid/libraries/addition_client.c",
+        "tests/chapter_9/valid/libraries/many_args.c",
+        "tests/chapter_9/valid/libraries/many_args_client.c",
+        "tests/chapter_9/valid/libraries/system_call.c",
+        "tests/chapter_9/valid/libraries/system_call_client.c",
+        "tests/chapter_9/valid/libraries/no_function_calls/division.c",
+        "tests/chapter_9/valid/libraries/no_function_calls/division_client.c",
+        "tests/chapter_9/valid/libraries/no_function_calls/local_stack_variables.c",
+        "tests/chapter_9/valid/libraries/no_function_calls/local_stack_variables_client.c",
+
+        "tests/chapter_9/valid/no_arguments/forward_decl.c",
+        "tests/chapter_9/valid/no_arguments/function_shadows_variable.c",
+        "tests/chapter_9/valid/no_arguments/multiple_declarations.c",
+        "tests/chapter_9/valid/no_arguments/no_return_value.c",
+        "tests/chapter_9/valid/no_arguments/precedence.c",
+        "tests/chapter_9/valid/no_arguments/use_function_in_expression.c",
+        "tests/chapter_9/valid/no_arguments/variable_shadows_function.c",
+
+        "tests/chapter_9/valid/stack_arguments/call_putchar.c",
+        "tests/chapter_9/valid/stack_arguments/lots_of_arguments.c",
+        "tests/chapter_9/valid/stack_arguments/stack_alignment.c",
+        //"tests/chapter_9/valid/stack_arguments/stack_alignment_check_linux.s",
+        //"tests/chapter_9/valid/stack_arguments/stack_alignment_check_osx.s",
+        "tests/chapter_9/valid/stack_arguments/test_for_memory_leaks.c",
+    };
+    Settings settings;
+
+    for (const auto &srcFile : srcFiles)
+    {
+        Compiler compiler;
+        try
+        {
+            int status = compiler.compile(Stage::Parsing, srcFile);
+            if (status != 0)
+            {
+                std::cerr << "Error compiling file " << srcFile << std::endl;
+            }
+            ASSERT_TRUE(status == 0);
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+            throw;
+        }
+    }
+}
+
+TEST_CASE(Chapter9ValidParseExtraCredit, "chapter_9", "--parse")
+{
+    std::vector<std::string> srcFiles = {
+        "tests/chapter_9/invalid_declarations/extra_credit/call_label_as_function.c",
+        "tests/chapter_9/invalid_declarations/extra_credit/compound_assign_to_fun_call.c",
+        "tests/chapter_9/invalid_declarations/extra_credit/decrement_fun_call.c",
+        "tests/chapter_9/invalid_declarations/extra_credit/increment_fun_call.c",
+
+        "tests/chapter_9/invalid_labels/extra_credit/goto_cross_function.c",
+        "tests/chapter_9/invalid_labels/extra_credit/goto_function.c",
+
+        "tests/chapter_9/invalid_types/extra_credit/bitwise_op_function.c",
+        "tests/chapter_9/invalid_types/extra_credit/compound_assign_function_lhs.c",
+        "tests/chapter_9/invalid_types/extra_credit/compound_assign_function_rhs.c",
+        "tests/chapter_9/invalid_types/extra_credit/postfix_incr_fun_name.c",
+        "tests/chapter_9/invalid_types/extra_credit/prefix_decr_fun_name.c",
+        "tests/chapter_9/invalid_types/extra_credit/switch_on_function.c",
+
+        "tests/chapter_9/valid/extra_credit/compound_assign_function_result.c",
+        "tests/chapter_9/valid/extra_credit/dont_clobber_ecx.c",
+        "tests/chapter_9/valid/extra_credit/goto_label_multiple_functions.c",
+        "tests/chapter_9/valid/extra_credit/goto_shared_name.c",
+        "tests/chapter_9/valid/extra_credit/label_naming_scheme.c",
+    };
+    Settings settings;
+
+    for (const auto &srcFile : srcFiles)
+    {
+        Compiler compiler;
+        try
+        {
+            int status = compiler.compile(Stage::Parsing, srcFile);
+            if (status != 0)
+            {
+                std::cerr << "Error compiling file " << srcFile << std::endl;
+            }
+            ASSERT_TRUE(status == 0);
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+            throw;
+        }
+    }
+}

@@ -245,3 +245,81 @@ TEST_CASE(Chapter8InvalidSemanticExtraCredit, "chapter_8", "--validate")
         }
     }
 }
+
+TEST_CASE(Chapter9InvalidSemantic, "chapter_9", "--validate")
+{
+    std::vector<std::string> srcFiles = {
+        "tests/chapter_9/invalid_declarations/assign_to_fun_call.c",
+        "tests/chapter_9/invalid_declarations/decl_params_with_same_name.c",
+        "tests/chapter_9/invalid_declarations/nested_function_definition.c",
+        "tests/chapter_9/invalid_declarations/params_with_same_name.c",
+        "tests/chapter_9/invalid_declarations/redefine_fun_as_var.c",
+        "tests/chapter_9/invalid_declarations/redefine_parameter.c",
+        "tests/chapter_9/invalid_declarations/redefine_var_as_fun.c",
+        "tests/chapter_9/invalid_declarations/undeclared_fun.c",
+        "tests/chapter_9/invalid_declarations/wrong_parameter_names.c",
+
+        "tests/chapter_9/invalid_types/assign_fun_to_variable.c",
+        "tests/chapter_9/invalid_types/assign_value_to_function.c",
+        "tests/chapter_9/invalid_types/call_variable_as_function.c",
+        "tests/chapter_9/invalid_types/conflicting_function_declarations.c",
+        "tests/chapter_9/invalid_types/conflicting_local_function_declaration.c",
+        "tests/chapter_9/invalid_types/divide_by_function.c",
+        "tests/chapter_9/invalid_types/multiple_function_definitions.c",
+        "tests/chapter_9/invalid_types/multiple_function_definitions_2.c",
+        "tests/chapter_9/invalid_types/too_few_args.c",
+        "tests/chapter_9/invalid_types/too_many_args.c",
+    };
+    Settings settings;
+
+    for (const auto &srcFile : srcFiles)
+    {
+        Compiler compiler;
+        try
+        {
+            int status = compiler.compile(Stage::Validate, srcFile);
+            ASSERT_TRUE(status != 0);
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+            throw;
+        }
+    }
+}
+
+TEST_CASE(Chapter9InvalidSemanticExtraCredit, "chapter_9", "--validate")
+{
+    std::vector<std::string> srcFiles = {
+        "tests/chapter_9/invalid_declarations/extra_credit/call_label_as_function.c",
+        "tests/chapter_9/invalid_declarations/extra_credit/compound_assign_to_fun_call.c",
+        "tests/chapter_9/invalid_declarations/extra_credit/decrement_fun_call.c",
+        "tests/chapter_9/invalid_declarations/extra_credit/increment_fun_call.c",
+
+        "tests/chapter_9/invalid_labels/extra_credit/goto_cross_function.c",
+        "tests/chapter_9/invalid_labels/extra_credit/goto_function.c",
+
+        "tests/chapter_9/invalid_types/extra_credit/bitwise_op_function.c",
+        "tests/chapter_9/invalid_types/extra_credit/compound_assign_function_lhs.c",
+        "tests/chapter_9/invalid_types/extra_credit/compound_assign_function_rhs.c",
+        "tests/chapter_9/invalid_types/extra_credit/postfix_incr_fun_name.c",
+        "tests/chapter_9/invalid_types/extra_credit/prefix_decr_fun_name.c",
+        "tests/chapter_9/invalid_types/extra_credit/switch_on_function.c",
+    };
+    Settings settings;
+
+    for (const auto &srcFile : srcFiles)
+    {
+        Compiler compiler;
+        try
+        {
+            int status = compiler.compile(Stage::Validate, srcFile);
+            ASSERT_TRUE(status != 0);
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+            throw;
+        }
+    }
+}

@@ -367,3 +367,36 @@ TEST_CASE(Chapter8InvalidParseExtraCredit, "chapter_8", "--parse")
         }
     }
 }
+
+TEST_CASE(Chapter9InvalidParse, "chapter_9", "--parse")
+{
+    std::vector<std::string> srcFiles = {
+        "tests/chapter_9/invalid_parse/call_non_identifier.c",
+        "tests/chapter_9/invalid_parse/decl_wrong_closing_delim.c",
+        "tests/chapter_9/invalid_parse/funcall_wrong_closing_delim.c",
+        "tests/chapter_9/invalid_parse/function_call_declaration.c",
+        "tests/chapter_9/invalid_parse/function_returning_function.c",
+        "tests/chapter_9/invalid_parse/fun_decl_for_loop.c",
+        "tests/chapter_9/invalid_parse/initialize_function_as_variable.c",
+        "tests/chapter_9/invalid_parse/trailing_comma.c",
+        "tests/chapter_9/invalid_parse/trailing_comma_decl.c",
+        "tests/chapter_9/invalid_parse/unclosed_paren_decl.c",
+        "tests/chapter_9/invalid_parse/var_init_in_param_list.c",
+    };
+    Settings settings;
+
+    for (const auto &srcFile : srcFiles)
+    {
+        Compiler compiler;
+        try
+        {
+            int status = compiler.compile(Stage::Parsing, srcFile);
+            ASSERT_TRUE(status != 0);
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+            throw;
+        }
+    }
+}
