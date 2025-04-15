@@ -28,7 +28,7 @@ TEST_CASE(Chapter5InvalidSemantic, "chapter_5", "--validate")
         Compiler compiler;
         try
         {
-            int status = compiler.compile(Stage::Validate, srcFile);
+            int status = compiler.compile(Stage::Validate, std::vector<std::string>{srcFile});
             // Check that the compilation succeeded
             ASSERT_TRUE(status != 0);
         }
@@ -62,7 +62,7 @@ TEST_CASE(Chapter5InvalidSemanticExtraCredit, "chapter_5", "--validate")
         Compiler compiler;
         try
         {
-            int status = compiler.compile(Stage::Validate, srcFile);
+            int status = compiler.compile(Stage::Validate, std::vector<std::string>{srcFile});
             // Check that the compilation succeeded
             ASSERT_TRUE(status != 0);
         }
@@ -88,7 +88,7 @@ TEST_CASE(Chapter6InvalidSemantic, "chapter_6", "--validate")
         Compiler compiler;
         try
         {
-            int status = compiler.compile(Stage::Validate, srcFile);
+            int status = compiler.compile(Stage::Validate, std::vector<std::string>{srcFile});
             // Check that the compilation succeeded
             ASSERT_TRUE(status != 0);
         }
@@ -116,7 +116,7 @@ TEST_CASE(Chapter6InvalidSemanticExtraCredit, "chapter_6", "--validate")
         Compiler compiler;
         try
         {
-            int status = compiler.compile(Stage::Validate, srcFile);
+            int status = compiler.compile(Stage::Validate, std::vector<std::string>{srcFile});
             ASSERT_TRUE(status != 0);
         }
         catch (const std::exception &e)
@@ -142,7 +142,7 @@ TEST_CASE(Chapter7InvalidSemantic, "chapter_7", "--validate")
         Compiler compiler;
         try
         {
-            int status = compiler.compile(Stage::Validate, srcFile);
+            int status = compiler.compile(Stage::Validate, std::vector<std::string>{srcFile});
             ASSERT_TRUE(status != 0);
         }
         catch (const std::exception &e)
@@ -167,7 +167,7 @@ TEST_CASE(Chapter7InvalidSemanticExtraCredit, "chapter_7", "--validate")
         Compiler compiler;
         try
         {
-            int status = compiler.compile(Stage::Validate, srcFile);
+            int status = compiler.compile(Stage::Validate, std::vector<std::string>{srcFile});
             ASSERT_TRUE(status != 0);
         }
         catch (const std::exception &e)
@@ -193,7 +193,7 @@ TEST_CASE(Chapter8InvalidSemantic, "chapter_8", "--validate")
         Compiler compiler;
         try
         {
-            int status = compiler.compile(Stage::Validate, srcFile);
+            int status = compiler.compile(Stage::Validate, std::vector<std::string>{srcFile});
             ASSERT_TRUE(status != 0);
         }
         catch (const std::exception &e)
@@ -235,7 +235,7 @@ TEST_CASE(Chapter8InvalidSemanticExtraCredit, "chapter_8", "--validate")
         Compiler compiler;
         try
         {
-            int status = compiler.compile(Stage::Validate, srcFile);
+            int status = compiler.compile(Stage::Validate, std::vector<std::string>{srcFile});
             ASSERT_TRUE(status != 0);
         }
         catch (const std::exception &e)
@@ -277,7 +277,7 @@ TEST_CASE(Chapter9InvalidSemantic, "chapter_9", "--validate")
         Compiler compiler;
         try
         {
-            int status = compiler.compile(Stage::Validate, srcFile);
+            int status = compiler.compile(Stage::Validate, std::vector<std::string>{srcFile});
             ASSERT_TRUE(status != 0);
         }
         catch (const std::exception &e)
@@ -313,7 +313,75 @@ TEST_CASE(Chapter9InvalidSemanticExtraCredit, "chapter_9", "--validate")
         Compiler compiler;
         try
         {
-            int status = compiler.compile(Stage::Validate, srcFile);
+            int status = compiler.compile(Stage::Validate, std::vector<std::string>{srcFile});
+            ASSERT_TRUE(status != 0);
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+            throw;
+        }
+    }
+}
+
+TEST_CASE(Chapter10InvalidSemantic, "chapter_10", "--validate")
+{
+    std::vector<std::string> srcFiles = {
+        "tests/chapter_10/invalid_declarations/conflicting_local_declarations.c",
+        "tests/chapter_10/invalid_declarations/extern_follows_local_var.c",
+        "tests/chapter_10/invalid_declarations/extern_follows_static_local_var.c",
+        "tests/chapter_10/invalid_declarations/local_var_follows_extern.c",
+        "tests/chapter_10/invalid_declarations/out_of_scope_extern_var.c",
+        "tests/chapter_10/invalid_declarations/redefine_param_as_identifier_with_linkage.c",
+        "tests/chapter_10/invalid_declarations/undeclared_global_variable.c",
+        "tests/chapter_10/invalid_types/conflicting_function_linkage.c",
+        "tests/chapter_10/invalid_types/conflicting_function_linkage_2.c",
+        "tests/chapter_10/invalid_types/conflicting_global_definitions.c",
+        "tests/chapter_10/invalid_types/conflicting_variable_linkage.c",
+        "tests/chapter_10/invalid_types/conflicting_variable_linkage_2.c",
+        "tests/chapter_10/invalid_types/extern_for_loop_counter.c",
+        "tests/chapter_10/invalid_types/extern_variable_initializer.c",
+        "tests/chapter_10/invalid_types/non_constant_static_initializer.c",
+        "tests/chapter_10/invalid_types/non_constant_static_local_initializer.c",
+        "tests/chapter_10/invalid_types/redeclare_file_scope_var_as_fun.c",
+        "tests/chapter_10/invalid_types/redeclare_fun_as_file_scope_var.c",
+        "tests/chapter_10/invalid_types/redeclare_fun_as_var.c",
+        "tests/chapter_10/invalid_types/static_block_scope_function_declaration.c",
+        "tests/chapter_10/invalid_types/static_for_loop_counter.c",
+        "tests/chapter_10/invalid_types/use_file_scope_variable_as_fun.c",
+    };
+    Settings settings;
+
+    for (const auto &srcFile : srcFiles)
+    {
+        Compiler compiler;
+        try
+        {
+            int status = compiler.compile(Stage::Validate, std::vector<std::string>{srcFile});
+            ASSERT_TRUE(status != 0);
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+            throw;
+        }
+    }
+}
+
+TEST_CASE(Chapter10InvalidSemanticExtraCredit, "chapter_10", "--validate")
+{
+    std::vector<std::string> srcFiles = {
+        "tests/chapter_10/invalid_labels/extra_credit/goto_global_var.c",
+        "tests/chapter_10/invalid_types/extra_credit/static_var_case.c",
+    };
+    Settings settings;
+
+    for (const auto &srcFile : srcFiles)
+    {
+        Compiler compiler;
+        try
+        {
+            int status = compiler.compile(Stage::Validate, std::vector<std::string>{srcFile});
             ASSERT_TRUE(status != 0);
         }
         catch (const std::exception &e)

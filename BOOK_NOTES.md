@@ -1,34 +1,54 @@
-# Chapter 1: A Minimal Compiler 
+# Table of Contents
+
+- [Part I](#part-i)
+  - [Chapter 1: A Minimal Compiler](#chapter-1-a-minimal-compiler)
+  - [Chapter 2: Unary Operators](#chapter-2-unary-operators)
+  - [Chapter 3: Binary Operators](#chapter-3-binary-operators)
+  - [Chapter 4: Logical and Relational Operators](#chapter-4-logical-and-relational-operators)
+  - [Chapter 5: Local Variables](#chapter-5-local-variables)
+  - [Chapter 6: If Statements and Conditional Expressions](#chapter-6-if-statements-and-conditional-expressions)
+  - [Chapter 7: Compound Statements](#chapter-7-compound-statements)
+  - [Chapter 8: Loops](#chapter-8-loops)
+  - [Chapter 9: Functions](#chapter-9-functions)
+  - [Chapter 10: File Scope Variable Declarations and Storage Class Specifiers](#chapter-10-file-scope-variable-declarations-and-storage-class-specifiers)
+
+---
+
+# Part I
+
+---
+
+# Chapter 1: A Minimal Compiler
 
 ## Stages of a Compiler
 
 1. **Lexer**
-    - Input: Source code (program.c)
-    - Output: Token list
+   - Input: Source code (program.c)
+   - Output: Token list
 2. **Parser**
-    - Input: Token list
-    - Output: Abstract Syntax Tree (AST)
+   - Input: Token list
+   - Output: Abstract Syntax Tree (AST)
 3. **Assembly Generation**
-    - Input: AST
-    - Output: Assembly code
+   - Input: AST
+   - Output: Assembly code
 4. **Code Emission**
-    - Input: Assembly code
-    - Output: Final assembly file 
+   - Input: Assembly code
+   - Output: Final assembly file
 
 ## The Lexer
 
-| Token | Regular expression |
-| ------- | -------------------- |
-| Identifier | [a-zA-Z_]\w\*\b|
-| Constant | [0-9]+\b |
-| *int* keyword | int\b |
-| *void* keyword | void\b |
-| *return* keyword | return\b |
-| Open parenthesis | \( |
-| Close parenthesis | \) |
-| Open brace | { |
-| Close brace | } |
-| Semicolon | ; |
+| Token             | Regular expression |
+| ----------------- | ------------------ |
+| Identifier        | [a-zA-Z_]\w\*\b    |
+| Constant          | [0-9]+\b           |
+| _int_ keyword     | int\b              |
+| _void_ keyword    | void\b             |
+| _return_ keyword  | return\b           |
+| Open parenthesis  | \(                 |
+| Close parenthesis | \)                 |
+| Open brace        | {                  |
+| Close brace       | }                  |
+| Semicolon         | ;                  |
 
 ```Lexer
 while input isn't empty:
@@ -42,13 +62,15 @@ while input isn't empty:
 ```
 
 **Notes**:
-- Treat keywords like other identifiers. First find the end fo the token. Then, if it is an identifier, lookup the list of preserved keywords. 
+
+- Treat keywords like other identifiers. First find the end fo the token. Then, if it is an identifier, lookup the list of preserved keywords.
 
 ## The Parser
 
-*Zephyr Abstract Syntax Description Language (ASDL)* is used to represent AST and *extended Backus Naur form (EBNF)* to represent formal grammar.
+_Zephyr Abstract Syntax Description Language (ASDL)_ is used to represent AST and _extended Backus Naur form (EBNF)_ to represent formal grammar.
 
 ### AST
+
 ```AST
 program = Program(function_definition)
 function_definition = Function(identifier name, statement body)
@@ -57,6 +79,7 @@ exp = Constant(int)
 ```
 
 ### EBNF
+
 ```EBNF
 <program> ::= <function>
 <function> ::= "int" <identifier> "(" "void" ")" "{" <statement> "}"
@@ -67,13 +90,14 @@ exp = Constant(int)
 ```
 
 ### Parser
+
 ```Parser
 parse_statement(tokens):
 	expect("return", tokens)
 	return_val = parse_exp(tokens)
 	expect(";", tokens)
 	return Return(return_val)
-	
+
 expect(expected, tokens):
 	actual = take_tokens(tokens)
 	if actual != expected:
@@ -83,6 +107,7 @@ expect(expected, tokens):
 ## Assembly Generation
 
 ### Assembly
+
 ```
 program = Program(function_definition)
 function_definition = Function(identifier name, instruction* instructions)
@@ -92,50 +117,53 @@ operand = Imm(int val) | Register
 
 #### Converting AST Nodes to Assembly
 
-| AST Node | Assembly construct |
-| -------- | ------------------ |
-| Program(function_definition) | Program(function_definition) | 
-| Function(name, body) | Function(name, instructions) |
-| Return(exp) | Mov(exp, Register) <br> Ret|
-| Constant(int) | Imm(int) |
+| AST Node                     | Assembly construct           |
+| ---------------------------- | ---------------------------- |
+| Program(function_definition) | Program(function_definition) |
+| Function(name, body)         | Function(name, instructions) |
+| Return(exp)                  | Mov(exp, Register) <br> Ret  |
+| Constant(int)                | Imm(int)                     |
 
 ## Code Emission
 
-On macOS, we add _ in front of the function name. For example, *main* becomes *_main*. Don't do this on Linux.
+On macOS, we add \_ in front of the function name. For example, _main_ becomes _\_main_. Don't do this on Linux.
 
 On Linux, add this at the end of the file:
-```	
+
+```
 	.section .note.GNU-stack,"",@progbits
 ```
 
-####  Formatting Top-Level Assembly Constructs
+#### Formatting Top-Level Assembly Constructs
 
-| Assembly top-level construct | Ouput |
-| --------------------- | ------------ |
-| Program(function_definition) |  Printout the function definition <br> On Linux, add at the end of file <br> &nbsp;&nbsp;&nbsp;&nbsp;*.section .note.GNU-stack,"",@progbits* | 
-| Function(name, instructions) | &nbsp;&nbsp;&nbsp;&nbsp;.globl \<name> <br> \<name>: <br> &nbsp;&nbsp;&nbsp;&nbsp;\<instructions> |
+| Assembly top-level construct | Ouput                                                                                                                                       |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| Program(function_definition) | Printout the function definition <br> On Linux, add at the end of file <br> &nbsp;&nbsp;&nbsp;&nbsp;_.section .note.GNU-stack,"",@progbits_ |
+| Function(name, instructions) | &nbsp;&nbsp;&nbsp;&nbsp;.globl \<name> <br> \<name>: <br> &nbsp;&nbsp;&nbsp;&nbsp;\<instructions>                                           |
 
-####  Formatting Assembly Instructions
+#### Formatting Assembly Instructions
 
-| Assembly instruction | Output |
-| ------------------ | --------- |
-| Mov(src, dst) | movl &nbsp;&nbsp;&nbsp;&nbsp;\<src>, \<dst> |
-| Ret | ret |
+| Assembly instruction | Output                                      |
+| -------------------- | ------------------------------------------- |
+| Mov(src, dst)        | movl &nbsp;&nbsp;&nbsp;&nbsp;\<src>, \<dst> |
+| Ret                  | ret                                         |
 
-####  Formatting Assembly Operands
+#### Formatting Assembly Operands
 
-| Assembly operand | Output |
-| ------------------ | --------- |
-| Register | %eax |
-| Imm(int) | $\<int> | 
+| Assembly operand | Output  |
+| ---------------- | ------- |
+| Register         | %eax    |
+| Imm(int)         | $\<int> |
 
 ## Summary
+
 We have 4 stages for compiler are the foundation for the rest of the journey.
 In the next chapter, we'll support unary operators, add a new IR to the compiler.
 
 ## Additional Resources
 
 **Linkers:**
+
 - [Beginner’s Guide to Linkers](https://www.lurklurk.org/linkers/linkers.html)
 - [Ian Lance Taylor’s 20-part essay](https://www.airs.com/blog/archives/38)
 - [Ian Lance Taylor’s 20-part table of contents](https://lwn.net/Articles/276782/)
@@ -143,13 +171,16 @@ In the next chapter, we'll support unary operators, add a new IR to the compiler
 - [Position Independent Code (PIC) in Shared Libraries on x64](https://eli.thegreenplace.net/2011/11/11/position-independent-code-pic-in-shared-libraries-on-x64)
 
 **AST definitions:**
+
 - [Abstract Syntax Tree Implementation Idioms](https://hillside.net/plop/plop2003/Papers/Jones-ImplementingASTs.pdf)
 - [The Zephyr Abstract Syntax Description Language](https://www.cs.princeton.edu/~appel/papers/asdl97.pdf)
 
 **Executable stacks:**
+
 - [Executable Stack](https://www.airs.com/blog/archives/518)
 
-### Reference implementation Analysis
+### Reference Implementation Analysis
+
 [Chapter 1 Code Analysis](./code_analysis/chapter_1.md)
 
 ---
@@ -159,24 +190,24 @@ In the next chapter, we'll support unary operators, add a new IR to the compiler
 ## Stages of a Compiler
 
 1. **Lexer**
-    - Input: Source code (program.c)
-    - Output: Token list
+   - Input: Source code (program.c)
+   - Output: Token list
 2. **Parser**
-    - Input: Token list
-    - Output: Abstract Syntax Tree (AST)
+   - Input: Token list
+   - Output: Abstract Syntax Tree (AST)
 3. **TACKY Generation**
-	- Input: AST
-	- Output: TAC IR (Tacky)
+   - Input: AST
+   - Output: TAC IR (Tacky)
 4. **Assembly Generation**
-    - Input: Tacky
-    - Output: Assembly code
-	- Passes:
-		1. Converting TACKY to Assembly
-		2. Replacing pseudoregisters
-		3. Instruction fix-up
+   - Input: Tacky
+   - Output: Assembly code
+   - Passes:
+     1. Converting TACKY to Assembly
+     2. Replacing pseudoregisters
+     3. Instruction fix-up
 5. **Code Emission**
-    - Input: Assembly code
-    - Output: Final assembly file 
+   - Input: Assembly code
+   - Output: Final assembly file
 
 ## The Lexer
 
@@ -187,11 +218,12 @@ New tokens to support
 | Complement | ~ |
 | Decrement | -- |
 
-We will not yet implement the decrement operator *--*, but we need to let the lexer regonize it so it won't mistake -- for -(-
+We will not yet implement the decrement operator _--_, but we need to let the lexer regonize it so it won't mistake -- for -(-
 
 ## The Parser
 
 ### AST
+
 <pre><code>program = Program(function_definition)
 function_definition = Function(identifier name, statement body)
 statement = Return(exp)
@@ -199,6 +231,7 @@ exp = Constant(int) <strong>| Unary(unary_operator, exp)</strong>
 <strong>unary_operator = Complement | Negate</strong></pre></code>
 
 ### EBNF
+
 <pre><code>&lt;program&gt; ::= &lt;function&gt;
 &lt;function&gt; ::= "int" &lt;identifier&gt; "(" "void" ")" "{" &lt;statement&gt; "}"
 &lt;statement&gt; ::= "return" &lt;exp&gt; ";"
@@ -228,16 +261,19 @@ parse_exp(tokens):
 ```
 
 ## TACKY Generation
-In C, expressions can be nested, and Assembly instructions cannot. 
+
+In C, expressions can be nested, and Assembly instructions cannot.
 For expression like `-(~2)`, first we need to apply the complement operation before the negation operation.
 
 TAC stands for Three-Address Code, because most instructions use at most three values: two sources and one destination.
 
-TAC is useful in: 
+TAC is useful in:
+
 - Major structural transformation
 - Optimization.
 
 ### TACKY
+
 ```
 program = Program(function_definition)
 function_definition = Function(identifier, instruction* body)
@@ -249,12 +285,12 @@ unary_operator = Complement | Negate
 TACKY instructions get operand of type Val, which is either a Var or a Constant.
 However, for dst must be a temporary Var, not a Constant.
 
-
 ### Generating TACKY
+
 ```
 emit_tacky(e, instructions):
 	match e with
-	| Constant(c) -> 
+	| Constant(c) ->
 		return Constant(c)
 	| Unary(op, inner) ->
 		src = emit_tacky(inner, instructions)
@@ -265,24 +301,29 @@ emit_tacky(e, instructions):
 		return dst
 ```
 
-***Notes:***
+**_Notes:_**
+
 - The first Constant is of AST, and the second is of TACKY.
 - The first Unary is of AST, and the second is of TACKY.
 
 ### Generating Names for Temporary Variables
+
 We keep a counter, and increment it whenever we use it to create a unique name.
 Example: tmp.0
 This won't conflict with user-defined identifier
 
 ### TACKY representation of Unary Expressions
-| AST | TACKY |
-| ----- | ----- |
-| Return(Constant(3)) | Return (Constant(3)) |
-| Return(Unary(Complement, Constant(2))) | Unary(Complement, Constant(2), Var("tmp.0")) <br>Return(Var("tmp.0"))|
+
+| AST                                                                                                                        | TACKY                                                                                                                                                          |
+| -------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Return(Constant(3))                                                                                                        | Return (Constant(3))                                                                                                                                           |
+| Return(Unary(Complement, Constant(2)))                                                                                     | Unary(Complement, Constant(2), Var("tmp.0")) <br>Return(Var("tmp.0"))                                                                                          |
 | Return(Unary(Negate,<br>&nbsp;&nbsp;&nbsp;&nbsp;Unary(Complement,<br>&nbsp;&nbsp;&nbsp;&nbsp;Unary(Negate, Constant(8))))) | Unary(Negate, Constant(8), Var("tmp.0"))<br>Unary(Complement, Var("tmp.0"), Var("tmp.1"))<br>Unary(Negate, Var("tmp.1"), Var("tmp.2"))<br>Return(Var("tmp.2")) |
 
 ## Assembly Generation
+
 There are a few ways to handle prolouge and epilogue:
+
 - [ ] Add push, pop, sub instructions
 - [x] Use high-level constructs for the whole prolouge and epilogue
 - [x] Leave out the function prolouge and epilouge and add them during code emission
@@ -290,13 +331,14 @@ There are a few ways to handle prolouge and epilogue:
 In TACKY, we introduced temporary variables, which is likely to appear a lot in the program.
 How can we represent those variables in Assembly while we only have a limited set of registers?<br>
 We'll add one more type of operand in Assembly: Pseudoregister (Pseudo).<br>
-As its name, pseudoregisters are to help us not worry about the resources of registers we have, and focus on how 
-instructions are converted from TAC IR to Assembly. 
+As its name, pseudoregisters are to help us not worry about the resources of registers we have, and focus on how
+instructions are converted from TAC IR to Assembly.
 In Part III, we'll implement a way to allocate as many available registers as possible; for now
 each pseudoregister (from temporary variable in TAC) is assigned with a stack memory.<br>
 And how do we represent stack memory? We also add one more type of operand: Stack
 
 ### Assembly
+
 <pre><code>program = Program(function_definition)
 function_definition = Function(identifier name, instruction* instructions)
 instruction = Mov(operand src, operand dst)
@@ -309,45 +351,50 @@ operand = Imm(int) <strong>| Reg(reg) | Pseudo(identifier) | Stack(int)</strong>
 
 #### Converting Top-Level TACKY Constructs to Assembly
 
-| TACKY top-level construct | Assembly top-level construct |
-| -------- | ------------------ |
-| Program(function_definition) | Program(function_definition) | 
+| TACKY top-level construct    | Assembly top-level construct |
+| ---------------------------- | ---------------------------- |
+| Program(function_definition) | Program(function_definition) |
 | Function(name, instructions) | Function(name, instructions) |
 
 #### Converting TACKY Instructions to Assembly
 
-| TACKY instruction | Assembly instructions |
-| -------- | ------------------ |
-| Return(val) | Mov(val, Reg(AX))<br>Ret| 
-| Unary(unary_operator, src, dst) | Mov(src, dst)<br>Unary(unary_operator, dst)  |
+| TACKY instruction               | Assembly instructions                       |
+| ------------------------------- | ------------------------------------------- |
+| Return(val)                     | Mov(val, Reg(AX))<br>Ret                    |
+| Unary(unary_operator, src, dst) | Mov(src, dst)<br>Unary(unary_operator, dst) |
 
 #### Converting TACKY Arithmetic Operators to Assembly
 
 | TACKY operator | Assembly operator |
-| -------- | ------------------ |
-| Complement | Not | 
-| Negate | Neg  |
+| -------------- | ----------------- |
+| Complement     | Not               |
+| Negate         | Neg               |
 
 #### Converting TACKY Operands to Assembly
 
-| TACKY operand | Assembly operand |
-| -------- | ------------------ |
-| Constant(int) | Imm(int) | 
+| TACKY operand   | Assembly operand   |
+| --------------- | ------------------ |
+| Constant(int)   | Imm(int)           |
 | Var(identifier) | Pseudo(identifier) |
 
 ### Replacing Pseudoregisters
-- For each pseudoregister, we subtract 4 bytes (we only support int datatype now) from the stack. 
-- We'll need a map from identifiers to stack offsets. 
+
+- For each pseudoregister, we subtract 4 bytes (we only support int datatype now) from the stack.
+- We'll need a map from identifiers to stack offsets.
 - And this compiler pass should also return the total stack offset so we can allocate enough stack space for local variables.
 
 ### Fixing Up Instructions
+
 - We'll insert AllocateStack instruction at the beginning of the instructions list in the function_definition.
-- Fix Mov instructions which have both src and dst as Stack operands. 
-So this instruction 
+- Fix Mov instructions which have both src and dst as Stack operands.
+  So this instruction
+
 ```
 movl	-4(%rbp), -8(%rbp)
 ```
+
 is fixed up into:
+
 ```
 movl	-4(%rbp), %r10d
 movl 	%r10d, -8(%rbp)
@@ -355,51 +402,52 @@ movl 	%r10d, -8(%rbp)
 
 ## Code Emission
 
-####  Formatting Top-Level Assembly Constructs
+#### Formatting Top-Level Assembly Constructs
 
-| Assembly top-level construct | Ouput |
-| --------------------- | ------------ |
-| Program(function_definition) |  Printout the function definition <br> On Linux, add at the end of file <br> nbsp;&&nbsp;&nbsp;&nbsp;*.section .note.GNU-stack,"",@progbits* | 
+| Assembly top-level construct | Ouput                                                                                                                                                                                                                          |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Program(function_definition) | Printout the function definition <br> On Linux, add at the end of file <br> nbsp;&&nbsp;&nbsp;&nbsp;_.section .note.GNU-stack,"",@progbits_                                                                                    |
 | Function(name, instructions) | &nbsp;&nbsp;&nbsp;&nbsp;.globl \<name> <br> \<name>: <br> &nbsp;&nbsp;&nbsp;&nbsp;push&nbsp;&nbsp;&nbsp;&nbsp;%rbp<br>&nbsp;&nbsp;&nbsp;&nbsp;movq&nbsp;&nbsp;&nbsp;&nbsp;%rsp,%rbp<br>&nbsp;&nbsp;&nbsp;&nbsp;\<instructions> |
 
-####  Formatting Assembly Instructions
+#### Formatting Assembly Instructions
 
-| Assembly instruction | Output |
-| ------------------ | --------- |
-| Mov(src, dst) | movl&nbsp;&nbsp;&nbsp;&nbsp;\<src>, \<dst> |
-| Ret | ret |
-| Unary(unary_operator, operand) | \<unary_operator>&nbsp;&nbsp;&nbsp;&nbsp;\<operand>|
-| AllocateStack(int) | subq&nbsp;&nbsp;&nbsp;&nbsp;$\<int>, %rsp |
+| Assembly instruction           | Output                                              |
+| ------------------------------ | --------------------------------------------------- |
+| Mov(src, dst)                  | movl&nbsp;&nbsp;&nbsp;&nbsp;\<src>, \<dst>          |
+| Ret                            | ret                                                 |
+| Unary(unary_operator, operand) | \<unary_operator>&nbsp;&nbsp;&nbsp;&nbsp;\<operand> |
+| AllocateStack(int)             | subq&nbsp;&nbsp;&nbsp;&nbsp;$\<int>, %rsp           |
 
-####  Formatting Names for Assembly Operators
+#### Formatting Names for Assembly Operators
 
 | Assembly operator | Instruction name |
-| ------------------ | --------- |
-| Neg | negl |
-| Not | notl | 
+| ----------------- | ---------------- |
+| Neg               | negl             |
+| Not               | notl             |
 
-####  Formatting Assembly Operands
+#### Formatting Assembly Operands
 
-| Assembly operand | Output |
-| ------------------ | --------- |
-| Reg(AX) | %eax |
-| Reg(R10) | %r10d |
-| Stack(int) | <int>(%rbp) |
-| Imm(int) | $\<int> | 
+| Assembly operand | Output      |
+| ---------------- | ----------- |
+| Reg(AX)          | %eax        |
+| Reg(R10)         | %r10d       |
+| Stack(int)       | <int>(%rbp) |
+| Imm(int)         | $\<int>     |
 
 ## Summary
-We added one more stage in the compiler: TACKY, our name for TAC IR. 
 
+We added one more stage in the compiler: TACKY, our name for TAC IR.
 
 ## Additional Resources
 
 **Two's Complement:**
+
 - [“Two’s Complement”](https://www.cs.cornell.edu/~tomf/notes/cps104/twoscomp.html)
 - [Chapter 2 of The Elements of Computing Systems](https://www.nand2tetris.org/course)
 
-### Reference implementation Analysis
-[Chapter 2 Code Analysis](./code_analysis/chapter_2.md)
+### Reference Implementation Analysis
 
+[Chapter 2 Code Analysis](./code_analysis/chapter_2.md)
 
 ---
 
@@ -408,26 +456,27 @@ We added one more stage in the compiler: TACKY, our name for TAC IR.
 ### Stages of a Compiler
 
 1. **Lexer**
-    - Input: Source code (program.c)
-    - Output: Token list
+   - Input: Source code (program.c)
+   - Output: Token list
 2. **Parser**
-    - Input: Token list
-    - Output: Abstract Syntax Tree (AST)
+   - Input: Token list
+   - Output: Abstract Syntax Tree (AST)
 3. **TACKY Generation**
-	- Input: AST
-	- Output: TAC IR (Tacky)
+   - Input: AST
+   - Output: TAC IR (Tacky)
 4. **Assembly Generation**
-    - Input: Tacky
-    - Output: Assembly code
-	- Passes:
-		1. Converting TACKY to Assembly
-		2. Replacing pseudoregisters
-		3. Instruction fix-up
+   - Input: Tacky
+   - Output: Assembly code
+   - Passes:
+     1. Converting TACKY to Assembly
+     2. Replacing pseudoregisters
+     3. Instruction fix-up
 5. **Code Emission**
-    - Input: Assembly code
-    - Output: Final assembly file 
+   - Input: Assembly code
+   - Output: Final assembly file
 
 In this chapter, we'll add support for 5 binary operators:
+
 - Addition
 - Subtraction
 - Multiplication
@@ -442,16 +491,17 @@ New tokens to recognize
 | Token | Regular expression |
 | ------- | -------------------- |
 | Plus | + |
-| Star | * |
+| Star | \* |
 | Slash | / |
 | Percent | / |
 
-We already added HYPHEN for *-* operator in the previous chapter.
+We already added HYPHEN for _-_ operator in the previous chapter.
 The lexing stage doens't need to know the role of the token in grammar.
 
 ## The Parser
 
 ### AST
+
 <pre><code>program = Program(function_definition)
 function_definition = Function(identifier name, statement body)
 statement = Return(exp)
@@ -463,30 +513,37 @@ unary_operator = Complement | Negate
 
 Designing grammar for binary operators in Recursive Descent Parser is tricky.
 Let's say we could naively add the grammar of binary operators in expression like the following:
+
 ```
 <exp> ::= <int> | <unop> <exp> | <exp> <binop> <exp>
 ```
+
 This wouldn't work. Why?
+
 - Parsing expression `1 + 2 * 3` would become ambigious as we do not specify we should parse them as `(1 + 2) * 3` or `1 + (2 * 3)`
 - It's a left-recursive rule, and in Recursive Descent Parser, we'll be in an unbounded recursion.
 
-There are 2 ways to solve this: 
+There are 2 ways to solve this:
+
 - Refactor our grammar to use pure Recursive Descent Parser.
 - Mix Precedence Climbing into Recurisve Descent Parser.
 
 Let's find out which one to use in our project!
 
 ### Refactoring the Grammar
+
 ```
 <exp> ::= <term> {("+"|"-") <term>}
 <term> ::= <factor> {("*"|"/"|"%") <factor}
 <factor> ::= <int> | <unop> <factor> | "(" <exp> ")"
 ```
+
 The precedence of operators are represented in the level of non-terminals.
-An expression involves only + and -, so they have the lowest precedence. 
+An expression involves only + and -, so they have the lowest precedence.
 A term only involves \*, / and %, and they have higher precedence level than expression.
 
-For our problem about, without any parantehesis,  `1 + 2 * 3`, it's parsed as following:
+For our problem about, without any parantehesis, `1 + 2 * 3`, it's parsed as following:
+
 ```
 Step 1. <term> + <term>
 Step 2. <factor> + (<factor> <factor>)
@@ -494,12 +551,13 @@ Step 3. <int> + (<int> * <int>)
 ```
 
 This works, but what if we have more operators with more levels of precedence? We'll then need to design several non-terminals for each level.
-And modifying grammar each time means we also have to modify our parsing functions. That's a lot of work to do. 
+And modifying grammar each time means we also have to modify our parsing functions. That's a lot of work to do.
 How about **Precedence Climbing**?
 
 ### Precedence Climbing
 
 ### EBNF
+
 <pre><code>&lt;program&gt; ::= &lt;function&gt;
 &lt;function&gt; ::= "int" &lt;identifier&gt; "(" "void" ")" "{" &lt;statement&gt; "}"
 &lt;statement&gt; ::= "return" &lt;exp&gt; ";"
@@ -510,12 +568,11 @@ How about **Precedence Climbing**?
 &lt;identifier&gt; ::= ? An identifier token ?
 &lt;int&gt; ::= ? A constant token ?</pre></code>
 
-
 ### Parser
 
 Unary operators and inner expression in parentheses have higher precedence level than binary operators, so they are in deeper non-terminal.
-The previous parse_exp function will now become parse_factor, with almost no changes, except for we call parse_factor for inner_exp in Unary as 
-unary expressions don't accept rules like `-1 + 2`. 
+The previous parse_exp function will now become parse_factor, with almost no changes, except for we call parse_factor for inner_exp in Unary as
+unary expressions don't accept rules like `-1 + 2`.
 
 ```
 parse_factor(tokens):
@@ -534,9 +591,9 @@ parse_factor(tokens):
 	else:
 		fail("Malformed factor")
 ```
+
 If we call parse_exp for inner_exp of unary, we'll parse `-1 + 2` as `-(1 + 2)`. Wrong! So calling parse_factor makes sure that
 `-1 + 2` is parsed as `(-1) + 2`. Factor does have rules for "(" <exp> ")", so if the input is `-(1 + 2)`, it's still correct.
-
 
 For the binary operators themselves, we assign precedence value to each of them and perform the following parsing:
 
@@ -544,31 +601,32 @@ For the binary operators themselves, we assign precedence value to each of them 
 parse_exp(tokens, min_prec):
 	left = parse_factor(tokens)
 	next_token = peek(tokens)
-	
+
 	while next_token is a binary operator and precedence(next_token) >= min_prec:
 		operator = parse_binop(tokens)
 		right = parse_exp(tokens, precedence(next_token) + 1)
 		left = Binary(operator, left, right)
 		next_token = peek(tokens)
-		
+
 	return left
 ```
 
 ### Precedence Values of Binary Operators
 
 | Operator | Precedence |
-| -------- | ---------- | 
-| \* | 50 |
-| / | 50 |
-| % | 50 |
-| + | 45 |
-| - | 45 |
+| -------- | ---------- |
+| \*       | 50         |
+| /        | 50         |
+| %        | 50         |
+| +        | 45         |
+| -        | 45         |
 
 The values don't matter as long as higher precedence operators have higher values.
 
 ## TACKY Generation
 
 ### TACKY
+
 <pre><code>
 program = Program(function_definition)
 function_definition = Function(identifier, instruction* body)
@@ -581,6 +639,7 @@ unary_operator = Complement | Negate
 </pre></code>
 
 ### Generating TACKY
+
 ```
 emit_tacky(e, instructions):
 	match e with
@@ -595,10 +654,11 @@ emit_tacky(e, instructions):
 		return dst
 ```
 
-***Notes:***
+**_Notes:_**
 In C standard, subexpressions of e1 and e2 are usually unsequenced. They can be evaluated in any order.
 
 ## Assembly Generation
+
 We need new instructions to represent binary operators in Assembly.
 For add, subtract, multiply, they have the same form:
 
@@ -607,17 +667,20 @@ op	src, dst
 ```
 
 However, divide and remainder don't follow the same form as we're dealing with dividend, divisor, quotient and remainder.
-We need to sign extend the *src* into rdx:rax before performing the division using `cdq` instruction.
+We need to sign extend the _src_ into rdx:rax before performing the division using `cdq` instruction.
 So to compute 9 / 2, we do:
+
 ```
 movl	$2, -4(%rbp)
 movl	$9, %eax
 cdq
 idivl 	-4(%rbp)
 ```
+
 The quotient is stored in eax and the remainder is stored in edx.
 
 ### Assembly
+
 <pre><code>program = Program(function_definition)
 function_definition = Function(identifier name, instruction* instructions)
 instruction = Mov(operand src, operand dst)
@@ -634,74 +697,83 @@ reg = AX | <strong>DX</strong> | R10 | <strong>R11</strong></pre></code>
 
 #### Converting Top-Level TACKY Constructs to Assembly
 
-| TACKY top-level construct | Assembly top-level construct |
-| -------- | ------------------ |
-| Program(function_definition) | Program(function_definition) | 
+| TACKY top-level construct    | Assembly top-level construct |
+| ---------------------------- | ---------------------------- |
+| Program(function_definition) | Program(function_definition) |
 | Function(name, instructions) | Function(name, instructions) |
 
 #### Converting TACKY Instructions to Assembly
 
-| TACKY instruction | Assembly instructions |
-| -------- | ------------------ |
-| Return(val) | Mov(val, Reg(AX))<br>Ret| 
-| Unary(unary_operator, src, dst) | Mov(src, dst)<br>Unary(unary_operator, dst)  |
-| **Binary(Divide, src1, src2, dst)** | **Mov(src1, Reg(AX))<br>Cdq<br>Idiv(src2)<br>Mov(Reg(AX), dst)** |
-| **Binary(Remainder, src1, src2, dst)** | **Mov(src1, Reg(AX))<br>Cdq<br>Idiv(src2)<br>Mov(Reg(DX), dst)** |
-| **Binary(binary_operator, src1, src2, dst)** | **Mov(src1, dst)<br>Binary(binary_operator, src2, dst)** |
-
+| TACKY instruction                            | Assembly instructions                                            |
+| -------------------------------------------- | ---------------------------------------------------------------- |
+| Return(val)                                  | Mov(val, Reg(AX))<br>Ret                                         |
+| Unary(unary_operator, src, dst)              | Mov(src, dst)<br>Unary(unary_operator, dst)                      |
+| **Binary(Divide, src1, src2, dst)**          | **Mov(src1, Reg(AX))<br>Cdq<br>Idiv(src2)<br>Mov(Reg(AX), dst)** |
+| **Binary(Remainder, src1, src2, dst)**       | **Mov(src1, Reg(AX))<br>Cdq<br>Idiv(src2)<br>Mov(Reg(DX), dst)** |
+| **Binary(binary_operator, src1, src2, dst)** | **Mov(src1, dst)<br>Binary(binary_operator, src2, dst)**         |
 
 #### Converting TACKY Arithmetic Operators to Assembly
 
 | TACKY operator | Assembly operator |
-| -------- | ------------------ |
-| Complement | Not | 
-| Negate | Neg  |
-| **Add** | **Add**  |
-| **Subtract** | **Sub**  |
-| **Multiply** | **Mult** |
+| -------------- | ----------------- |
+| Complement     | Not               |
+| Negate         | Neg               |
+| **Add**        | **Add**           |
+| **Subtract**   | **Sub**           |
+| **Multiply**   | **Mult**          |
 
 #### Converting TACKY Operands to Assembly
 
-| TACKY operand | Assembly operand |
-| -------- | ------------------ |
-| Constant(int) | Imm(int) | 
+| TACKY operand   | Assembly operand   |
+| --------------- | ------------------ |
+| Constant(int)   | Imm(int)           |
 | Var(identifier) | Pseudo(identifier) |
 
 ### Replacing Pseudoregisters
-We added two instruction that have operands: *Binary* and *Idiv*.
+
+We added two instruction that have operands: _Binary_ and _Idiv_.
 Treat them like Mov, Unary.
 
 ### Fixing Up Instructions
 
-The *idiv* can't take a constant operand, so we copy the constant into our scratch register R10.
+The _idiv_ can't take a constant operand, so we copy the constant into our scratch register R10.
 
-So this instruction 
+So this instruction
+
 ```
 idivl	$3
 ```
+
 is fixed up into:
+
 ```
 movl 	$3, %r10d
 idivl	%r10d
 ```
 
-The *add* and *sub* instructions cannot memory addresses as both operands, similar to the *mov* instruction.
+The _add_ and _sub_ instructions cannot memory addresses as both operands, similar to the _mov_ instruction.
 From this:
+
 ```
 addl	-4(%rbp), -8(%rbp)
 ```
+
 is fixedup into:
+
 ```
 movl 	-4(%rbp), %r10d
 addl	%r10d, -8(%rbp)
 ```
 
-The *imul* instruction cannot use memory address as its destination. We'll dedicate R11 to fix up destination, also for later chapters.
+The _imul_ instruction cannot use memory address as its destination. We'll dedicate R11 to fix up destination, also for later chapters.
 From this:
+
 ```
 imull 	$3, -4(%rbp)
 ```
+
 to this:
+
 ```
 movl 	-4(%rbp), %r11d
 imull 	$3, %r11d
@@ -710,48 +782,50 @@ movl 	%r11d, -4(%rbp)
 
 ## Code Emission
 
-####  Formatting Top-Level Assembly Constructs
+#### Formatting Top-Level Assembly Constructs
 
-| Assembly top-level construct | Ouput |
-| --------------------- | ------------ |
-| Program(function_definition) |  Printout the function definition <br> On Linux, add at the end of file <br> nbsp;&&nbsp;&nbsp;&nbsp;*.section .note.GNU-stack,"",@progbits* | 
+| Assembly top-level construct | Ouput                                                                                                                                                                                                                          |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Program(function_definition) | Printout the function definition <br> On Linux, add at the end of file <br> nbsp;&&nbsp;&nbsp;&nbsp;_.section .note.GNU-stack,"",@progbits_                                                                                    |
 | Function(name, instructions) | &nbsp;&nbsp;&nbsp;&nbsp;.globl \<name> <br> \<name>: <br> &nbsp;&nbsp;&nbsp;&nbsp;push&nbsp;&nbsp;&nbsp;&nbsp;%rbp<br>&nbsp;&nbsp;&nbsp;&nbsp;movq&nbsp;&nbsp;&nbsp;&nbsp;%rsp,%rbp<br>&nbsp;&nbsp;&nbsp;&nbsp;\<instructions> |
 
-####  Formatting Assembly Instructions
+#### Formatting Assembly Instructions
 
-| Assembly instruction | Output |
-| ------------------ | --------- |
-| Mov(src, dst) | movl&nbsp;&nbsp;&nbsp;&nbsp;\<src>, \<dst> |
-| Ret | ret |
-| Unary(unary_operator, operand) | \<unary_operator>&nbsp;&nbsp;&nbsp;&nbsp;\<operand>|
+| Assembly instruction                  | Output                                                       |
+| ------------------------------------- | ------------------------------------------------------------ |
+| Mov(src, dst)                         | movl&nbsp;&nbsp;&nbsp;&nbsp;\<src>, \<dst>                   |
+| Ret                                   | ret                                                          |
+| Unary(unary_operator, operand)        | \<unary_operator>&nbsp;&nbsp;&nbsp;&nbsp;\<operand>          |
 | **Binary(binary_operator, src, dst)** | **\<binary_operator>&nbsp;&nbsp;&nbsp;&nbsp;\<src>, \<dst>** |
-| **Idiv(operand)** | **idivl&nbsp;&nbsp;&nbsp;&nbsp;\<operand>** |
-| **Cdq** | **cdq** |
-| AllocateStack(int) | subq&nbsp;&nbsp;&nbsp;&nbsp;$\<int>, %rsp |
+| **Idiv(operand)**                     | **idivl&nbsp;&nbsp;&nbsp;&nbsp;\<operand>**                  |
+| **Cdq**                               | **cdq**                                                      |
+| AllocateStack(int)                    | subq&nbsp;&nbsp;&nbsp;&nbsp;$\<int>, %rsp                    |
 
-####  Formatting Names for Assembly Operators
+#### Formatting Names for Assembly Operators
 
 | Assembly operator | Instruction name |
-| ------------------ | --------- |
-| Neg | negl |
-| Not | notl | 
-| **Add** | **addl** | 
-| **Sub** | **subl** | 
-| **Mult** | **imull** | 
+| ----------------- | ---------------- |
+| Neg               | negl             |
+| Not               | notl             |
+| **Add**           | **addl**         |
+| **Sub**           | **subl**         |
+| **Mult**          | **imull**        |
 
-####  Formatting Assembly Operands
+#### Formatting Assembly Operands
 
-| Assembly operand | Output |
-| ------------------ | --------- |
-| Reg(AX) | %eax |
-| **Reg(DX)** | **%eax** |
-| Reg(R10) | %r10d |
-| **Reg(R11)** | **%r11d** |
-| Stack(int) | <int>(%rbp) |
-| Imm(int) | $\<int> | 
+| Assembly operand | Output      |
+| ---------------- | ----------- |
+| Reg(AX)          | %eax        |
+| **Reg(DX)**      | **%eax**    |
+| Reg(R10)         | %r10d       |
+| **Reg(R11)**     | **%r11d**   |
+| Stack(int)       | <int>(%rbp) |
+| Imm(int)         | $\<int>     |
 
 ## Extra Credit: Bitwise Operators
+
 Bitwise operators are also binary operators. Add support for:
+
 - AND (&)
 - OR (|)
 - XOR (^)
@@ -759,18 +833,21 @@ Bitwise operators are also binary operators. Add support for:
 - Right Shift (>>)
 
 ## Summary
-We've learned to use precedence climbing method to support 5 binary operators. 
+
+We've learned to use precedence climbing method to support 5 binary operators.
 In the next chapter, we'll implement more unary and binary operators upon the foundation we've just created.
 
 ## Additional Resources
 
 **Two's Complement:**
+
 - [Parsing Expressions by Precedence Climbing](https://eli.thegreenplace.net/2012/08/02/parsing-expressions-by-precedence-climbing)
 - [Some Problems of Recursive Descent Parsers](https://eli.thegreenplace.net/2009/03/14/some-problems-of-recursive-descent-parsers)
 - [Pratt Parsing and Precedence Climbing Are the Same Algorithm](https://www.oilshell.org/blog/2016/11/01.html)
 - [Precedence Climbing Is Widely Used](https://www.oilshell.org/blog/2017/03/30.html)
 
-### Reference implementation Analysis
+### Reference Implementation Analysis
+
 [Chapter 3 Code Analysis](./code_analysis/chapter_3.md)
 
 ---
@@ -780,29 +857,30 @@ In the next chapter, we'll implement more unary and binary operators upon the fo
 ### Stages of a Compiler
 
 1. **Lexer**
-    - Input: Source code (program.c)
-    - Output: Token list
+   - Input: Source code (program.c)
+   - Output: Token list
 2. **Parser**
-    - Input: Token list
-    - Output: Abstract Syntax Tree (AST)
+   - Input: Token list
+   - Output: Abstract Syntax Tree (AST)
 3. **TACKY Generation**
-	- Input: AST
-	- Output: TAC IR (Tacky)
+   - Input: AST
+   - Output: TAC IR (Tacky)
 4. **Assembly Generation**
-    - Input: Tacky
-    - Output: Assembly code
-	- Passes:
-		1. Converting TACKY to Assembly
-		2. Replacing pseudoregisters
-		3. Instruction fix-up
+   - Input: Tacky
+   - Output: Assembly code
+   - Passes:
+     1. Converting TACKY to Assembly
+     2. Replacing pseudoregisters
+     3. Instruction fix-up
 5. **Code Emission**
-    - Input: Assembly code
-    - Output: Final assembly file 
+   - Input: Assembly code
+   - Output: Final assembly file
 
 We'll add three logical operators:
+
 - Not (!)
 - And (&&)
-- Or  (\|\|)
+- Or (\|\|)
 
 and relational operators: ==, !=, < , > , <=, >=
 
@@ -820,7 +898,6 @@ New tokens to recognize
 | GreaterThan | > |
 | LessOrEqual | <= |
 | GreaterOrEqual | >= |
-
 
 ## The Parser
 
@@ -840,25 +917,25 @@ binary_operator = Add | Subtract | Multiply | Divide | Remainder <strong>| And |
 ### Parser
 
 First, update parse_factor to handle the new ! operator, which should be parsed the similarly to Negate and Complement.
-Then, update parse_exp to handle new binary operators. 
+Then, update parse_exp to handle new binary operators.
 
 ### Precedence Values of Binary Operators
 
 | Operator | Precedence |
-| -------- | ---------- | 
-| \* | 50 |
-| / | 50 |
-| % | 50 |
-| + | 45 |
-| - | 45 |
-| < | 35 |
-| <= | 35 |
-| > | 35 |
-| >= | 35 |
-| == | 30 |
-| != | 30 |
-| && | 10 |
-| \|\| | 5 |
+| -------- | ---------- |
+| \*       | 50         |
+| /        | 50         |
+| %        | 50         |
+| +        | 45         |
+| -        | 45         |
+| <        | 35         |
+| <=       | 35         |
+| >        | 35         |
+| >=       | 35         |
+| ==       | 30         |
+| !=       | 30         |
+| &&       | 10         |
+| \|\|     | 5          |
 
 This table is spaced enough for other binary operators implemented in Extra Credit section in chapter 3.
 Extend both parse_unop and parse_binop.
@@ -867,9 +944,10 @@ Extend both parse_unop and parse_binop.
 
 Relational operators are converted to TACKY the same way as implemented binary operators.
 However, for && and \|\|, we cannot do this as our TACKY evaluates both expressions in binary, while && and \|\| sometimes allow to skip the 2nd expression.
-That's why we're going to add *unconditional jump* and *conditional jump* to support the two *short-circuit* operators.
+That's why we're going to add _unconditional jump_ and _conditional jump_ to support the two _short-circuit_ operators.
 
 ### TACKY
+
 <pre><code>
 program = Program(function_definition)
 function_definition = Function(identifier, instruction* body)
@@ -889,7 +967,7 @@ binary_operator = Add | Subtract | Mulitply | Divide | Remainder <strong>| Equal
 
 - **Jump** instruction works in goto in C.
 - **JumpIfZero** evaluates the condition, if condition is 0, then jump to the target, skip to the next instruction otherwise.
-- **JumpIfNotZero** does the opposite to the *JumpIfZero*
+- **JumpIfNotZero** does the opposite to the _JumpIfZero_
 - **Copy** to move 1, or 0 based on the results of && and ||, into a destination
 
 ### Generating TACKY
@@ -897,6 +975,7 @@ binary_operator = Add | Subtract | Mulitply | Divide | Remainder <strong>| Equal
 **Convert Short-Circuiting Operators to TACKY**
 
 For &&
+
 ```
 <instructions for e1>
 v1 = <result of e1>
@@ -923,6 +1002,7 @@ It's ok if our autogenerated labels conflict with user-defined names, we'll mang
 ## Assembly Generation
 
 ### Assembly
+
 <pre><code>program = Program(function_definition)
 function_definition = Function(identifier name, instruction* instructions)
 instruction = Mov(operand src, operand dst)
@@ -948,78 +1028,86 @@ We do the same for Set instructions.
 
 #### Converting Top-Level TACKY Constructs to Assembly
 
-| TACKY top-level construct | Assembly top-level construct |
-| -------- | ------------------ |
-| Program(function_definition) | Program(function_definition) | 
+| TACKY top-level construct    | Assembly top-level construct |
+| ---------------------------- | ---------------------------- |
+| Program(function_definition) | Program(function_definition) |
 | Function(name, instructions) | Function(name, instructions) |
 
 #### Converting TACKY Instructions to Assembly
 
-| TACKY instruction | Assembly instructions |
-| -------- | ------------------ |
-| Return(val) | Mov(val, Reg(AX))<br>Ret| 
-| Unary(unary_operator, src, dst) | Mov(src, dst)<br>Unary(unary_operator, dst) |
-| **Unary(Not, src, dst)** | **Cmp(Imm(0), src)<br>Mov(Imm(0), dst)<br>SetCC(E, dst)** |
-| Binary(Divide, src1, src2, dst) | Mov(src1, Reg(AX))<br>Cdq<br>Idiv(src2)<br>Mov(Reg(AX), dst) |
-| Binary(Remainder, src1, src2, dst) | Mov(src1, Reg(AX))<br>Cdq<br>Idiv(src2)<br>Mov(Reg(DX), dst) |
-| Binary(binary_operator, src1, src2, dst) | Mov(src1, dst)<br>Binary(binary_operator, src2, dst) |
+| TACKY instruction                                | Assembly instructions                                                      |
+| ------------------------------------------------ | -------------------------------------------------------------------------- |
+| Return(val)                                      | Mov(val, Reg(AX))<br>Ret                                                   |
+| Unary(unary_operator, src, dst)                  | Mov(src, dst)<br>Unary(unary_operator, dst)                                |
+| **Unary(Not, src, dst)**                         | **Cmp(Imm(0), src)<br>Mov(Imm(0), dst)<br>SetCC(E, dst)**                  |
+| Binary(Divide, src1, src2, dst)                  | Mov(src1, Reg(AX))<br>Cdq<br>Idiv(src2)<br>Mov(Reg(AX), dst)               |
+| Binary(Remainder, src1, src2, dst)               | Mov(src1, Reg(AX))<br>Cdq<br>Idiv(src2)<br>Mov(Reg(DX), dst)               |
+| Binary(binary_operator, src1, src2, dst)         | Mov(src1, dst)<br>Binary(binary_operator, src2, dst)                       |
 | **Binary(relational_operator, src1, src2, dst)** | **Cmp(src1, src2)<br>Mov(Imm(0), dst)<br>SetCC(relational_operator, dst)** |
-| **Jump(target)** | **Jmp(target)** |
-| **JumpIfZero(condition, target)** | **Cmp(Imm(0), condition)<br>SetCC(E, target)** |
-| **JumpIfNotZero(condition, target)** | **Cmp(Imm(0), condition)<br>SetCC(NE, target)** |
-| **Copy(src, dst)** | **Mov(src, dst)** |
-| **Label(identifier)** | **Label(identifier)** |
+| **Jump(target)**                                 | **Jmp(target)**                                                            |
+| **JumpIfZero(condition, target)**                | **Cmp(Imm(0), condition)<br>SetCC(E, target)**                             |
+| **JumpIfNotZero(condition, target)**             | **Cmp(Imm(0), condition)<br>SetCC(NE, target)**                            |
+| **Copy(src, dst)**                               | **Mov(src, dst)**                                                          |
+| **Label(identifier)**                            | **Label(identifier)**                                                      |
 
 #### Converting TACKY Arithmetic Operators to Assembly
 
 | TACKY operator | Assembly operator |
-| -------- | ------------------ |
-| Complement | Not | 
-| Negate | Neg  |
-| Add | Add  |
-| Subtract | Sub  |
-| Multiply | Mult |
+| -------------- | ----------------- |
+| Complement     | Not               |
+| Negate         | Neg               |
+| Add            | Add               |
+| Subtract       | Sub               |
+| Multiply       | Mult              |
 
 #### Converting TACKY Comparisons to Assembly
-| TACKY comparison | Assembly condition code |
-| -------- | ------------------ |
-| **Equal** | **E** | 
-| **NotEqual** | **NE**  |
-| **LessThan** | **L**  |
-| **LessOrEqual** | **LE**  |
-| **GreaterThan** | **G** |
-| **GreaterOrEqual** | **GE** |
+
+| TACKY comparison   | Assembly condition code |
+| ------------------ | ----------------------- |
+| **Equal**          | **E**                   |
+| **NotEqual**       | **NE**                  |
+| **LessThan**       | **L**                   |
+| **LessOrEqual**    | **LE**                  |
+| **GreaterThan**    | **G**                   |
+| **GreaterOrEqual** | **GE**                  |
 
 #### Converting TACKY Operands to Assembly
 
-| TACKY operand | Assembly operand |
-| -------- | ------------------ |
-| Constant(int) | Imm(int) | 
+| TACKY operand   | Assembly operand   |
+| --------------- | ------------------ |
+| Constant(int)   | Imm(int)           |
 | Var(identifier) | Pseudo(identifier) |
 
 ### Replacing Pseudoregisters
-We added two instruction that have operands: *Cmp* and *SetCC*.
+
+We added two instruction that have operands: _Cmp_ and _SetCC_.
 Update this pass to replace any pseudoregisters used in these.
 
 ### Fixing Up Instructions
 
-The *cmp* instructions, like *mov*, *add* and *sub*, cannot have memory addresses for both operands.
+The _cmp_ instructions, like _mov_, _add_ and _sub_, cannot have memory addresses for both operands.
 So the instruction
+
 ```
 cmpl	-4(%rbp), -8(%rbp)
 ```
+
 is fixed up into
+
 ```
 movl 	-4(%bp), %r10d
 cmpl	%r10d, -8(%rbp)
 ```
 
-Also, *cmp*, similarly to *sub*, cannot have destination as constant.
+Also, _cmp_, similarly to _sub_, cannot have destination as constant.
 The instruction:
+
 ```
 cmpl	%eax, $5
 ```
+
 is fixed up into
+
 ```
 movl 	%5, %r11d
 cmpl	%eax, %r11d
@@ -1030,83 +1118,85 @@ From the convention of the previous chapter, we use R10 to fix the first operand
 ## Code Emission
 
 As mentioned in the TACKY stage, we'll mangle the conflicts between labels and user-defined identifiers by adding local prefix to our labels.
-The prefix is .L on linux and L on MacOS. 
+The prefix is .L on linux and L on MacOS.
 
-####  Formatting Top-Level Assembly Constructs
+#### Formatting Top-Level Assembly Constructs
 
-| Assembly top-level construct | Ouput |
-| --------------------- | ------------ |
-| Program(function_definition) |  Printout the function definition <br> On Linux, add at the end of file <br> &nbsp;&nbsp;&nbsp;&nbsp;*.section .note.GNU-stack,"",@progbits* | 
+| Assembly top-level construct | Ouput                                                                                                                                                                                                                          |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Program(function_definition) | Printout the function definition <br> On Linux, add at the end of file <br> &nbsp;&nbsp;&nbsp;&nbsp;_.section .note.GNU-stack,"",@progbits_                                                                                    |
 | Function(name, instructions) | &nbsp;&nbsp;&nbsp;&nbsp;.globl \<name> <br> \<name>: <br> &nbsp;&nbsp;&nbsp;&nbsp;push&nbsp;&nbsp;&nbsp;&nbsp;%rbp<br>&nbsp;&nbsp;&nbsp;&nbsp;movq&nbsp;&nbsp;&nbsp;&nbsp;%rsp,%rbp<br>&nbsp;&nbsp;&nbsp;&nbsp;\<instructions> |
 
-####  Formatting Assembly Instructions
+#### Formatting Assembly Instructions
 
-| Assembly instruction | Output |
-| ------------------ | --------- |
-| Mov(src, dst) | movl&nbsp;&nbsp;&nbsp;&nbsp;\<src>, \<dst> |
-| Ret | ret |
-| Unary(unary_operator, operand) | \<unary_operator>&nbsp;&nbsp;&nbsp;&nbsp;\<operand>|
+| Assembly instruction              | Output                                                   |
+| --------------------------------- | -------------------------------------------------------- |
+| Mov(src, dst)                     | movl&nbsp;&nbsp;&nbsp;&nbsp;\<src>, \<dst>               |
+| Ret                               | ret                                                      |
+| Unary(unary_operator, operand)    | \<unary_operator>&nbsp;&nbsp;&nbsp;&nbsp;\<operand>      |
 | Binary(binary_operator, src, dst) | \<binary_operator>&nbsp;&nbsp;&nbsp;&nbsp;\<src>, \<dst> |
-| Idiv(operand) | idivl&nbsp;&nbsp;&nbsp;&nbsp;\<operand> |
-| Cdq | cdq |
-| AllocateStack(int) | subq&nbsp;&nbsp;&nbsp;&nbsp;$\<int>, %rsp |
-| **Cmp(operand, operand)** | **cmpl&nbsp;&nbsp;&nbsp;&nbsp;\<operand>, \<operand>** |
-| **Jmp(label)** | **jmp&nbsp;&nbsp;&nbsp;&nbsp;.L\<label>** |
-| **JmpCC(cond_code, label)** | **j\<cond_code>&nbsp;&nbsp;&nbsp;&nbsp;.L\<label>** |
-| **SetCC(cond_code, operand)** | **set\<cond_code>&nbsp;&nbsp;&nbsp;&nbsp;\<operand>** |
-| **Label(label)** | **.L\<label>:** |
+| Idiv(operand)                     | idivl&nbsp;&nbsp;&nbsp;&nbsp;\<operand>                  |
+| Cdq                               | cdq                                                      |
+| AllocateStack(int)                | subq&nbsp;&nbsp;&nbsp;&nbsp;$\<int>, %rsp                |
+| **Cmp(operand, operand)**         | **cmpl&nbsp;&nbsp;&nbsp;&nbsp;\<operand>, \<operand>**   |
+| **Jmp(label)**                    | **jmp&nbsp;&nbsp;&nbsp;&nbsp;.L\<label>**                |
+| **JmpCC(cond_code, label)**       | **j\<cond_code>&nbsp;&nbsp;&nbsp;&nbsp;.L\<label>**      |
+| **SetCC(cond_code, operand)**     | **set\<cond_code>&nbsp;&nbsp;&nbsp;&nbsp;\<operand>**    |
+| **Label(label)**                  | **.L\<label>:**                                          |
 
 **Notes**:
-- *jmp* and *.L\<label>* don't have size suffixes as they don't take operands.
-- *jmpcc* and *setcc* do need suffixes to indicate the size of the condition they test.
 
-####  Formatting Names for Assembly Operators
+- _jmp_ and _.L\<label>_ don't have size suffixes as they don't take operands.
+- _jmpcc_ and _setcc_ do need suffixes to indicate the size of the condition they test.
+
+#### Formatting Names for Assembly Operators
 
 | Assembly operator | Instruction name |
-| ------------------ | --------- |
-| Neg | negl |
-| Not | notl | 
-| Add | addl | 
-| Sub | subl | 
-| Mult | imull | 
+| ----------------- | ---------------- |
+| Neg               | negl             |
+| Not               | notl             |
+| Add               | addl             |
+| Sub               | subl             |
+| Mult              | imull            |
 
 **Instruction Suffixes for Condition Codes**
 
 | Condition code | Instruction suffix |
-| ------------------ | --------- |
-| **E** | **e** |
-| **NE** | **ne** | 
-| **L** | **l** | 
-| **LE** | **le** | 
-| **G** | **g** | 
-| **GE** | **ge** | 
+| -------------- | ------------------ |
+| **E**          | **e**              |
+| **NE**         | **ne**             |
+| **L**          | **l**              |
+| **LE**         | **le**             |
+| **G**          | **g**              |
+| **GE**         | **ge**             |
 
-####  Formatting Assembly Operands
+#### Formatting Assembly Operands
 
-| Assembly operand | Output |
-| ------------------ | --------- |
-| Reg(AX) 4-byte | %eax |
-| **Reg(AX) 1-byte** | **%al**|
-| Reg(DX) 4-byte | %eax |
-| **Reg(DX) 1-byte** | **%dl** |
-| Reg(R10) 4-byte | %r10d |
-| **Reg(R10) 1-byte** | **%r10b** |
-| Reg(R11) 4-byte | %r11d |
-| **Reg(R11) 1-byte** | **%r11b** |
-| Stack(int) | <int>(%rbp) |
-| Imm(int) | $\<int> | 
-
+| Assembly operand    | Output      |
+| ------------------- | ----------- |
+| Reg(AX) 4-byte      | %eax        |
+| **Reg(AX) 1-byte**  | **%al**     |
+| Reg(DX) 4-byte      | %eax        |
+| **Reg(DX) 1-byte**  | **%dl**     |
+| Reg(R10) 4-byte     | %r10d       |
+| **Reg(R10) 1-byte** | **%r10b**   |
+| Reg(R11) 4-byte     | %r11d       |
+| **Reg(R11) 1-byte** | **%r11b**   |
+| Stack(int)          | <int>(%rbp) |
+| Imm(int)            | $\<int>     |
 
 ## Summary
+
 Relational and short-circuiting operators are important to let programs branch and make decisions.
-The implementation of this step is a foundation for our *if* statement and loops later chapters.
+The implementation of this step is a foundation for our _if_ statement and loops later chapters.
 
 ## Additional Resources
 
 - [A Guide to Undefined Behavior in C and C++, Part 1](https://blog.regehr.org/archives/213)
 - [With Undefined Behavior, Anything Is Possible](https://raphlinus.github.io/programming/rust/2018/08/17/undefined-behavior.html)
 
-### Reference implementation Analysis
+### Reference Implementation Analysis
+
 [Chapter 4 Code Analysis](./code_analysis/chapter_4.md)
 
 ---
@@ -1116,36 +1206,36 @@ The implementation of this step is a foundation for our *if* statement and loops
 ## Stages of a Compiler
 
 1. **Lexer**
-    - Input: Source code (program.c)
-    - Output: Token list
+   - Input: Source code (program.c)
+   - Output: Token list
 2. **Parser**
-    - Input: Token list
-    - Output: Abstract Syntax Tree (AST)
+   - Input: Token list
+   - Output: Abstract Syntax Tree (AST)
 3. **Semantic Analysis**
-    - Input: AST
-    - Output: Transformed AST
-	- Passes:
-		1. Variable resolution
+   - Input: AST
+   - Output: Transformed AST
+   - Passes:
+     1. Variable resolution
 4. **TACKY Generation**
-    - Input: Transformed AST
-    - Output: TAC IR (Tacky)
+   - Input: Transformed AST
+   - Output: TAC IR (Tacky)
 5. **Assembly Generation**
-    - Input: Tacky
-    - Output: Assembly code
-    - Passes:
-        1. Converting TACKY to Assembly
-        2. Replacing pseudoregisters
-        3. Instruction fix-up
+   - Input: Tacky
+   - Output: Assembly code
+   - Passes:
+     1. Converting TACKY to Assembly
+     2. Replacing pseudoregisters
+     3. Instruction fix-up
 6. **Code Emission**
-    - Input: Assembly code
-    - Output: Final assembly file 
+   - Input: Assembly code
+   - Output: Final assembly file
 
 In this chapter, we'll add assignment, support local variables in C. Thus, we introduce a new stage in our compiler: Semantic analysis.
 
 A variable declaration consists of the variable's type, name and optional expression (intializer to specify initial value).<br>
 Variable assignment is an expression that has side-effect (updating the variable value), and we, most of the time, do not care its resulting value.
 Variable is also an expression type.<br>
-An expression that can appear on the left side of an assignment is called *lvalue*.<br> For now, our only *lvalue* is variable.
+An expression that can appear on the left side of an assignment is called _lvalue_.<br> For now, our only _lvalue_ is variable.
 
 ## The Lexer
 
@@ -1159,6 +1249,7 @@ Variable names are just identifiers, and our lexer has already recognized them.
 ## The Parser
 
 ### AST
+
 <pre><code>program = Program(function_definition)
 function_definition = Function(identifier name, <strong>block_item*</strong> body)
 <strong>block_item = S(statement) | D(declaration)</strong>
@@ -1175,12 +1266,13 @@ binary_operator = Add | Subtract | Multiply | Divide | Remainder | And | Or
                 | GreaterThan | GreaterOrEqual</pre></code>
 
 - Null statement is added in this stage here just because of its simplicity. It has nothing to do with local variables.
-- Declarations are different from statements, so we need a separate node for declarations. 
+- Declarations are different from statements, so we need a separate node for declarations.
 - Statements can finally be compiled and executed when the program runs, while declarations are simply to tell the compiler that some identifiers exist and ready to be used.
 
 We've defined our function to have the body of a single statement. That's changed now. A function body can now contain a list of **block items**. A **block item** can be either a declaration or a statement.
 
 ### EBNF
+
 <pre><code>&lt;program&gt; ::= &lt;function&gt;
 &lt;function&gt; ::= "int" &lt;identifier&gt; "(" "void" ")" "{" <strong>{ &lt;block-item&gt; }</strong> "}"
 <strong>&lt;block-item&gt; ::= &lt;statement&gt; | &lt;declaration&gt;</strong>
@@ -1195,6 +1287,7 @@ We've defined our function to have the body of a single statement. That's change
 &lt;int&gt; ::= ? A constant token ?</pre></code>
 
 ### Parser
+
 ```
 parse_function_definition(tokens):
 	// parse everything up through the open brace as before
@@ -1207,7 +1300,7 @@ parse_function_definition(tokens):
 	return Function(name, function_body)
 ```
 
-To parse_block_item, peek the first token. If it's the *int* keyword, it's a declaration, a statement otherwise.
+To parse*block_item, peek the first token. If it's the \_int* keyword, it's a declaration, a statement otherwise.
 
 Also, our "=" operator is right associative, different from any previous binary operators. Let's update our parse_exp:
 
@@ -1215,7 +1308,7 @@ Also, our "=" operator is right associative, different from any previous binary 
 parse_exp(tokens, min_prec):
 	left = parse_factor(tokens)
 	next_token = peek(tokens)
-	
+
 	while next_token is a binary operator and precedence(next_token) >= min_prec:
 		if next_token is "=":
 			take_token(tokens) // remove "=" from list of tokens
@@ -1232,30 +1325,32 @@ parse_exp(tokens, min_prec):
 ### Precedence Values of Binary Operators
 
 | Operator | Precedence |
-| -------- | ---------- | 
-| \* | 50 |
-| / | 50 |
-| % | 50 |
-| + | 45 |
-| - | 45 |
-| < | 35 |
-| <= | 35 |
-| > | 35 |
-| >= | 35 |
-| == | 30 |
-| != | 30 |
-| && | 10 |
-| \|\| | 5 |
-| **=**  | **1** |
+| -------- | ---------- |
+| \*       | 50         |
+| /        | 50         |
+| %        | 50         |
+| +        | 45         |
+| -        | 45         |
+| <        | 35         |
+| <=       | 35         |
+| >        | 35         |
+| >=       | 35         |
+| ==       | 30         |
+| !=       | 30         |
+| &&       | 10         |
+| \|\|     | 5          |
+| **=**    | **1**      |
 
 **Note**:
+
 - Our Parser allows any expression can be on the left handside of an assignment.
-- Our Semantic Analysis stage will check if the expression is actually a valid *lvalue* expression.
-- We check for the validity of *lvalue* not in Parser but in Semantic Analysis because we will support more complex lvalues later.
+- Our Semantic Analysis stage will check if the expression is actually a valid _lvalue_ expression.
+- We check for the validity of _lvalue_ not in Parser but in Semantic Analysis because we will support more complex lvalues later.
 
 ## Semantic Analysis
 
 ### Variable Resolution
+
 ```
 resolve_declaration(Declaration(name, init), variable_map):
 	if name is in variable_map:
@@ -1278,11 +1373,11 @@ resolve_statement(statement, variable_map):
 ```
 resolve_exp(exp, variable_map):
 	match e with
-	| Assignment(left, right) -> 
+	| Assignment(left, right) ->
 		if left is not a Var node:
 			fail("Invalid lvalue")
 		return Assignment(resolve_exp(left, variable_map), resolve_exp(right, variable_map))
-	| Var(v) -> 
+	| Var(v) ->
 		if v is in variable_map:
 			return Var(variable_map.get(v))
 		else:
@@ -1290,18 +1385,21 @@ resolve_exp(exp, variable_map):
 	| --snip--
 ```
 
-In resolve_exp, for other kinds of expression that are not Assignment nor Var, we simply process any subexpression with resolve_exp. 
+In resolve_exp, for other kinds of expression that are not Assignment nor Var, we simply process any subexpression with resolve_exp.
 Ultimately, this pass should return a transformed AST that uses autogenerated instead of user-defined identifiers.
 
 ### Update compiler driver
+
 Make sure you add a new stage for compiler driver. Let's use **--validate** flag.
 
 ## TACKY Generation
 
 ### TACKY
+
 We don't modify anything in TACKY as it already supports Var and Copy to assign values to Var.
 
 ### Generating TACKY
+
 We'll need to extend the Tacky Generation to support two new expression nodes in AST: Var and Assignment.
 
 ```
@@ -1309,7 +1407,7 @@ emit_tacky(e, instructions):
 	match e with
 	| --snip--
 	| Var(v) -> Var(v)
-	| Assignment(Var(v), rhs) -> 
+	| Assignment(Var(v), rhs) ->
 		result = emit_tacky(rhs, instructions)
 		instructions.append(Copy(result, Var(v)))
 		return Var(v)
@@ -1321,9 +1419,11 @@ For expression statement, we call emit_tacky for the inner expression of the sta
 Emit an extra Return(Constant(0)) to the end of every function. If the function already has a return statement, it won't reach the guard one.
 
 ## Assembly Generation
+
 We do not change our TACKY AST, so Assembly stage stays intact. You can still reference the whole converting below.
 
 ### Assembly
+
 <pre><code>program = Program(function_definition)
 function_definition = Function(identifier name, instruction* instructions)
 instruction = Mov(operand src, operand dst)
@@ -1346,135 +1446,140 @@ reg = AX | DX | R10 | R11</pre></code>
 
 #### Converting Top-Level TACKY Constructs to Assembly
 
-| TACKY top-level construct | Assembly top-level construct |
-| -------- | ------------------ |
-| Program(function_definition) | Program(function_definition) | 
+| TACKY top-level construct    | Assembly top-level construct |
+| ---------------------------- | ---------------------------- |
+| Program(function_definition) | Program(function_definition) |
 | Function(name, instructions) | Function(name, instructions) |
 
 #### Converting TACKY Instructions to Assembly
 
-| TACKY instruction | Assembly instructions |
-| -------- | ------------------ |
-| Return(val) | Mov(val, Reg(AX))<br>Ret| 
-| Unary(unary_operator, src, dst) | Mov(src, dst)<br>Unary(unary_operator, dst) |
-| Unary(Not, src, dst) | Cmp(Imm(0), src)<br>Mov(Imm(0), dst)<br>SetCC(E, dst) |
-| Binary(Divide, src1, src2, dst) | Mov(src1, Reg(AX))<br>Cdq<br>Idiv(src2)<br>Mov(Reg(AX), dst) |
-| Binary(Remainder, src1, src2, dst) | Mov(src1, Reg(AX))<br>Cdq<br>Idiv(src2)<br>Mov(Reg(DX), dst) |
-| Binary(binary_operator, src1, src2, dst) | Mov(src1, dst)<br>Binary(binary_operator, src2, dst) |
+| TACKY instruction                            | Assembly instructions                                                  |
+| -------------------------------------------- | ---------------------------------------------------------------------- |
+| Return(val)                                  | Mov(val, Reg(AX))<br>Ret                                               |
+| Unary(unary_operator, src, dst)              | Mov(src, dst)<br>Unary(unary_operator, dst)                            |
+| Unary(Not, src, dst)                         | Cmp(Imm(0), src)<br>Mov(Imm(0), dst)<br>SetCC(E, dst)                  |
+| Binary(Divide, src1, src2, dst)              | Mov(src1, Reg(AX))<br>Cdq<br>Idiv(src2)<br>Mov(Reg(AX), dst)           |
+| Binary(Remainder, src1, src2, dst)           | Mov(src1, Reg(AX))<br>Cdq<br>Idiv(src2)<br>Mov(Reg(DX), dst)           |
+| Binary(binary_operator, src1, src2, dst)     | Mov(src1, dst)<br>Binary(binary_operator, src2, dst)                   |
 | Binary(relational_operator, src1, src2, dst) | Cmp(src1, src2)<br>Mov(Imm(0), dst)<br>SetCC(relational_operator, dst) |
-| Jump(target) | Jmp(target) |
-| JumpIfZero(condition, target) | Cmp(Imm(0), condition)<br>SetCC(E, target) |
-| JumpIfNotZero(condition, target) | Cmp(Imm(0), condition)<br>SetCC(NE, target) |
-| Copy(src, dst) | Mov(src, dst) |
-| Label(identifier) | Label(identifier) |
+| Jump(target)                                 | Jmp(target)                                                            |
+| JumpIfZero(condition, target)                | Cmp(Imm(0), condition)<br>SetCC(E, target)                             |
+| JumpIfNotZero(condition, target)             | Cmp(Imm(0), condition)<br>SetCC(NE, target)                            |
+| Copy(src, dst)                               | Mov(src, dst)                                                          |
+| Label(identifier)                            | Label(identifier)                                                      |
 
 #### Converting TACKY Arithmetic Operators to Assembly
 
 | TACKY operator | Assembly operator |
-| -------- | ------------------ |
-| Complement | Not | 
-| Negate | Neg  |
-| Add | Add  |
-| Subtract | Sub  |
-| Multiply | Mult |
+| -------------- | ----------------- |
+| Complement     | Not               |
+| Negate         | Neg               |
+| Add            | Add               |
+| Subtract       | Sub               |
+| Multiply       | Mult              |
 
 #### Converting TACKY Comparisons to Assembly
+
 | TACKY comparison | Assembly condition code |
-| -------- | ------------------ |
-| Equal | E | 
-| NotEqual | NE  |
-| LessThan | L  |
-| LessOrEqual | LE  |
-| GreaterThan | G |
-| GreaterOrEqual | GE |
+| ---------------- | ----------------------- |
+| Equal            | E                       |
+| NotEqual         | NE                      |
+| LessThan         | L                       |
+| LessOrEqual      | LE                      |
+| GreaterThan      | G                       |
+| GreaterOrEqual   | GE                      |
 
 #### Converting TACKY Operands to Assembly
 
-| TACKY operand | Assembly operand |
-| -------- | ------------------ |
-| Constant(int) | Imm(int) | 
+| TACKY operand   | Assembly operand   |
+| --------------- | ------------------ |
+| Constant(int)   | Imm(int)           |
 | Var(identifier) | Pseudo(identifier) |
 
 ## Code Emission
+
 Remains unchanged as there are no modifications in the Assembly stage.
 
-####  Formatting Top-Level Assembly Constructs
+#### Formatting Top-Level Assembly Constructs
 
-| Assembly top-level construct | Ouput |
-| --------------------- | ------------ |
-| Program(function_definition) |  Printout the function definition <br> On Linux, add at the end of file <br> &nbsp;&nbsp;&nbsp;&nbsp;*.section .note.GNU-stack,"",@progbits* | 
+| Assembly top-level construct | Ouput                                                                                                                                                                                                                          |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Program(function_definition) | Printout the function definition <br> On Linux, add at the end of file <br> &nbsp;&nbsp;&nbsp;&nbsp;_.section .note.GNU-stack,"",@progbits_                                                                                    |
 | Function(name, instructions) | &nbsp;&nbsp;&nbsp;&nbsp;.globl \<name> <br> \<name>: <br> &nbsp;&nbsp;&nbsp;&nbsp;push&nbsp;&nbsp;&nbsp;&nbsp;%rbp<br>&nbsp;&nbsp;&nbsp;&nbsp;movq&nbsp;&nbsp;&nbsp;&nbsp;%rsp,%rbp<br>&nbsp;&nbsp;&nbsp;&nbsp;\<instructions> |
 
-####  Formatting Assembly Instructions
+#### Formatting Assembly Instructions
 
-| Assembly instruction | Output |
-| ------------------ | --------- |
-| Mov(src, dst) | movl&nbsp;&nbsp;&nbsp;&nbsp;\<src>, \<dst> |
-| Ret | ret |
-| Unary(unary_operator, operand) | \<unary_operator>&nbsp;&nbsp;&nbsp;&nbsp;\<operand>|
+| Assembly instruction              | Output                                                   |
+| --------------------------------- | -------------------------------------------------------- |
+| Mov(src, dst)                     | movl&nbsp;&nbsp;&nbsp;&nbsp;\<src>, \<dst>               |
+| Ret                               | ret                                                      |
+| Unary(unary_operator, operand)    | \<unary_operator>&nbsp;&nbsp;&nbsp;&nbsp;\<operand>      |
 | Binary(binary_operator, src, dst) | \<binary_operator>&nbsp;&nbsp;&nbsp;&nbsp;\<src>, \<dst> |
-| Idiv(operand) | idivl&nbsp;&nbsp;&nbsp;&nbsp;\<operand> |
-| Cdq | cdq |
-| AllocateStack(int) | subq&nbsp;&nbsp;&nbsp;&nbsp;$\<int>, %rsp |
-| Cmp(operand, operand) | cmpl&nbsp;&nbsp;&nbsp;&nbsp;\<operand>, \<operand> |
-| Jmp(label) | jmp&nbsp;&nbsp;&nbsp;&nbsp;.L\<label> |
-| JmpCC(cond_code, label) | j\<cond_code>&nbsp;&nbsp;&nbsp;&nbsp;.L\<label> |
-| SetCC(cond_code, operand) | set\<cond_code>&nbsp;&nbsp;&nbsp;&nbsp;\<operand> |
-| Label(label) | .L\<label>: |
+| Idiv(operand)                     | idivl&nbsp;&nbsp;&nbsp;&nbsp;\<operand>                  |
+| Cdq                               | cdq                                                      |
+| AllocateStack(int)                | subq&nbsp;&nbsp;&nbsp;&nbsp;$\<int>, %rsp                |
+| Cmp(operand, operand)             | cmpl&nbsp;&nbsp;&nbsp;&nbsp;\<operand>, \<operand>       |
+| Jmp(label)                        | jmp&nbsp;&nbsp;&nbsp;&nbsp;.L\<label>                    |
+| JmpCC(cond_code, label)           | j\<cond_code>&nbsp;&nbsp;&nbsp;&nbsp;.L\<label>          |
+| SetCC(cond_code, operand)         | set\<cond_code>&nbsp;&nbsp;&nbsp;&nbsp;\<operand>        |
+| Label(label)                      | .L\<label>:                                              |
 
-####  Formatting Names for Assembly Operators
+#### Formatting Names for Assembly Operators
 
 | Assembly operator | Instruction name |
-| ------------------ | --------- |
-| Neg | negl |
-| Not | notl | 
-| Add | addl | 
-| Sub | subl | 
-| Mult | imull | 
+| ----------------- | ---------------- |
+| Neg               | negl             |
+| Not               | notl             |
+| Add               | addl             |
+| Sub               | subl             |
+| Mult              | imull            |
 
 #### Instruction Suffixes for Condition Codes
 
 | Condition code | Instruction suffix |
-| ------------------ | --------- |
-| E | e |
-| NE | ne | 
-| L | l | 
-| LE | le | 
-| G | g | 
-| GE | ge | 
+| -------------- | ------------------ |
+| E              | e                  |
+| NE             | ne                 |
+| L              | l                  |
+| LE             | le                 |
+| G              | g                  |
+| GE             | ge                 |
 
-####  Formatting Assembly Operands
+#### Formatting Assembly Operands
 
-| Assembly operand | Output |
-| ------------------ | --------- |
-| Reg(AX) 4-byte | %eax |
-| Reg(AX) 1-byte | %al|
-| Reg(DX) 4-byte | %eax |
-| Reg(DX) 1-byte | %dl |
-| Reg(R10) 4-byte | %r10d |
-| Reg(R10) 1-byte | %r10b |
-| Reg(R11) 4-byte | %r11d |
-| Reg(R11) 1-byte | %r11b |
-| Stack(int) | <int>(%rbp) |
-| Imm(int) | $\<int> | 
+| Assembly operand | Output      |
+| ---------------- | ----------- |
+| Reg(AX) 4-byte   | %eax        |
+| Reg(AX) 1-byte   | %al         |
+| Reg(DX) 4-byte   | %eax        |
+| Reg(DX) 1-byte   | %dl         |
+| Reg(R10) 4-byte  | %r10d       |
+| Reg(R10) 1-byte  | %r10b       |
+| Reg(R11) 4-byte  | %r11d       |
+| Reg(R11) 1-byte  | %r11b       |
+| Stack(int)       | <int>(%rbp) |
+| Imm(int)         | $\<int>     |
 
 ## Extra Credit: Compound Assignment, Increment, and Decrement
-Add support for compound assignments: 
-+=, -=, *=, /=, %=
 
-We've also implemented Extra Credit in chapter 3, so we also support: 
+Add support for compound assignments:
++=, -=, \*=, /=, %=
+
+We've also implemented Extra Credit in chapter 3, so we also support:
 &=, |=, ^=, <<=, >>=
 
-Increment and decrement also can be implemented: 
+Increment and decrement also can be implemented:
 ++, --
 
 Note that ++ and -- can be either prefix or postfix their operands.
 
 ## Summary
-This chapter is a milestone as we added new kind of statement and first construct that has side effect.
-Also the Semantic Analysis stage is implemented to make sure the program makes sense. 
 
-### Reference implementation Analysis
+This chapter is a milestone as we added new kind of statement and first construct that has side effect.
+Also the Semantic Analysis stage is implemented to make sure the program makes sense.
+
+### Reference Implementation Analysis
+
 [Chapter 5 Code Analysis](./code_analysis/chapter_5.md)
 
 ---
@@ -1484,29 +1589,29 @@ Also the Semantic Analysis stage is implemented to make sure the program makes s
 ## Stages of a Compiler
 
 1. **Lexer**
-    - Input: Source code (program.c)
-    - Output: Token list
+   - Input: Source code (program.c)
+   - Output: Token list
 2. **Parser**
-    - Input: Token list
-    - Output: Abstract Syntax Tree (AST)
+   - Input: Token list
+   - Output: Abstract Syntax Tree (AST)
 3. **Semantic Analysis**
-    - Input: AST
-    - Output: Transformed AST
-	- Passes:
-		1. Variable resolution
+   - Input: AST
+   - Output: Transformed AST
+   - Passes:
+     1. Variable resolution
 4. **TACKY Generation**
-    - Input: Transformed AST
-    - Output: TAC IR (Tacky)
+   - Input: Transformed AST
+   - Output: TAC IR (Tacky)
 5. **Assembly Generation**
-    - Input: Tacky
-    - Output: Assembly code
-    - Passes:
-        1. Converting TACKY to Assembly
-        2. Replacing pseudoregisters
-        3. Instruction fix-up
+   - Input: Tacky
+   - Output: Assembly code
+   - Passes:
+     1. Converting TACKY to Assembly
+     2. Replacing pseudoregisters
+     3. Instruction fix-up
 6. **Code Emission**
-    - Input: Assembly code
-    - Output: Final assembly file 
+   - Input: Assembly code
+   - Output: Final assembly file
 
 Control flow lets a program decide what statements to execute at runtime based on the current state of the program.
 We'll support **If Statements** and **Conditional Expressions** in this chapter.
@@ -1524,6 +1629,7 @@ New tokens to recognize
 ## The Parser
 
 ### AST
+
 <pre><code>program = Program(function_definition)
 function_definition = Function(identifier name, block_item* body)
 block_item = S(statement) | D(declaration)
@@ -1543,8 +1649,8 @@ binary_operator = Add | Subtract | Multiply | Divide | Remainder | And | Or
                 | Equal | NotEqual | LessThan | LessOrEqual
                 | GreaterThan | GreaterOrEqual</pre></code>
 
-
 ### EBNF
+
 <pre><code>&lt;program&gt; ::= &lt;function&gt;
 &lt;function&gt; ::= "int" &lt;identifier&gt; "(" "void" ")" "{" { &lt;block-item&gt; } "}"
 &lt;block-item&gt; ::= &lt;statement&gt; | &lt;declaration&gt;
@@ -1561,7 +1667,6 @@ binary_operator = Add | Subtract | Multiply | Divide | Remainder | And | Or
 &lt;identifier&gt; ::= ? An identifier token ?
 &lt;int&gt; ::= ? A constant token ?</pre></code>
 
-
 Firstly, let's tackle the **If** construct.
 We've not implemented compound statements yet, so we can only compile the following example:
 
@@ -1572,9 +1677,10 @@ else
 	b = 8;
 ```
 
-AST definition of the **If** construct doesn't include *else if* because an if statement can have at most one else clause. An else if clause is an else with another if statement.
+AST definition of the **If** construct doesn't include _else if_ because an if statement can have at most one else clause. An else if clause is an else with another if statement.
 
 So this example:
+
 ```
 if (a):
 	return 0;
@@ -1585,6 +1691,7 @@ else:
 ```
 
 is similar to this:
+
 ```
 if (a):
 	return 0;
@@ -1596,18 +1703,20 @@ else:
 ```
 
 Interestingly, the grammar to parse the if-else is also ambiguous.
+
 ```
 "if" "(" <exp> ")" <statement> ["else" <statement>]
 ```
-If the statement right after the if(condition) is another if statement, then the else statement, if exists, belongs to which if?
-The grammar itself doesn't tell this. Luckily, this is a famous quirk that has it own name: *dangling else ambiguity*.
 
-The dangling else ambiguity cause problems for parser generators, not our handwritten recursive descent parser. 
+If the statement right after the if(condition) is another if statement, then the else statement, if exists, belongs to which if?
+The grammar itself doesn't tell this. Luckily, this is a famous quirk that has it own name: _dangling else ambiguity_.
+
+The dangling else ambiguity cause problems for parser generators, not our handwritten recursive descent parser.
 When we parse the if statement, if we see an else statement right after it, attach it the the closest if.
 
 Now, how about **condition expression**?
 The expression has its form: `condition ? exp : exp`
-We treat it as a binary expression, whose operator is the whole *? exp :*.
+We treat it as a binary expression, whose operator is the whole _? exp :_.
 Such operator has higher precedence than assignments, but lower than anything else.
 Condition expressions are right associative.
 
@@ -1617,7 +1726,7 @@ Condition expressions are right associative.
 parse_exp(tokens, min_prec):
 	left = parse_factor(tokens)
 	next_token = peek(tokens)
-	
+
 	while next_token is a binary operator and precedence(next_token) >= min_prec:
 		if next_token is "=":
 			take_token(tokens) // remove "=" from list of tokens
@@ -1638,37 +1747,40 @@ parse_exp(tokens, min_prec):
 ### Precedence Values of Binary Operators
 
 | Operator | Precedence |
-| -------- | ---------- | 
-| \* | 50 |
-| / | 50 |
-| % | 50 |
-| + | 45 |
-| - | 45 |
-| < | 35 |
-| <= | 35 |
-| > | 35 |
-| >= | 35 |
-| == | 30 |
-| != | 30 |
-| && | 10 |
-| \|\| | 5 |
-| **?** | **3** |
-| =  | 1 |
+| -------- | ---------- |
+| \*       | 50         |
+| /        | 50         |
+| %        | 50         |
+| +        | 45         |
+| -        | 45         |
+| <        | 35         |
+| <=       | 35         |
+| >        | 35         |
+| >=       | 35         |
+| ==       | 30         |
+| !=       | 30         |
+| &&       | 10         |
+| \|\|     | 5          |
+| **?**    | **3**      |
+| =        | 1          |
 
 ## Semantic Analysis
 
 ### Variable Resolution
-Extend the *resolve_statement* and *resolve_exp* to handle new constructs. 
+
+Extend the _resolve_statement_ and _resolve_exp_ to handle new constructs.
 
 ## TACKY Generation
 
 ### TACKY
+
 We leverage the constructs used to support && and || operator in chapter 4 for if statements and conditional expressions.
 So we do not make any changes to the TACKY for now.
 
 ### Generating TACKY
 
 To **convert If Statements to TACKY**, we do the following:
+
 ```
 <instructions for condition>
 c = <result of condition>
@@ -1678,6 +1790,7 @@ Label(end)
 ```
 
 With an else, add a few more instructions:
+
 ```
 <instructions for condition>
 c = <result of condition>
@@ -1690,6 +1803,7 @@ Label(end)
 ```
 
 **Converting Conditional Expressions to TACKY** is very similar, except for that we need to copy which result to the destination.
+
 ```
 <instructions for condition>
 c = <result of condition>
@@ -1706,18 +1820,22 @@ Label(end)
 ```
 
 ## Assembly Generation
+
 We do not change our TACKY AST, so Assembly stage stays intact.
 
 ## Extra Credit: Labeled Statements and Goto
-If we can support *If Statements* and *Conditional Expressions*, we can move forward to add support for **Goto** and **Labeled Statements**.
+
+If we can support _If Statements_ and _Conditional Expressions_, we can move forward to add support for **Goto** and **Labeled Statements**.
 Goto is like Jump in Assembly, whereas Labeled Statements specify the target for Goto.
-A new pass in Semantic Analysis is needed to check for the errors like using the same label for two labeled statements. 
+A new pass in Semantic Analysis is needed to check for the errors like using the same label for two labeled statements.
 
 ## Summary
+
 Congratulations! We've just implemented the first control structures in our compiler. However, we are limited by having a single statement in each clause.
 We'll extend to use compound statement, which is also a single statement but contains several inner statements in the next chapter.
 
-### Reference implementation Analysis
+### Reference Implementation Analysis
+
 [Chapter 6 Code Analysis](./code_analysis/chapter_6.md)
 
 ---
@@ -1727,40 +1845,42 @@ We'll extend to use compound statement, which is also a single statement but con
 ## Stages of a Compiler
 
 1. **Lexer**
-    - Input: Source code (program.c)
-    - Output: Token list
+   - Input: Source code (program.c)
+   - Output: Token list
 2. **Parser**
-    - Input: Token list
-    - Output: Abstract Syntax Tree (AST)
+   - Input: Token list
+   - Output: Abstract Syntax Tree (AST)
 3. **Semantic Analysis**
-    - Input: AST
-    - Output: Transformed AST
-	- Passes:
-		1. Variable resolution
+   - Input: AST
+   - Output: Transformed AST
+   - Passes:
+     1. Variable resolution
 4. **TACKY Generation**
-    - Input: Transformed AST
-    - Output: TAC IR (Tacky)
+   - Input: Transformed AST
+   - Output: TAC IR (Tacky)
 5. **Assembly Generation**
-    - Input: Tacky
-    - Output: Assembly code
-    - Passes:
-        1. Converting TACKY to Assembly
-        2. Replacing pseudoregisters
-        3. Instruction fix-up
+   - Input: Tacky
+   - Output: Assembly code
+   - Passes:
+     1. Converting TACKY to Assembly
+     2. Replacing pseudoregisters
+     3. Instruction fix-up
 6. **Code Emission**
-    - Input: Assembly code
-    - Output: Final assembly file 
+   - Input: Assembly code
+   - Output: Final assembly file
 
 We will only change the **Parser**, **Variable Resolution** and a bit of **TackyGen** to support **compound statements**.
-We won't touch *Lexer* or the **CodeGen** stages at all.
+We won't touch _Lexer_ or the **CodeGen** stages at all.
 
 Compound statements are to:
+
 - Group statements and declarations into a single unit.
-- Delineate the different *scopes* within a function.
+- Delineate the different _scopes_ within a function.
 
 ## The Parser
 
 ### AST
+
 <pre><code>program = Program(function_definition)
 function_definition = Function(identifier name, <strong>block body</strong>)
 block_item = S(statement) | D(declaration)
@@ -1782,8 +1902,8 @@ binary_operator = Add | Subtract | Multiply | Divide | Remainder | And | Or
                 | Equal | NotEqual | LessThan | LessOrEqual
                 | GreaterThan | GreaterOrEqual</pre></code>
 
-
 ### EBNF
+
 <pre><code>&lt;program&gt; ::= &lt;function&gt;
 &lt;function&gt; ::= "int" &lt;identifier&gt; "(" "void" ")" <strong>&lt;block&gt;</strong>
 <strong>&lt;block&gt; ::= "{" { &lt;block-item&gt; } "}"</strong>
@@ -1803,7 +1923,8 @@ binary_operator = Add | Subtract | Multiply | Divide | Remainder | And | Or
 &lt;int&gt; ::= ? A constant token ?</pre></code>
 
 ### Parser
-When we parse a \<statement>, a "{" token tells us that we've hit a compound statement. 
+
+When we parse a \<statement>, a "{" token tells us that we've hit a compound statement.
 
 ## Semantic Analysis
 
@@ -1825,29 +1946,34 @@ resolve_statement(statement, variable_map):
 	match statement with
 	| Return(e) -> return Return(resolve_exp(e, variable_map))
 	| Expression(e) -> return Expression(resolve_exp(e, variable_map))
-	| Compound(block) -> 
+	| Compound(block) ->
 		new_variable_map = copy_variable_map(variable_map)
 		return Compound(resolve_block(block, variable_map)
 	| Null -> return Null
 ```
 
-Finally, the function *copy_variable_map* simply copies the whole variable map, but set from_current_block to false to each entry.
+Finally, the function _copy_variable_map_ simply copies the whole variable map, but set from_current_block to false to each entry.
 
 ## TACKY Generation
 
 ### TACKY
+
 No modifications needed!
 
 ### Generating TACKY
+
 Straightforwardly, to emit TACKY for a compound statement, we emit TACKY for each block item in it. This should use the same function with the function body.
 
 ## Assembly Generation
+
 We do not change our TACKY AST, so Assembly stage stays intact.
 
 ## Summary
-We've supported a new kind of statements and extended our Variable Resolution pass to be a little more sophisticated. It's important for us to implement loops in the next chapter. 
 
-### Reference implementation Analysis
+We've supported a new kind of statements and extended our Variable Resolution pass to be a little more sophisticated. It's important for us to implement loops in the next chapter.
+
+### Reference Implementation Analysis
+
 [Chapter 7 Code Analysis](./code_analysis/chapter_7.md)
 
 ---
@@ -1857,39 +1983,40 @@ We've supported a new kind of statements and extended our Variable Resolution pa
 ## Stages of a Compiler
 
 1. **Lexer**
-	- Input: Source code (program.c)
-	- Output: Token list
+   - Input: Source code (program.c)
+   - Output: Token list
 2. **Parser**
-	- Input: Token list
-	- Output: Abstract Syntax Tree (AST)
+   - Input: Token list
+   - Output: Abstract Syntax Tree (AST)
 3. **Semantic Analysis**
-	- Input: AST
-	- Output: Transformed AST
-	- Passes:
-		1. Variable resolution
-		2. Loop Labeling
+   - Input: AST
+   - Output: Transformed AST
+   - Passes:
+     1. Variable resolution
+     2. Loop Labeling
 4. **TACKY Generation**
-	- Input: Transformed AST
-	- Output: TAC IR (Tacky)
+   - Input: Transformed AST
+   - Output: TAC IR (Tacky)
 5. **Assembly Generation**
-	- Input: Tacky
-	- Output: Assembly code
-	- Passes:
-		1. Converting TACKY to Assembly
-		2. Replacing pseudoregisters
-		3. Instruction fix-up
+   - Input: Tacky
+   - Output: Assembly code
+   - Passes:
+     1. Converting TACKY to Assembly
+     2. Replacing pseudoregisters
+     3. Instruction fix-up
 6. **Code Emission**
-	- Input: Assembly code
-	- Output: Final assembly file 
+   - Input: Assembly code
+   - Output: Final assembly file
 
 In this chapter, we'll add support for:
+
 - While loop
 - DoWhile loop
 - ForLoop
 - Break
 - Continue
 
-We need to update our lexer, parser to support all 5 new statements and add a new semantic analysis pass called *loop labeling*.
+We need to update our lexer, parser to support all 5 new statements and add a new semantic analysis pass called _loop labeling_.
 
 ## The Lexer
 
@@ -1905,6 +2032,7 @@ New tokens to recognize
 ## The Parser
 
 ### AST
+
 <pre><code>program = Program(function_definition)
 function_definition = Function(identifier name, block body)
 block_item = S(statement) | D(declaration)
@@ -1933,6 +2061,7 @@ binary_operator = Add | Subtract | Multiply | Divide | Remainder | And | Or
 				| GreaterThan | GreaterOrEqual</pre></code>
 
 ### EBNF
+
 <pre><code>&lt;program&gt; ::= &lt;function&gt;
 &lt;function&gt; ::= "int" &lt;identifier&gt; "(" "void" ")" &lt;block&gt;
 &lt;block&gt; ::= "{" { &lt;block-item&gt; } "}"
@@ -1958,22 +2087,23 @@ binary_operator = Add | Subtract | Multiply | Divide | Remainder | And | Or
 &lt;int&gt; ::= ? A constant token ?</pre></code>
 
 ### Parser
-We can write helper function to parse optional expressions, specifically two optional expressions in a *for* loop header.
+
+We can write helper function to parse optional expressions, specifically two optional expressions in a _for_ loop header.
 
 ## Semantic Analysis
 
 ### Variable Resolution
 
-For *while* and *do* loops, we can simply recursively resolve_statement of their substatements and subexpressions.
-For *break* and *continue*, we don't do anything to them as they have no substatements nor subexpressions.
+For _while_ and _do_ loops, we can simply recursively resolve*statement of their substatements and subexpressions.
+For \_break* and _continue_, we don't do anything to them as they have no substatements nor subexpressions.
 
-The *for* loop is more complicated as its header introduces a new variable scope.
+The _for_ loop is more complicated as its header introduces a new variable scope.
 
 ```
 resolve_statement(statement, variable_map):
 	match statement with
 	| --snip-- // While, do, break and continue are simple to implement here as well.
-	| For(init, condition, post, body) -> 
+	| For(init, condition, post, body) ->
 		new_variable_map = copy_variable_map(variable_map)
 		init = resolve_for_init(init, new_variable_map)
 		condition = resolve_optional_exp(condition, new_variable_map)
@@ -1981,6 +2111,7 @@ resolve_statement(statement, variable_map):
 		body = resolve_statement(body, new_variable_map)
 		return For(init, condition, post, body)
 ```
+
 ```
 resolve_for_init(init, variable_map):
 	match init with
@@ -1988,16 +2119,17 @@ resolve_for_init(init, variable_map):
 	| InitDecl(d) -> return InitDecl(resolve_declaration(d, variable_map))
 ```
 
-*resolve_optional_exp* is omitted, as it's simple as: it calls *resolve_exp* if the expression is present, does nothing otherwise.
+_resolve_optional_exp_ is omitted, as it's simple as: it calls _resolve_exp_ if the expression is present, does nothing otherwise.
 
 ### Loop Labeling
+
 We traverse the AST tree again. This time, whenever we encounter a loop statement, we generate a unique ID and annotate to the ID to it.
 We then traverse deeply into its statements to see if it uses any break or continue, if yes we also annotate the ID to the break/continue.
 
 ```
 label_statement(statement, current_label)
 	match statement with:
-	| Break -> 
+	| Break ->
 		if current_label is null:
 			fail("break statement outside of loop")
 		return annotate(break, current_label)
@@ -2005,26 +2137,28 @@ label_statement(statement, current_label)
 		if current_label is null:
 			fail("continue statement outside of loop")
 		return annotate(continue, current_label)
-	| While(condition, body) -> 
+	| While(condition, body) ->
 		new_label = make_label()
 		labeled_body = label_statement(body, new_label)
 		labeled_statement = While(condition, labeled_body)
 		return annotate(labeled_statement, new_label)
-	| --snip-- 
+	| --snip--
 	// For DoWhile and For loop are processed  the same way as While.
 ```
-
 
 ## TACKY Generation
 
 ### TACKY
+
 No modifications needed!
 
 ### Generating TACKY
-Both *break* and *continue* are just jump instructions in TACKY (and Assembly). Question is where to jump to!
+
+Both _break_ and _continue_ are just jump instructions in TACKY (and Assembly). Question is where to jump to!
 Generally, the label to break is always the last instructions of the total loop, outside the scope of the loop iterations; the label to continue is put right after the last instructions of the loop body.
 
 **DoWhile**
+
 ```
 Label(start)
 <instructions for body>
@@ -2036,6 +2170,7 @@ Label(break_label)
 ```
 
 **While**
+
 ```
 Label(continue_label)
 <instructions for condition>
@@ -2047,6 +2182,7 @@ Label(break_label)
 ```
 
 **For**
+
 ```
 <instructions for init>
 Label(start)
@@ -2061,17 +2197,21 @@ Label(break_label)
 ```
 
 ## Assembly Generation
+
 We do not change our TACKY AST, so Assembly stage stays intact.
 
 ## Extra Credit: Switch Statements
+
 To support switch case statements, we're required to significantly change the Loop Labeling pass.
-*break* can be used to break out of a switch, while *continue* is only for loops.
+_break_ can be used to break out of a switch, while _continue_ is only for loops.
 Let's create another pass in the Semantic Analysis stage to collect all the cases in a switch statements.
 
 ## Summary
-We added three loop statements, break and continue statements. We also had a new Semantic Analysis pass to associate each *break* and *continue* to their enclosing loops.
 
-### Reference implementation Analysis
+We added three loop statements, break and continue statements. We also had a new Semantic Analysis pass to associate each _break_ and _continue_ to their enclosing loops.
+
+### Reference Implementation Analysis
+
 [Chapter 8 Code Analysis](./code_analysis/chapter_8.md)
 
 ---
@@ -2090,9 +2230,9 @@ We added three loop statements, break and continue statements. We also had a new
    - Input: AST
    - Output: Transformed AST
    - Passes:
-	 1. Variable resolution
-	 2. Type Checking
-	 3. Loop Labeling
+   1. Variable resolution
+   2. Type Checking
+   3. Loop Labeling
 4. **TACKY Generation**
    - Input: Transformed AST
    - Output: TAC IR (Tacky)
@@ -2100,9 +2240,9 @@ We added three loop statements, break and continue statements. We also had a new
    - Input: Tacky
    - Output: Assembly code
    - Passes:
-	 1. Converting TACKY to Assembly
-	 2. Replacing pseudoregisters
-	 3. Instruction fix-up
+   1. Converting TACKY to Assembly
+   2. Replacing pseudoregisters
+   3. Instruction fix-up
 6. **Code Emission**
    - Input: Assembly code
    - Output: Final assembly file
@@ -2170,7 +2310,7 @@ binary_operator = Add | Subtract | Multiply | Divide | Remainder | And | Or
 <strong>&lt;declaration&gt; ::= &lt;variable-declaration&gt; | &lt;function-declaration&gt;
 &lt;variable-declaration&gt; ::= "int" &lt;identifier&gt; [ "=" &lt;exp&gt; ] ";"
 &lt;function-declaration&gt; ::= "int" &lt;identifier&gt; "(" &lt;param-list&gt; ")" (&lt;block&gt; | ";")
-&lt;param-list&gt; ::= "void" | "int" &lt;identifier&gt; { "," "int" &lt;idenfifier&gt; }</strong>
+&lt;param-list&gt; ::= "void" | "int" &lt;identifier&gt; { "," "int" &lt;identifier&gt; }</strong>
 &lt;block&gt; ::= "{" { &lt;block-item&gt; } "}"
 &lt;block-item&gt; ::= &lt;statement&gt; | &lt;declaration&gt;
 &lt;for-init&gt; ::= <strong>&lt;variable-declaration&gt;</strong> | [ &lt;exp&gt; ] ";"
@@ -2234,7 +2374,7 @@ resolve_exp(e, identifier_map):
 
 ```
 resolve_function_declaration(decl, identifier_map):
-	if decl.name is in idenfifier_map:
+	if decl.name is in identifier_map:
 		prev_entry = identifier_map.get(decl.name)
 		if prev_entry.from_current_scope and (not prev_entry.has_linkage)
 			fail("Duplicate declaration")
@@ -2456,27 +2596,27 @@ However, if we want to push a value from a memory, like -4(%rbp), onto the stack
 
 #### Converting Top-Level TACKY Constructs to Assembly
 
-| TACKY top-level construct                | Assembly top-level construct                                                                                                                                                                                                                                                                                                                                                                 |
-| ---------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Program(function_definitions)            | Program(**function_definitions**)                                                                                                                                                                                                                                                                                                                                                            |
+| TACKY top-level construct                | Assembly top-level construct                                                                                                                                                                                                                                                                                                                                                                  |
+| ---------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Program(function_definitions)            | Program(**function_definitions**)                                                                                                                                                                                                                                                                                                                                                             |
 | Function(name, **params**, instructions) | Function(name, **[Mov(Reg(DI), param1), <br>&nbsp;&nbsp;&nbsp;&nbsp;Mov(Reg(SI), param2), <br>&nbsp;&nbsp;&nbsp;&nbsp;\<copy next four parameters from registers>, <br>&nbsp;&nbsp;&nbsp;&nbsp;Mov(Stack(16), param7), <br>&nbsp;&nbsp;&nbsp;&nbsp;Mov(Stack(24), param8), <br>&nbsp;&nbsp;&nbsp;&nbsp;\<copy remaining parameters from stack>] +**<br>&nbsp;&nbsp;&nbsp;&nbsp; instructions) |
 
 #### Converting TACKY Instructions to Assembly
 
-| TACKY instruction                            | Assembly instructions                                                                                                                                                                                                    |
-| -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Return(val)                                  | Mov(val, Reg(AX))<br>Ret                                                                                                                                                                                                 |
-| Unary(unary_operator, src, dst)              | Mov(src, dst)<br>Unary(unary_operator, dst)                                                                                                                                                                              |
-| Unary(Not, src, dst)                         | Cmp(Imm(0), src)<br>Mov(Imm(0), dst)<br>SetCC(E, dst)                                                                                                                                                                    |
-| Binary(Divide, src1, src2, dst)              | Mov(src1, Reg(AX))<br>Cdq<br>Idiv(src2)<br>Mov(Reg(AX), dst)                                                                                                                                                             |
-| Binary(Remainder, src1, src2, dst)           | Mov(src1, Reg(AX))<br>Cdq<br>Idiv(src2)<br>Mov(Reg(DX), dst)                                                                                                                                                             |
-| Binary(binary_operator, src1, src2, dst)     | Mov(src1, dst)<br>Binary(binary_operator, src2, dst)                                                                                                                                                                     |
-| Binary(relational_operator, src1, src2, dst) | Cmp(src1, src2)<br>Mov(Imm(0), dst)<br>SetCC(relational_operator, dst)                                                                                                                                                   |
-| Jump(target)                                 | Jmp(target)                                                                                                                                                                                                              |
-| JumpIfZero(condition, target)                | Cmp(Imm(0), condition)<br>SetCC(E, target)                                                                                                                                                                               |
-| JumpIfNotZero(condition, target)             | Cmp(Imm(0), condition)<br>SetCC(NE, target)                                                                                                                                                                              |
-| Copy(src, dst)                               | Mov(src, dst)                                                                                                                                                                                                            |
-| Label(identifier)                            | Label(identifier)                                                                                                                                                                                                        |
+| TACKY instruction                            | Assembly instructions                                                                                                        |
+| -------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| Return(val)                                  | Mov(val, Reg(AX))<br>Ret                                                                                                     |
+| Unary(unary_operator, src, dst)              | Mov(src, dst)<br>Unary(unary_operator, dst)                                                                                  |
+| Unary(Not, src, dst)                         | Cmp(Imm(0), src)<br>Mov(Imm(0), dst)<br>SetCC(E, dst)                                                                        |
+| Binary(Divide, src1, src2, dst)              | Mov(src1, Reg(AX))<br>Cdq<br>Idiv(src2)<br>Mov(Reg(AX), dst)                                                                 |
+| Binary(Remainder, src1, src2, dst)           | Mov(src1, Reg(AX))<br>Cdq<br>Idiv(src2)<br>Mov(Reg(DX), dst)                                                                 |
+| Binary(binary_operator, src1, src2, dst)     | Mov(src1, dst)<br>Binary(binary_operator, src2, dst)                                                                         |
+| Binary(relational_operator, src1, src2, dst) | Cmp(src1, src2)<br>Mov(Imm(0), dst)<br>SetCC(relational_operator, dst)                                                       |
+| Jump(target)                                 | Jmp(target)                                                                                                                  |
+| JumpIfZero(condition, target)                | Cmp(Imm(0), condition)<br>SetCC(E, target)                                                                                   |
+| JumpIfNotZero(condition, target)             | Cmp(Imm(0), condition)<br>SetCC(NE, target)                                                                                  |
+| Copy(src, dst)                               | Mov(src, dst)                                                                                                                |
+| Label(identifier)                            | Label(identifier)                                                                                                            |
 | **FunCall(fun_name, args, dst)**             | **\<fix stack alignment><br>\<set up arguments><br>Call(fun_name)<br>\<deallocate arguments\/padding><br>Mov(Reg(AX), dst)** |
 
 #### Converting TACKY Arithmetic Operators to Assembly
@@ -2525,7 +2665,7 @@ On Linux, include @PLT after the function names. For example: _foo_ -> _foo@PLT_
 
 | Assembly top-level construct      | Ouput                                                                                                                                                                                                                          |
 | --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Program(**function_definitions**) | **Printout each function definition** <br> On Linux, add at the end of file <br> &nbsp;&nbsp;&nbsp;&nbsp;_.section .note.GNU-stack,"",@progbits_                                                                                   |
+| Program(**function_definitions**) | **Printout each function definition** <br> On Linux, add at the end of file <br> &nbsp;&nbsp;&nbsp;&nbsp;_.section .note.GNU-stack,"",@progbits_                                                                               |
 | Function(name, instructions)      | &nbsp;&nbsp;&nbsp;&nbsp;.globl \<name> <br> \<name>: <br> &nbsp;&nbsp;&nbsp;&nbsp;push&nbsp;&nbsp;&nbsp;&nbsp;%rbp<br>&nbsp;&nbsp;&nbsp;&nbsp;movq&nbsp;&nbsp;&nbsp;&nbsp;%rsp,%rbp<br>&nbsp;&nbsp;&nbsp;&nbsp;\<instructions> |
 
 #### Formatting Assembly Instructions
@@ -2544,8 +2684,8 @@ On Linux, include @PLT after the function names. For example: _foo_ -> _foo@PLT_
 | JmpCC(cond_code, label)           | j\<cond_code>&nbsp;&nbsp;&nbsp;&nbsp;.L\<label>                                            |
 | SetCC(cond_code, operand)         | set\<cond_code>&nbsp;&nbsp;&nbsp;&nbsp;\<operand>                                          |
 | Label(label)                      | .L\<label>:                                                                                |
-| **DeallocateStack(int)**          | **addq&nbsp;&nbsp;&nbsp;&nbsp;$\<int>, %rsp**                                                                     |
-| **Push(operand)**                 | **pushq&nbsp;&nbsp;&nbsp;&nbsp;\<operand>**                                                                       |
+| **DeallocateStack(int)**          | **addq&nbsp;&nbsp;&nbsp;&nbsp;$\<int>, %rsp**                                              |
+| **Push(operand)**                 | **pushq&nbsp;&nbsp;&nbsp;&nbsp;\<operand>**                                                |
 | **Call(label)**                   | **call&nbsp;&nbsp;&nbsp;&nbsp;\<label><br>or<br>call&nbsp;&nbsp;&nbsp;&nbsp;\<label>@PLT** |
 
 #### Formatting Names for Assembly Operators
@@ -2571,43 +2711,764 @@ On Linux, include @PLT after the function names. For example: _foo_ -> _foo@PLT_
 
 #### Formatting Assembly Operands
 
-| Assembly operand   | Output   |
-| ------------------ | -------- |
-| Reg(AX) **8-byte** | **%rax** |
-| Reg(AX) 4-byte     | %eax     |
-| Reg(AX) 1-byte     | %al      |
-| Reg(DX) **8-byte** | **%rdx** |
-| Reg(DX) 4-byte | %edx |
-| Reg(DX) 1-byte | %dl |
-| **Reg(CX) 8-byte** | **%rcx** |
-| **Reg(CX) 4-byte** | **%ecx** |
-| **Reg(CX) 1-byte** | **%cl** |
-| **Reg(DI) 8-byte** | **%rdi** |
-| **Reg(DI) 4-byte** | **%edi** |
-| **Reg(DI) 1-byte** | **%dil** |
-| **Reg(SI) 8-byte** | **%rsi** |
-| **Reg(SI) 4-byte** | **%esi** |
-| **Reg(SI) 1-byte** | **%sil** |
-| **Reg(R8) 8-byte** | **%r8** |
-| **Reg(R8) 4-byte** | **%r8d** |
-| **Reg(R8) 1-byte** | **%r8b** |
-| **Reg(R9) 8-byte** | **%r9** |
-| **Reg(R9) 4-byte** | **%r9d** |
-| **Reg(R9) 1-byte** | **%r9b** |
-| **Reg(R10) 8-byte** | **%r10** |
-| Reg(R10) 4-byte | %r10d |
-| Reg(R10) 1-byte | %r10b |
-| **Reg(R11) 8-byte** | **%r11** |
-| Reg(R11) 4-byte | %r11d |
-| Reg(R11) 1-byte | %r11b |
-| Stack(int) | <int>(%rbp) |
-| Imm(int) | $\<int> |
+| Assembly operand    | Output      |
+| ------------------- | ----------- |
+| Reg(AX) **8-byte**  | **%rax**    |
+| Reg(AX) 4-byte      | %eax        |
+| Reg(AX) 1-byte      | %al         |
+| Reg(DX) **8-byte**  | **%rdx**    |
+| Reg(DX) 4-byte      | %edx        |
+| Reg(DX) 1-byte      | %dl         |
+| **Reg(CX) 8-byte**  | **%rcx**    |
+| **Reg(CX) 4-byte**  | **%ecx**    |
+| **Reg(CX) 1-byte**  | **%cl**     |
+| **Reg(DI) 8-byte**  | **%rdi**    |
+| **Reg(DI) 4-byte**  | **%edi**    |
+| **Reg(DI) 1-byte**  | **%dil**    |
+| **Reg(SI) 8-byte**  | **%rsi**    |
+| **Reg(SI) 4-byte**  | **%esi**    |
+| **Reg(SI) 1-byte**  | **%sil**    |
+| **Reg(R8) 8-byte**  | **%r8**     |
+| **Reg(R8) 4-byte**  | **%r8d**    |
+| **Reg(R8) 1-byte**  | **%r8b**    |
+| **Reg(R9) 8-byte**  | **%r9**     |
+| **Reg(R9) 4-byte**  | **%r9d**    |
+| **Reg(R9) 1-byte**  | **%r9b**    |
+| **Reg(R10) 8-byte** | **%r10**    |
+| Reg(R10) 4-byte     | %r10d       |
+| Reg(R10) 1-byte     | %r10b       |
+| **Reg(R11) 8-byte** | **%r11**    |
+| Reg(R11) 4-byte     | %r11d       |
+| Reg(R11) 1-byte     | %r11b       |
+| Stack(int)          | <int>(%rbp) |
+| Imm(int)            | $\<int>     |
 
 ## Summary
 
 Yeehaw! We just implemented Function calls, the most powerful and complicated features we've faced.
 In the next chapter, we expand on the idea of identifier linkage to implement file scope variables and storage-class specifiers.
 
-### Reference implementation Analysis
+### Reference Implementation Analysis
 
 [Chapter 9 Code Analysis](./code_analysis/chapter_9.md)
+
+---
+
+# Chapter 10: File Scope Variable Declarations and Storage Class Specifiers
+
+## Stages of a Compiler
+
+1. **Lexer**
+   - Input: Source code (program.c)
+   - Output: Token list
+2. **Parser**
+   - Input: Token list
+   - Output: Abstract Syntax Tree (AST)
+3. **Semantic Analysis**
+   - Input: AST
+   - Output: Transformed AST
+   - Passes:
+   1. Variable resolution
+   2. Type Checking
+   3. Loop Labeling
+4. **TACKY Generation**
+   - Input: Transformed AST
+   - Output: TAC IR (Tacky)
+5. **Assembly Generation**
+   - Input: Tacky
+   - Output: Assembly code
+   - Passes:
+   1. Converting TACKY to Assembly
+   2. Replacing pseudoregisters
+   3. Instruction fix-up
+6. **Code Emission**
+   - Input: Assembly code
+   - Output: Final assembly file
+
+- To wrap up our first part, we'll support variable declarations at file scope, and introduce the storage class specifiers: Extern and Static.
+- The storage class specifiers control the linkage and storage duration of the declared objects.
+- We'll update semantic analysis stage to determine the linkage and storage duration of every declaration.
+- We'll also add some new assembly directives to represent the linkage.
+
+## All About Declarations
+
+- To support storage class specifiers, we'll keep track some properties of a declaration:
+
+  - Scope
+  - Linkage
+  - Is a definition?
+  - Type, which we will handle in more details in Part II
+
+- Some terms to get started:
+  - File/Source file: a preprocessed source file, a "translation unit"
+  - Static variable: a variable that has its lifetime from the program starts until it exits. The word static represents the storage duration, not the keyword _static_ specifier
+  - Automatic variable: a variable that has its life time from the point it's declared to the end of its scope.
+  - External variable: a variable that has internal or external linkage. The word external represents the linkage, not the keyword _extern_ specifier
+
+### Scope
+
+Functions and variables have the same rules of scoping. A variable or function must be declared before they can be used. We already know this, so nothing much to explain here.
+
+### Linkage
+
+Linkage represents if an object is visible to the current file, or can be found from another file via Linker:
+
+- Functions always have linkage (external by default).
+- File scope variables always have linkage (external by default).
+- Local variables have no linkage.
+
+A declaration's linkage depends on two things:
+
+- Storage-class specifier.
+- Declared at block scope or file scope.
+
+Functions that are declared without any storage-specifier are handled as if they have _extern_.
+
+Let's talk about _static_ specifier first:
+
+- At file scope, _static_ specifier indicates a function/variable has internal linkage.
+- At block scope, _static_ controls storage duration, not linkage.
+- It's illegal to declare static functions at block scope because functions have no storage duration.
+
+The _extern_ specifier is more complicated:
+
+- The current declaration with _extern_ will have the same linkage as the previous visible declaration.
+- If none is visible, the declaration will have external linkage.
+
+### Storage Duration
+
+Storage duration is a property of variables. Functions don't have storage duration.
+To determine the storage duration of a variable:
+
+- All file scope variables have static storage duration
+- Local variables that are declared with _static_ or _extern_ also have static storage duration
+- All other local variables have automatic storage duration
+
+For automatic variables, the scope and lifetime are so closely linked that the distinction is almost irrelevant.
+A static variable's lifetime depends on its scope: - If the static variable is declared at file scope, its scope extends from the start to the end of the program. - Otherwise, the static variable is declared at block scope, though it has a lifetime from the start of the end of the program, its scope only extends from the point and to the end of the scope where's it's declared/brought into.
+
+Static variables are initialized before program runs, so their initializers must be constants.
+
+### Definitions vs. Declarations
+
+- [x] Every variable declaration with an initializer is a definition. (We already know this)
+- [ ] Every variable declaration without linkage is a definition: local variables are allocated on stack, and not necessarily initialized; local static variables are allocated in the **data** or **bss** sections, and are always initialized (with initializers or to zero)
+
+_Note_:
+
+- _extern_ variable declarations at block scope cannot have initializers. Why? The use of the _extern_ for a local variable declaration means that the variable is defined somewhere in the same file.
+- A variable declaration with internal or external linkage, no _extern_ specifier and no initializer is a _tentative_ definition. Though it's illegal to define a variable more than once, it's totally fine to have multiple tentative definition for a variable.
+
+### Summarize
+
+Here's how an identifier's linkage, storage duration and status as a definition are determined.
+
+- The leftmost columns (Scope, Specifier) refer to a declaration's syntax during the parsing.
+- The other columns are properties we need to determine during the semantic analysis.
+
+#### Properties of Variable Declarations
+
+| Scope       | Specifier | Linkage                                                  | Storage duration | Definition with initializer | Definition without initializer  |
+| ----------- | --------- | -------------------------------------------------------- | ---------------- | --------------------------- | ------------------------------- |
+| File scope  | None      | External                                                 | Static           | Yes                         | Tentative                       |
+| File scope  | Static    | Internal                                                 | Static           | Yes                         | Tentative                       |
+| File scope  | Extern    | _Matches prior visible declaration; external by default_ | Static           | Yes                         | No                              |
+| Block scope | None      | None                                                     | Automatic        | Yes                         | Yes (defined but uninitialized) |
+| Block scope | Static    | None                                                     | Static           | Yes                         | Yes (initialized to zero)       |
+| Block scope | Extern    | _Matches prior visible declaration; external by default_ | Static           | Invalid                     | No                              |
+
+#### Properties of Function Declarations
+
+| Scope       | Specifier      | Linkage                                                  | Definition with body | Definition without body |
+| ----------- | -------------- | -------------------------------------------------------- | -------------------- | ----------------------- |
+| File scope  | None or extern | _Matches prior visible declaration; external by default_ | Yes                  | No                      |
+| File scope  | Static         | Internal                                                 | Yes                  | No                      |
+| Block scope | None or extern | _Matches prior visible declaration; external by default_ | Invalid              | No                      |
+| Block scope | Static         | Invalid                                                  | Invalid              | Invalid                 |
+
+### Error Cases
+
+We'll need to detect more errors. Some of them are familiar from previous chapters, with slight detail changes; some are brand new. So let's prepare:
+
+#### Conflicting Declarations
+
+- Two declarations of an identifier in the same scope, and one of them has no linkage.
+- Two declarations of an identifier refer to different types.
+
+#### Multiple definitions
+
+- External variables are defined multiple times. Note that our compiler cannot detect the error, but the linker will.
+
+#### No Definitions
+
+- We use a variable or a function that is declared but never defined, we'll have error at link time. Again, our compiler won't detect it, but the linker will.
+
+#### Invalid Initializers
+
+- Initializers for static variables must be constants.
+- Extern declarations at block scope cannot have any initializer.
+
+#### Restrictions on Storage-Class Specifiers
+
+- _extern_ and _static_ specifiers cannot be used on function parameters nor variable declaration in for-loop headers.
+- Local function declarations cannot have _static_. The use of static at local scope controls storage duration, but functions have no storage duration.
+
+## The Lexer
+
+New tokens to recognize
+| Token | Regular expression |
+| ------- | -------------------- |
+| Static | static |
+| Extern | extern |
+
+## The Parser
+
+### AST
+
+<pre><code>program = Program(<strong>declaration*</strong>)
+declaration = FunDecl(function_declaration) | VarDecl(variable_declaration)
+variable_declaration = (identifier name, exp? init, <strong>storage_class?</strong>)
+function_declaration = (identifier name, identifier* params, block? body, <strong>storage_class?</strong>)
+<strong>storage_class = Static | Extern</strong>
+block_item = S(statement) | D(declaration)
+block = Block(block_item*)
+for_init = InitDecl(variable_declaration) | InitExp(exp?)
+statement = Return(exp) 
+	| Expression(exp) 
+	| If(exp condition, statement then, statement? else)
+	| Compound(block)
+	| Break
+	| Continue
+	| While(exp condition, statement body)
+	| DoWhile(statement body, exp condition)
+	| For(for_init init, exp? condition, exp? post, statement body)
+	| Null 
+exp = Constant(int) 
+	| Var(identifier) 
+	| Unary(unary_operator, exp)
+	| Binary(binary_operator, exp, exp)
+	| Assignment(exp, exp) 
+	| Conditional(exp condition, exp, exp)
+	| FunctionCall(identifier, exp* args)
+unary_operator = Complement | Negate | Not
+binary_operator = Add | Subtract | Multiply | Divide | Remainder | And | Or
+				| Equal | NotEqual | LessThan | LessOrEqual
+				| GreaterThan | GreaterOrEqual</pre></code>
+
+### EBNF
+
+<pre><code>&lt;program&gt; ::= { <strong>&lt;declaration&gt;</strong> }
+&lt;declaration&gt; ::= &lt;variable-declaration&gt; | &lt;function-declaration&gt;
+&lt;variable-declaration&gt; ::= <strong>{ &lt;specifier&gt; }+</strong> &lt;identifier&gt; [ "=" &lt;exp&gt; ] ";"
+&lt;function-declaration&gt; ::= <strong>{ &lt;specifier&gt; }+</strong> &lt;identifier&gt; "(" &lt;param-list&gt; ")" (&lt;block&gt; | ";")
+&lt;param-list&gt; ::= "void" | "int" &lt;identifier&gt; { "," "int" &lt;identifier&gt; }
+<strong>&lt;specifier&gt; ::= "int" | "static" | "extern"</strong>
+&lt;block&gt; ::= "{" { &lt;block-item&gt; } "}"
+&lt;block-item&gt; ::= &lt;statement&gt; | &lt;declaration&gt;
+&lt;for-init&gt; ::= &lt;variable-declaration&gt; | [ &lt;exp&gt; ] ";"
+&lt;statement&gt; ::= "return" &lt;exp&gt; ";" 
+	| &lt;exp&gt; ";" 
+	| "if" "(" &lt;exp&gt; ")" &lt;statement&gt; ["else" &lt;statement&gt;]
+	| &lt;block&gt;
+	| "break" ";"
+	| "continue" ";"
+	| "while" "(" &lt;exp&gt; ")" &lt;statement&gt;
+	| "do" &lt;statement&gt; "while" "(" &lt;exp&gt; ")" ";"
+	| "for" "(" &lt;for-init&gt; [ &lt;exp&gt; ] ";" [ &lt;exp&gt; ] ")" &lt;statement&gt;
+	| ";"
+&lt;exp&gt; ::= &lt;factor&gt; | &lt;exp&gt; &lt;binop&gt; &lt;exp&gt; | &lt;exp&gt; "?" &lt;exp&gt; ":" &lt;exp&gt;
+&lt;factor&gt; ::= &lt;int&gt; | &lt;identifier&gt; | &lt;unop&gt; &lt;factor&gt; | "(" &lt;exp&gt; ")"
+	| &lt;identifier&gt; "(" [ &lt;argument-list&gt; ] ")"
+&lt;argument-list&gt; ::= &lt;exp&gt; { "," &lt;exp&gt; }
+&lt;unop&gt; ::= "-" | "~" 
+&lt;binop&gt; :: = "+" | "-" | "\*" | "/" | "%" | "&&" | "||"
+				| "==" | "!=" | "&lt;" | "&lt;=" | "&gt;" | "&gt;=" | "="
+&lt;identifier&gt; ::= ? An identifier token ?
+&lt;int&gt; ::= ? A constant token ?</pre></code>
+
+**Note**:
+
+- {\<specifier>}+ represents a non-empty list of specifiers.
+- \<param-list> rule hasn't changed because each parameter is defined with "int" keyword, we don't accept a list of specifier that might have "extern" or "static".
+
+### Parser
+
+#### Parsing Type and Storage-Class Specifiers
+
+The parser consumes a list of specifiers at the start of a declaration, converts them into exactly one type and at most one storage-class specifier.
+
+```
+parse_type_and_storage_class(specifier_list):
+	types = []
+	storage_classes = []
+	for specifier in specifier_list:
+		if specifier is "int":
+			types.append(specifier)
+		else:
+			storage_classes.append(specifier)
+
+	if length(types) != 1:
+		fail("Invalid type specifier")
+	if length(storage_classes) > 1:
+		fail("Invalid storage class")
+
+	type = Int
+
+	if length(storage_classes) == 1:
+		storage_class = parse_storage_class(storage_classes[0])
+	else:
+		storage_class = null
+
+	return (type, storage_class)
+```
+
+#### Distinguishing Between Function and Variable Declarations
+
+The logic of parsing function and variable declarations are similar, even in the future when we support more types.
+So it's ideal to have a single function to parse both and return a declaration AST node.
+
+In the for loop header, we can also use the same function, then check if the returned declaration is FunDecl or not? If it is, throw an error.
+
+## Semantic Analysis
+
+In the identifier resolution pass, we check for duplicate declarations in the same scope.
+In the type checking pass, we add storage class and linkage information to the symbol table as we'll need them in later stages. We also deal with more error checking.
+
+### Identifier Resolution
+
+We resolve variables at file scopes here.
+In the identifier map, we track whether each identifier has linkage. We don't need to distinguish between internal and external linkage until the type checking pass.
+
+```
+resolve_file_scope_variable_declaration(decl, identifier_map):
+	identifier_map.add(decl.name, MapEntry(
+		new_name=decl.name,
+		from_current_scope=True,
+		has_linkage=True
+	))
+
+	return decl
+```
+
+As we see, for file scope declarations, they has_linkage is always true. File scope variable declarations have initializers which must be constants, so we don't need to call resolve_exp. But we'll check if it's really a constant in the type checking pass.
+
+```
+resolve_local_variable_declaration(decl, identifier_map):
+	if decl.name is in identifier_map:
+		prev_entry = identifier_map.get(decl.name)
+		if prev_entry.from_current_scope:
+			if not(prev_entry.has_linkage and decl.storage_class == Extern):
+				fail("Duplicate local declaration")
+
+	if decl.storage_class == Extern:
+		identifier_map.add(decl.name, MapEntry(
+			new_name=decl.name,
+			from_current_scope=True,
+			has_linkage=True
+		))
+		return decl
+	else:
+		unique_name = UniqueIds.make_temporary()
+		identifier_map.add(decl.name, MapEntry(
+			new_name=unique_name,
+			from_current_scope=True,
+			has_linkage=False
+		))
+
+		--snip--
+```
+
+At block scope, if a variable has extern keyword, we record it has linkage in the map and retain its name.
+
+We don't need to change how to process function declaration in this pass, except one change: Block scope functions cannot have "static" specifier.
+
+### Type Checker
+
+We'll track Static functions and variables in this pass.
+
+- Record each variable's storage duration
+- Record the initial values of variables with static storage duration
+- Record whether functions and variables with static storage duration are globally visible (to other files)
+
+#### Identifier Attributes in the Symbol Table
+
+```
+identifier_attrs = FunAttr(bool defined, bool global)
+				| StaticAttr(initial_value init, bool global)
+				| LocalAttr
+
+initial_value = Tentative | Initial(int) | NoInitializer
+```
+
+#### Function Declarations
+
+```
+typecheck_function_declaration(decl, symbols):
+	fun_type = FunType(length(decl.params))
+	has_body = decl.body is not null
+	already_defined = False
+	global = decl.storage_class != Static
+
+	if decl.name is in symbols:
+		old_decl = symbols.get(decl.name)
+		if old_decl.type != fun_type:
+			fail("Incompatible function declarations")
+		already_defined = old_decl.attrs.defined
+		if already_defined and has_body:
+			fail("Function is defined more than once")
+
+		if old_decl.attrs.global and decl.storage_class == Static:
+			fail("Static function declaration follows non-static")
+		global = old_decl.attrs.global
+
+	attrs = FunAttr(
+		defined=(already_defined or has_body),
+		global=global
+	)
+
+	symbols.add(decl.name, fun_type, attrs)
+	--snip--
+```
+
+#### File Scope Variable Declarations
+
+We determine the initial value and its global visibility. Both of these depend on the current declaration and previous declarations of the same variable.
+
+```
+typecheck_file_scope_variable_declaration(decl, symbols):
+	if decl.init is constant integer i:
+		initial_value = Initial(i)
+	else if decl.init is null:
+		if decl.storage_class == Extern:
+			initial_value = NoInitializer
+		else:
+			initial_value = Tentative
+	else:
+		fail("Non-constant initializer")
+
+	global = (decl.storage_class != Static)
+
+	if decl.name is in symbols:
+		old_decl = symbols.get(decl.name)
+		if old_decl.type != Int:
+			fail("Function redeclared as variable")
+		if decl.storage_class == Extern:
+			global = old_decl.attrs.global
+		else if old_decl.attrs.global != global:
+			fail("Conflicting variable linkage")
+
+		if old_decl.attrs.init is a constant:
+			if initial_value is a constant:
+				fail("Conflicting file scope variable definitions")
+			else:
+				initial_value = old_decl.attrs.init
+		else if initial_value is not a constant and old_decl.attrs.init == Tentative:
+			initial_value = Tentative
+
+		attrs = StaticAttr(init=initial_value, global=global)
+		symbols.add(decl.name, Int, attrs)
+```
+
+#### Block Scope Variable Declarations
+
+```
+typecheck_local_variable_declaration(decl, symbols):
+	if decl.storage_class == Extern:
+		if decl.init is not null:
+			fail("Initializer on local extern variable declaration")
+		if decl.name is in symbols:
+			old_decl = symbols.get(decl.name)
+			if old_decl.type != Int:
+				fail("Function redeclared as variable")
+		else:
+			symbols.add(decl.name, Int, attrs=StaticAttr(
+				init=NoInitializer,
+				global=True
+			))
+
+	else if decl.storage_class == Static:
+		if decl.init is constant integer i:
+			initial_value = Initial(i)
+		else if decl.init is null:
+			initial_value = Initial(0)
+		else:
+			fail("Non-constant initializer on local static variable")
+
+		symbols.add(decl.name, Int, attrs=StaticAttr(
+			init=initial_value,
+			global=False
+		))
+	else:
+		symbols.add(decl.name, Int, attrs=LocalAttr)
+		if decl.init is not null:
+			typecheck_exp(decl.init, symbols)
+```
+
+**Note**:
+
+- A local extern declaration will never change the initial value or linkage we've already recorded, so we do nothing if it's already declared. Otherwise, we add it the symbol table and mark it as globally visible and not initialized.
+- In for loop header, we validate that the declaration in it doesn't have any storage-class specifier.
+
+## TACKY Generation
+
+### TACKY
+
+<pre><code>
+program = Program(<strong>top_level*</strong>)
+<strong>top_level</strong> = Function(identifier, <strong>bool global</strong>, identifier* params, instruction* body)
+		<strong>| StaticVariable(identifier, bool global, int init)</strong>
+instruction = Return(val) 
+	| Unary(unary_operator, val src, val dst)
+	| Binary(binary_operator, val src1, val src2, val dst)
+	| Copy(val src, val dst)
+	| Jump(identifier target)
+	| JumpIfZero(val condition, identifier target)
+	| JumpIfNotZero(val condition, identifier target)
+	| Label(identifier)
+	| FunCall(identifier fun_name, val* args, val dst)
+val = Constant(int) | Var(identifier)
+unary_operator = Complement | Negate | Not
+binary_operator = Add | Subtract | Mulitply | Divide | Remainder | Equal | Not Equal
+				| LessThan | LessOrEaual | GreaterThan | GreaterOrEqual
+</pre></code>
+
+### Generating TACKY
+
+Our final TACKY program will have both function definitions converted from the original AST, and variable definitions generated from the symbol table.
+
+```
+convert_symbols_to_tacky(symbols):
+	tacky_defs = []
+	for (name, entry) in symbols:
+		match entry.attrs with
+		| StaticAttr(init, global) ->
+			match init with
+			| Initial(i) -> tacky_defs.append(StaticVariable(name, global, i))
+			| Tentative -> tacky_defs.append(StaticVariable(name, global, 0))
+			| NoInitializer -> continue
+		| -> continue
+	return tacky_defs
+```
+
+**Note**: Right now, it doesn't matter whether we process the AST or the symbol table first. Since chapter 16, it will be important that we process the AST first and the symbol table second. The reason is that we will also update the symbol table while converting the AST to TACKY first then.
+
+## Assembly Generation
+
+### Assembly
+
+<pre><code>program = Program(<strong>top_level*</strong>)
+<strong>top_level</strong> = Function(identifier name, <strong>bool global,</strong> instruction* instructions)
+	<strong>| StaticVariable(identifier name, bool global, int init)</strong>
+instruction = Mov(operand src, operand dst)
+		| Unary(unary_operator, operand dst)
+		| Binary(binary_operator, operand, operand)
+		| Cmp(operand, operand)
+		| Idiv(operand)
+		| Cdq
+		| Jmp(identifier)
+		| JmpCC(cond_code, identifier)
+		| SetCC(cond_code, operand)
+		| Label(identifier)
+		| AllocateStack(int)
+		| DeallocateStack(int)
+		| Push(operand)
+		| Call(identifier) 
+		| Ret
+unary_operator = Neg | Not
+binary_operator = Add | Sub | Mult
+operand = Imm(int) | Reg(reg) | Pseudo(identifier) | Stack(int) <strong>| Data(identifier)</strong>
+cond_code = E | NE | G | GE | L | LE
+reg = AX | CX | DX | DI | SI | R8 | R9 | R10 | R11</pre></code>
+
+### Converting TACKY to Assembly
+
+Beside program, function and static variable constructs, we won't change any other conversion.
+We'll convert every TACKY Var operand to Pseudo operand, regardless of whether it has static or automatic duration.
+
+#### Converting Top-Level TACKY Constructs to Assembly
+
+| TACKY top-level construct                        | Assembly top-level construct                                                                                                                                                                                                                                                                                                                                                                          |
+| ------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Program(top_level_defs)**                      | **Program(top_level_defs)**                                                                                                                                                                                                                                                                                                                                                                           |
+| Function(name, **global**, params, instructions) | Function(name, **global**, [Mov(Reg(DI), param1), <br>&nbsp;&nbsp;&nbsp;&nbsp;Mov(Reg(SI), param2), <br>&nbsp;&nbsp;&nbsp;&nbsp;\<copy next four parameters from registers>, <br>&nbsp;&nbsp;&nbsp;&nbsp;Mov(Stack(16), param7), <br>&nbsp;&nbsp;&nbsp;&nbsp;Mov(Stack(24), param8), <br>&nbsp;&nbsp;&nbsp;&nbsp;\<copy remaining parameters from stack>] +<br>&nbsp;&nbsp;&nbsp;&nbsp; instructions) |
+| **StaticVariable(name, global, init)**           | **StaticVariable(name, global, init)**                                                                                                                                                                                                                                                                                                                                                                |
+
+#### Converting TACKY Instructions to Assembly
+
+| TACKY instruction                            | Assembly instructions                                                                                                    |
+| -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| Return(val)                                  | Mov(val, Reg(AX))<br>Ret                                                                                                 |
+| Unary(Not, src, dst)                         | Cmp(Imm(0), src)<br>Mov(Imm(0), dst)<br>SetCC(E, dst)                                                                    |
+| Unary(unary_operator, src, dst)              | Mov(src, dst)<br>Unary(unary_operator, dst)                                                                              |
+| Binary(Divide, src1, src2, dst)              | Mov(src1, Reg(AX))<br>Cdq<br>Idiv(src2)<br>Mov(Reg(AX), dst)                                                             |
+| Binary(Remainder, src1, src2, dst)           | Mov(src1, Reg(AX))<br>Cdq<br>Idiv(src2)<br>Mov(Reg(DX), dst)                                                             |
+| Binary(arithmetic_operator, src1, src2, dst) | Mov(src1, dst)<br>Binary(arithmetic_operator, src2, dst)                                                                 |
+| Binary(relational_operator, src1, src2, dst) | Cmp(src1, src2)<br>Mov(Imm(0), dst)<br>SetCC(relational_operator, dst)                                                   |
+| Jump(target)                                 | Jmp(target)                                                                                                              |
+| JumpIfZero(condition, target)                | Cmp(Imm(0), condition)<br>SetCC(E, target)                                                                               |
+| JumpIfNotZero(condition, target)             | Cmp(Imm(0), condition)<br>SetCC(NE, target)                                                                              |
+| Copy(src, dst)                               | Mov(src, dst)                                                                                                            |
+| Label(identifier)                            | Label(identifier)                                                                                                        |
+| FunCall(fun_name, args, dst)                 | \<fix stack alignment><br>\<set up arguments><br>Call(fun_name)<br>\<deallocate arguments\/padding><br>Mov(Reg(AX), dst) |
+
+#### Converting TACKY Arithmetic Operators to Assembly
+
+| TACKY operator | Assembly operator |
+| -------------- | ----------------- |
+| Complement     | Not               |
+| Negate         | Neg               |
+| Add            | Add               |
+| Subtract       | Sub               |
+| Multiply       | Mult              |
+
+#### Converting TACKY Comparisons to Assembly
+
+| TACKY comparison | Assembly condition code |
+| ---------------- | ----------------------- |
+| Equal            | E                       |
+| NotEqual         | NE                      |
+| LessThan         | L                       |
+| LessOrEqual      | LE                      |
+| GreaterThan      | G                       |
+| GreaterOrEqual   | GE                      |
+
+#### Converting TACKY Operands to Assembly
+
+| TACKY operand   | Assembly operand   |
+| --------------- | ------------------ |
+| Constant(int)   | Imm(int)           |
+| Var(identifier) | Pseudo(identifier) |
+
+### Replacing Pseudoregisters
+
+Now, not every variable is defined on the stack anymore. We check from the symbol table to know whether the variable should be in the stack or in Data/BSS section.
+How to handle this:
+
+- If the pseudo(name) has the name NOT in the assigned map:
+  - Look it up in the symbol table:
+  - Found with static duration: we map it to a Data operand by the same name
+  - Otherwise: assign it a new slot on the stack as usual
+
+Static variables don't live on the stack, so they don't count toward the total stack size.
+
+### Fixing Up Instructions
+
+Data operands are memory addresses too! Several rules we've written do not allow us to have both operands as memory.
+
+The instruction
+
+```
+Mov(Data("x"), Stack(-4))
+```
+
+is fixed up into:
+
+```
+Mov(Data("x"), Reg(R10))
+Mov(Reg(R10), Stack(-4))
+```
+
+## Code Emission
+
+- Emit _.globl_ directive for static variable that has global attribute as true.
+- Emit _.text_ directive at the start of each function definition.
+- Emit Data operand from _Data("foo")_ to _foo(%rip)_ in Linux and _\_foo(%rip)_ in MacOS.
+
+#### Formatting Top-Level Assembly Constructs
+
+| Assembly top-level construct                                          | Ouput                                                                                                                                                                                                                                                                                                                  |
+| --------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Program(**top_levels**)                                               | **Printout each top-level construct.** <br> On Linux, add at the end of file <br> &nbsp;&nbsp;&nbsp;&nbsp;_.section .note.GNU-stack,"",@progbits_                                                                                                                                                                      |
+| Function(name, global, instructions)                                  | &nbsp;&nbsp;&nbsp;&nbsp;**\<global-directive>**<br>&nbsp;&nbsp;&nbsp;&nbsp;**.text**<br>&nbsp;&nbsp;&nbsp;&nbsp;.globl \<name> <br> \<name>: <br> &nbsp;&nbsp;&nbsp;&nbsp;push&nbsp;&nbsp;&nbsp;&nbsp;%rbp<br>&nbsp;&nbsp;&nbsp;&nbsp;movq&nbsp;&nbsp;&nbsp;&nbsp;%rsp,%rbp<br>&nbsp;&nbsp;&nbsp;&nbsp;\<instructions> |
+| **StaticVariable(name, global, init) (Initialized to zero)**          | **&nbsp;&nbsp;&nbsp;&nbsp;\<global-directive><br>&nbsp;&nbsp;&nbsp;&nbsp;.bss<br>&nbsp;&nbsp;&nbsp;&nbsp;\<alignment-directive><br>\<name>:<br>&nbsp;&nbsp;&nbsp;&nbsp;.zero 4**                                                                                                                                       |
+| **StaticVariable(name, global, init) (Initialized to nonzero value)** | **&nbsp;&nbsp;&nbsp;&nbsp;\<global-directive><br>&nbsp;&nbsp;&nbsp;&nbsp;.data<br>&nbsp;&nbsp;&nbsp;&nbsp;\<alignment-directive><br>\<name>:<br>&nbsp;&nbsp;&nbsp;&nbsp;.long \<init>**                                                                                                                                |
+| **Gobal directive**                                                   | **if global is true:<br>.globl \<identifier><br>Otherwise, omit this directive.**                                                                                                                                                                                                                                      |
+| **Alignment directive**                                               | **For Linux only: .align 4<br>For macOS and Linux: .balign 4**                                                                                                                                                                                                                                                         |
+
+#### Formatting Assembly Instructions
+
+| Assembly instruction              | Output                                                                                 |
+| --------------------------------- | -------------------------------------------------------------------------------------- |
+| Mov(src, dst)                     | movl&nbsp;&nbsp;&nbsp;&nbsp;\<src>, \<dst>                                             |
+| Ret                               | ret                                                                                    |
+| Unary(unary_operator, operand)    | \<unary_operator>&nbsp;&nbsp;&nbsp;&nbsp;\<operand>                                    |
+| Binary(binary_operator, src, dst) | \<binary_operator>&nbsp;&nbsp;&nbsp;&nbsp;\<src>, \<dst>                               |
+| Idiv(operand)                     | idivl&nbsp;&nbsp;&nbsp;&nbsp;\<operand>                                                |
+| Cdq                               | cdq                                                                                    |
+| AllocateStack(int)                | subq&nbsp;&nbsp;&nbsp;&nbsp;$\<int>, %rsp                                              |
+| Cmp(operand, operand)             | cmpl&nbsp;&nbsp;&nbsp;&nbsp;\<operand>, \<operand>                                     |
+| Jmp(label)                        | jmp&nbsp;&nbsp;&nbsp;&nbsp;.L\<label>                                                  |
+| JmpCC(cond_code, label)           | j\<cond_code>&nbsp;&nbsp;&nbsp;&nbsp;.L\<label>                                        |
+| SetCC(cond_code, operand)         | set\<cond_code>&nbsp;&nbsp;&nbsp;&nbsp;\<operand>                                      |
+| Label(label)                      | .L\<label>:                                                                            |
+| DeallocateStack(int)              | addq&nbsp;&nbsp;&nbsp;&nbsp;$\<int>, %rsp                                              |
+| Push(operand)                     | pushq&nbsp;&nbsp;&nbsp;&nbsp;\<operand>                                                |
+| Call(label)                       | call&nbsp;&nbsp;&nbsp;&nbsp;\<label><br>or<br>call&nbsp;&nbsp;&nbsp;&nbsp;\<label>@PLT |
+
+#### Formatting Names for Assembly Operators
+
+| Assembly operator | Instruction name |
+| ----------------- | ---------------- |
+| Neg               | negl             |
+| Not               | notl             |
+| Add               | addl             |
+| Sub               | subl             |
+| Mult              | imull            |
+
+#### Instruction Suffixes for Condition Codes
+
+| Condition code | Instruction suffix |
+| -------------- | ------------------ |
+| E              | e                  |
+| NE             | ne                 |
+| L              | l                  |
+| LE             | le                 |
+| G              | g                  |
+| GE             | ge                 |
+
+#### Formatting Assembly Operands
+
+| Assembly operand | Output      |
+| ---------------- | ----------- |
+| Reg(AX) 8-byte   | %rax        |
+| Reg(AX) 4-byte   | %eax        |
+| Reg(AX) 1-byte   | %al         |
+| Reg(DX) 8-byte   | %rdx        |
+| Reg(DX) 4-byte   | %edx        |
+| Reg(DX) 1-byte   | %dl         |
+| Reg(CX) 8-byte   | %rcx        |
+| Reg(CX) 4-byte   | %ecx        |
+| Reg(CX) 1-byte   | %cl         |
+| Reg(DI) 8-byte   | %rdi        |
+| Reg(DI) 4-byte   | %edi        |
+| Reg(DI) 1-byte   | %dil        |
+| Reg(SI) 8-byte   | %rsi        |
+| Reg(SI) 4-byte   | %esi        |
+| Reg(SI) 1-byte   | %sil        |
+| Reg(R8) 8-byte   | %r8         |
+| Reg(R8) 4-byte   | %r8d        |
+| Reg(R8) 1-byte   | %r8b        |
+| Reg(R9) 8-byte   | %r9         |
+| Reg(R9) 4-byte   | %r9d        |
+| Reg(R9) 1-byte   | %r9b        |
+| Reg(R10) 8-byte  | %r10        |
+| Reg(R10) 4-byte  | %r10d       |
+| Reg(R10) 1-byte  | %r10b       |
+| Reg(R11) 8-byte  | %r11        |
+| Reg(R11) 4-byte  | %r11d       |
+| Reg(R11) 1-byte  | %r11b       |
+| Stack(int)       | <int>(%rbp) |
+| Imm(int)         | $\<int>     |
+
+## Summary
+
+Congratulations! This chapter marks the end checkpoint of our journey of Part I.
+We've implemented all the basic mechanics of C, from local and file scope varibles to control-flow statements to
+function calls.
+
+In Part II, we'll implement more types: signed, unsigned integers, floating-point numbers, pointers, arrays, and structures.
+Or we can skip to Part III where we will optimize the compiler.
+
+### Reference Implementation Analysis
+
+[Chapter 10 Code Analysis](./code_analysis/chapter_10_.md)

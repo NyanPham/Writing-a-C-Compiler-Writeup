@@ -30,7 +30,7 @@ TEST_CASE(Chapter2ValidTackyGen, "chapter_2", "--tacky")
         Compiler compiler;
         try
         {
-            int status = compiler.compile(Stage::Tacky, srcFile);
+            int status = compiler.compile(Stage::Tacky, std::vector<std::string>{srcFile});
             // Check that the compilation succeeded
             ASSERT_TRUE(status == 0);
         }
@@ -68,7 +68,7 @@ TEST_CASE(Chapter3ValidTackyGen, "chapter_3", "--tacky")
         Compiler compiler;
         try
         {
-            int status = compiler.compile(Stage::Tacky, srcFile);
+            int status = compiler.compile(Stage::Tacky, std::vector<std::string>{srcFile});
             // Check that the compilation succeeded
             ASSERT_TRUE(status == 0);
         }
@@ -102,7 +102,7 @@ TEST_CASE(Chapter3ValidTackyGenExtraCredit, "chapter_3", "--tacky")
         Compiler compiler;
         try
         {
-            int status = compiler.compile(Stage::Tacky, srcFile);
+            int status = compiler.compile(Stage::Tacky, std::vector<std::string>{srcFile});
             // Check that the compilation succeeded
             ASSERT_TRUE(status == 0);
         }
@@ -158,7 +158,7 @@ TEST_CASE(Chapter4ValidTackyGen, "chapter_4", "--tacky")
         Compiler compiler;
         try
         {
-            int status = compiler.compile(Stage::Tacky, srcFile);
+            int status = compiler.compile(Stage::Tacky, std::vector<std::string>{srcFile});
             // Check that the compilation succeeded
             ASSERT_TRUE(status == 0);
         }
@@ -185,7 +185,7 @@ TEST_CASE(Chapter4ValidTackyGenExtraCredit, "chapter_4", "--tacky")
         Compiler compiler;
         try
         {
-            int status = compiler.compile(Stage::Tacky, srcFile);
+            int status = compiler.compile(Stage::Tacky, std::vector<std::string>{srcFile});
             // Check that the compilation succeeded
             ASSERT_TRUE(status == 0);
         }
@@ -227,7 +227,7 @@ TEST_CASE(Chapter5ValidTackyGen, "chapter_5", "--tacky")
         Compiler compiler;
         try
         {
-            int status = compiler.compile(Stage::Tacky, srcFile);
+            int status = compiler.compile(Stage::Tacky, std::vector<std::string>{srcFile});
             // Check that the compilation succeeded
             ASSERT_TRUE(status == 0);
         }
@@ -275,7 +275,7 @@ TEST_CASE(Chapter5ValidTackyGenExtraCredit, "chapter_5", "--tacky")
         Compiler compiler;
         try
         {
-            int status = compiler.compile(Stage::Tacky, srcFile);
+            int status = compiler.compile(Stage::Tacky, std::vector<std::string>{srcFile});
             // Check that the compilation succeeded
             ASSERT_TRUE(status == 0);
         }
@@ -322,7 +322,7 @@ TEST_CASE(Chapter6ValidTackyGen, "chapter_6", "--tacky")
         Compiler compiler;
         try
         {
-            int status = compiler.compile(Stage::Tacky, srcFile);
+            int status = compiler.compile(Stage::Tacky, std::vector<std::string>{srcFile});
             // Check that the compilation succeeded
             ASSERT_TRUE(status == 0);
         }
@@ -364,7 +364,7 @@ TEST_CASE(Chapter6ValidTackyGenExtraCredit, "chapter_6", "--tacky")
         Compiler compiler;
         try
         {
-            int status = compiler.compile(Stage::Tacky, srcFile);
+            int status = compiler.compile(Stage::Tacky, std::vector<std::string>{srcFile});
             // Check that the compilation succeeded
             ASSERT_TRUE(status == 0);
         }
@@ -398,7 +398,7 @@ TEST_CASE(Chapter7ValidTackyGen, "chapter_7", "--tacky")
         Compiler compiler;
         try
         {
-            int status = compiler.compile(Stage::Tacky, srcFile);
+            int status = compiler.compile(Stage::Tacky, std::vector<std::string>{srcFile});
             // Check that the compilation succeeded
             ASSERT_TRUE(status == 0);
         }
@@ -426,7 +426,7 @@ TEST_CASE(Chapter7ValidTackyGenExtraCredit, "chapter_7", "--tacky")
         Compiler compiler;
         try
         {
-            int status = compiler.compile(Stage::Tacky, srcFile);
+            int status = compiler.compile(Stage::Tacky, std::vector<std::string>{srcFile});
             // Check that the compilation succeeded
             ASSERT_TRUE(status == 0);
         }
@@ -471,7 +471,7 @@ TEST_CASE(Chapter8ValidTackyGen, "chapter_8", "--tacky")
         Compiler compiler;
         try
         {
-            int status = compiler.compile(Stage::Tacky, srcFile);
+            int status = compiler.compile(Stage::Tacky, std::vector<std::string>{srcFile});
             // Check that the compilation succeeded
             ASSERT_TRUE(status == 0);
         }
@@ -526,7 +526,7 @@ TEST_CASE(Chapter8ValidTackyGenExtraCredit, "chapter_8", "--tacky")
         Compiler compiler;
         try
         {
-            int status = compiler.compile(Stage::Tacky, srcFile);
+            int status = compiler.compile(Stage::Tacky, std::vector<std::string>{srcFile});
             // Check that the compilation succeeded
             ASSERT_TRUE(status == 0);
         }
@@ -585,7 +585,7 @@ TEST_CASE(Chapter9ValidTackyGen, "chapter_9", "--tacky")
         Compiler compiler;
         try
         {
-            int status = compiler.compile(Stage::Tacky, srcFile);
+            int status = compiler.compile(Stage::Tacky, std::vector<std::string>{srcFile});
             // Check that the compilation succeeded
             ASSERT_TRUE(status == 0);
         }
@@ -613,7 +613,93 @@ TEST_CASE(Chapter9ValidTackyGenExtraCredit, "chapter_9", "--tacky")
         Compiler compiler;
         try
         {
-            int status = compiler.compile(Stage::Tacky, srcFile);
+            int status = compiler.compile(Stage::Tacky, std::vector<std::string>{srcFile});
+            // Check that the compilation succeeded
+            ASSERT_TRUE(status == 0);
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+            throw;
+        }
+    }
+}
+
+TEST_CASE(Chapter10ValidTackyGen, "chapter_10", "--tacky")
+{
+    std::vector<std::string> srcFiles = {
+        //"tests/chapter_10/valid/data_on_page_boundary_linux.s",
+        //"tests/chapter_10/valid/data_on_page_boundary_osx.s",
+        "tests/chapter_10/valid/distinct_local_and_extern.c",
+        "tests/chapter_10/valid/extern_block_scope_variable.c",
+        "tests/chapter_10/valid/multiple_static_file_scope_vars.c",
+        "tests/chapter_10/valid/multiple_static_local.c",
+        "tests/chapter_10/valid/push_arg_on_page_boundary.c",
+        "tests/chapter_10/valid/shadow_static_local_var.c",
+        "tests/chapter_10/valid/static_local_multiple_scopes.c",
+        "tests/chapter_10/valid/static_local_uninitialized.c",
+        "tests/chapter_10/valid/static_recursive_call.c",
+        "tests/chapter_10/valid/static_then_extern.c",
+        "tests/chapter_10/valid/static_variables_in_expressions.c",
+        "tests/chapter_10/valid/tentative_definition.c",
+        "tests/chapter_10/valid/type_before_storage_class.c",
+        "tests/chapter_10/valid/libraries/external_linkage_function.c",
+        "tests/chapter_10/valid/libraries/external_linkage_function_client.c",
+        "tests/chapter_10/valid/libraries/external_tentative_var.c",
+        "tests/chapter_10/valid/libraries/external_tentative_var_client.c",
+        "tests/chapter_10/valid/libraries/external_variable.c",
+        "tests/chapter_10/valid/libraries/external_variable_client.c",
+        "tests/chapter_10/valid/libraries/external_var_scoping.c",
+        "tests/chapter_10/valid/libraries/external_var_scoping_client.c",
+        "tests/chapter_10/valid/libraries/internal_hides_external_linkage.c",
+        "tests/chapter_10/valid/libraries/internal_hides_external_linkage_client.c",
+        "tests/chapter_10/valid/libraries/internal_linkage_function.c",
+        "tests/chapter_10/valid/libraries/internal_linkage_function_client.c",
+        "tests/chapter_10/valid/libraries/internal_linkage_var.c",
+        "tests/chapter_10/valid/libraries/internal_linkage_var_client.c",
+    };
+    Settings settings;
+
+    for (const auto &srcFile : srcFiles)
+    {
+        Compiler compiler;
+        try
+        {
+            int status = compiler.compile(Stage::Tacky, std::vector<std::string>{srcFile});
+            // Check that the compilation succeeded
+            ASSERT_TRUE(status == 0);
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+            throw;
+        }
+    }
+}
+
+TEST_CASE(Chapter10ValidTackyGenExtraCredit, "chapter_10", "--tacky")
+{
+    std::vector<std::string> srcFiles = {
+        "tests/chapter_10/valid/extra_credit/bitwise_ops_file_scope_vars.c",
+        "tests/chapter_10/valid/extra_credit/compound_assignment_static_var.c",
+        "tests/chapter_10/valid/extra_credit/goto_skip_static_initializer.c",
+        "tests/chapter_10/valid/extra_credit/increment_global_vars.c",
+        "tests/chapter_10/valid/extra_credit/label_file_scope_var_same_name.c",
+        "tests/chapter_10/valid/extra_credit/label_static_var_same_name.c",
+        "tests/chapter_10/valid/extra_credit/switch_on_extern.c",
+        "tests/chapter_10/valid/extra_credit/switch_skip_extern_decl.c",
+        "tests/chapter_10/valid/extra_credit/switch_skip_static_initializer.c",
+        "tests/chapter_10/valid/extra_credit/libraries/same_label_same_fun.c",
+        "tests/chapter_10/valid/extra_credit/libraries/same_label_same_fun_client.c",
+    };
+    Settings settings;
+
+    for (const auto &srcFile : srcFiles)
+    {
+        Compiler compiler;
+        try
+        {
+            int status = compiler.compile(Stage::Tacky, std::vector<std::string>{srcFile});
             // Check that the compilation succeeded
             ASSERT_TRUE(status == 0);
         }

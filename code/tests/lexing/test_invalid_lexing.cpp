@@ -23,7 +23,7 @@ TEST_CASE(Chapter1InvalidLex, "chapter_1", "--lex")
         Compiler compiler;
         try
         {
-            int status = compiler.compile(Stage::Lexing, srcFile);
+            int status = compiler.compile(Stage::Lexing, std::vector<std::string>{srcFile});
             if (status == 0)
             {
                 std::cerr << "Expected error compiling file " << srcFile << std::endl;
@@ -49,7 +49,7 @@ TEST_CASE(Chapter6InvalidLexExtraCredit, "chapter_6", "--lex")
         Compiler compiler;
         try
         {
-            int status = compiler.compile(Stage::Lexing, srcFile);
+            int status = compiler.compile(Stage::Lexing, std::vector<std::string>{srcFile});
             if (status == 0)
             {
                 std::cerr << "Expected error compiling file " << srcFile << std::endl;

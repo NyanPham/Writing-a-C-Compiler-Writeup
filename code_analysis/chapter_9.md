@@ -288,8 +288,8 @@ resolve_exp(e, id_map):
 
 Our previous _resolve_declaration_ is only for local variable declarations. We will keep most of the logic, but as we also need to resolve parameters the same way, so we'll split the logic into 2 functions:
 
-- resolve_local_var_helper
-- resolve_local_var_declaration
+- _resolve_local_var_helper_
+- _resolve_local_var_declaration_
 
 ```
 // helper for resolving local variables and parameters; deals with validation and updating the identifier map

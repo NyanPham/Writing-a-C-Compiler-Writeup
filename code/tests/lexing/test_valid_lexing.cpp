@@ -25,7 +25,7 @@ TEST_CASE(Chapter1ValidLex, "chapter_1", "--lex")
         Compiler compiler;
         try
         {
-            int status = compiler.compile(Stage::Lexing, srcFile);
+            int status = compiler.compile(Stage::Lexing, std::vector<std::string>{srcFile});
             ASSERT_TRUE(status == 0);
         }
         catch (const std::exception &e)
@@ -67,7 +67,7 @@ TEST_CASE(Chapter2ValidLex, "chapter_2", "--lex")
         Compiler compiler;
         try
         {
-            int status = compiler.compile(Stage::Lexing, srcFile);
+            int status = compiler.compile(Stage::Lexing, std::vector<std::string>{srcFile});
             ASSERT_TRUE(status == 0);
         }
         catch (const std::exception &e)
@@ -114,7 +114,7 @@ TEST_CASE(Chapter3ValidLex, "chapter_3", "--lex")
         Compiler compiler;
         try
         {
-            int status = compiler.compile(Stage::Lexing, srcFile);
+            int status = compiler.compile(Stage::Lexing, std::vector<std::string>{srcFile});
             ASSERT_TRUE(status == 0);
         }
         catch (const std::exception &e)
@@ -149,7 +149,7 @@ TEST_CASE(Chapter3ValidLexExtraCredit, "chapter_3", "--lex")
         Compiler compiler;
         try
         {
-            int status = compiler.compile(Stage::Lexing, srcFile);
+            int status = compiler.compile(Stage::Lexing, std::vector<std::string>{srcFile});
             ASSERT_TRUE(status == 0);
         }
         catch (const std::exception &e)
@@ -211,7 +211,7 @@ TEST_CASE(Chapter4ValidLex, "chapter_4", "--lex")
         Compiler compiler;
         try
         {
-            int status = compiler.compile(Stage::Lexing, srcFile);
+            int status = compiler.compile(Stage::Lexing, std::vector<std::string>{srcFile});
             ASSERT_TRUE(status == 0);
         }
         catch (const std::exception &e)
@@ -237,7 +237,7 @@ TEST_CASE(Chapter4ValidLexExtraCredit, "chapter_4", "--lex")
         Compiler compiler;
         try
         {
-            int status = compiler.compile(Stage::Lexing, srcFile);
+            int status = compiler.compile(Stage::Lexing, std::vector<std::string>{srcFile});
             ASSERT_TRUE(status == 0);
         }
         catch (const std::exception &e)
@@ -302,7 +302,7 @@ TEST_CASE(Chapter5ValidLex, "chapter_5", "--lex")
         Compiler compiler;
         try
         {
-            int status = compiler.compile(Stage::Lexing, srcFile);
+            int status = compiler.compile(Stage::Lexing, std::vector<std::string>{srcFile});
             ASSERT_TRUE(status == 0);
         }
         catch (const std::exception &e)
@@ -366,7 +366,7 @@ TEST_CASE(Chapter5ValidLexExtraCredit, "chapter_5", "--lex")
         Compiler compiler;
         try
         {
-            int status = compiler.compile(Stage::Lexing, srcFile);
+            int status = compiler.compile(Stage::Lexing, std::vector<std::string>{srcFile});
             ASSERT_TRUE(status == 0);
         }
         catch (const std::exception &e)
@@ -426,7 +426,7 @@ TEST_CASE(Chapter6ValidLex, "chapter_6", "--lex")
         Compiler compiler;
         try
         {
-            int status = compiler.compile(Stage::Lexing, srcFile);
+            int status = compiler.compile(Stage::Lexing, std::vector<std::string>{srcFile});
             ASSERT_TRUE(status == 0);
         }
         catch (const std::exception &e)
@@ -481,7 +481,7 @@ TEST_CASE(Chapter6ValidLexExtraCredit, "chapter_6", "--lex")
         Compiler compiler;
         try
         {
-            int status = compiler.compile(Stage::Lexing, srcFile);
+            int status = compiler.compile(Stage::Lexing, std::vector<std::string>{srcFile});
             ASSERT_TRUE(status == 0);
         }
         catch (const std::exception &e)
@@ -524,7 +524,7 @@ TEST_CASE(Chapter7ValidLex, "chapter_7", "--lex")
         Compiler compiler;
         try
         {
-            int status = compiler.compile(Stage::Lexing, srcFile);
+            int status = compiler.compile(Stage::Lexing, std::vector<std::string>{srcFile});
             ASSERT_TRUE(status == 0);
         }
         catch (const std::exception &e)
@@ -555,7 +555,7 @@ TEST_CASE(Chapter7ValidLexExtraCredit, "chapter_7", "--lex")
         Compiler compiler;
         try
         {
-            int status = compiler.compile(Stage::Lexing, srcFile);
+            int status = compiler.compile(Stage::Lexing, std::vector<std::string>{srcFile});
             ASSERT_TRUE(status == 0);
         }
         catch (const std::exception &e)
@@ -615,7 +615,7 @@ TEST_CASE(Chapter8ValidLex, "chapter_8", "--lex")
         Compiler compiler;
         try
         {
-            int status = compiler.compile(Stage::Lexing, srcFile);
+            int status = compiler.compile(Stage::Lexing, std::vector<std::string>{srcFile});
             ASSERT_TRUE(status == 0);
         }
         catch (const std::exception &e)
@@ -697,7 +697,7 @@ TEST_CASE(Chapter8ValidLexExtraCredit, "chapter_8", "--lex")
         Compiler compiler;
         try
         {
-            int status = compiler.compile(Stage::Lexing, srcFile);
+            int status = compiler.compile(Stage::Lexing, std::vector<std::string>{srcFile});
             ASSERT_TRUE(status == 0);
         }
         catch (const std::exception &e)
@@ -789,7 +789,7 @@ TEST_CASE(Chapter9ValidLex, "chapter_9", "--lex")
         Compiler compiler;
         try
         {
-            int status = compiler.compile(Stage::Lexing, srcFile);
+            int status = compiler.compile(Stage::Lexing, std::vector<std::string>{srcFile});
             ASSERT_TRUE(status == 0);
         }
         catch (const std::exception &e)
@@ -831,7 +831,125 @@ TEST_CASE(Chapter9ValidLexExtraCredit, "chapter_9", "--lex")
         Compiler compiler;
         try
         {
-            int status = compiler.compile(Stage::Lexing, srcFile);
+            int status = compiler.compile(Stage::Lexing, std::vector<std::string>{srcFile});
+            ASSERT_TRUE(status == 0);
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+            throw;
+        }
+    }
+}
+
+TEST_CASE(Chapter10ValidLex, "chapter_10", "--lex")
+{
+    std::vector<std::string> srcFiles = {
+        //"tests/chapter_10/valid/data_on_page_boundary_linux.s",
+        //"tests/chapter_10/valid/data_on_page_boundary_osx.s",
+        "tests/chapter_10/valid/distinct_local_and_extern.c",
+        "tests/chapter_10/valid/extern_block_scope_variable.c",
+        "tests/chapter_10/valid/multiple_static_file_scope_vars.c",
+        "tests/chapter_10/valid/multiple_static_local.c",
+        "tests/chapter_10/valid/push_arg_on_page_boundary.c",
+        "tests/chapter_10/valid/shadow_static_local_var.c",
+        "tests/chapter_10/valid/static_local_multiple_scopes.c",
+        "tests/chapter_10/valid/static_local_uninitialized.c",
+        "tests/chapter_10/valid/static_recursive_call.c",
+        "tests/chapter_10/valid/static_then_extern.c",
+        "tests/chapter_10/valid/static_variables_in_expressions.c",
+        "tests/chapter_10/valid/tentative_definition.c",
+        "tests/chapter_10/valid/type_before_storage_class.c",
+        "tests/chapter_10/valid/libraries/external_linkage_function.c",
+        "tests/chapter_10/valid/libraries/external_linkage_function_client.c",
+        "tests/chapter_10/valid/libraries/external_tentative_var.c",
+        "tests/chapter_10/valid/libraries/external_tentative_var_client.c",
+        "tests/chapter_10/valid/libraries/external_variable.c",
+        "tests/chapter_10/valid/libraries/external_variable_client.c",
+        "tests/chapter_10/valid/libraries/external_var_scoping.c",
+        "tests/chapter_10/valid/libraries/external_var_scoping_client.c",
+        "tests/chapter_10/valid/libraries/internal_hides_external_linkage.c",
+        "tests/chapter_10/valid/libraries/internal_hides_external_linkage_client.c",
+        "tests/chapter_10/valid/libraries/internal_linkage_function.c",
+        "tests/chapter_10/valid/libraries/internal_linkage_function_client.c",
+        "tests/chapter_10/valid/libraries/internal_linkage_var.c",
+        "tests/chapter_10/valid/libraries/internal_linkage_var_client.c",
+        "tests/chapter_10/invalid_parse/extern_param.c",
+        "tests/chapter_10/invalid_parse/missing_parameter_list.c",
+        "tests/chapter_10/invalid_parse/missing_type_specifier.c",
+        "tests/chapter_10/invalid_parse/multi_storage_class_fun.c",
+        "tests/chapter_10/invalid_parse/multi_storage_class_var.c",
+        "tests/chapter_10/invalid_parse/static_and_extern.c",
+        "tests/chapter_10/invalid_parse/static_param.c",
+        "tests/chapter_10/invalid_declarations/conflicting_local_declarations.c",
+        "tests/chapter_10/invalid_declarations/extern_follows_local_var.c",
+        "tests/chapter_10/invalid_declarations/extern_follows_static_local_var.c",
+        "tests/chapter_10/invalid_declarations/local_var_follows_extern.c",
+        "tests/chapter_10/invalid_declarations/out_of_scope_extern_var.c",
+        "tests/chapter_10/invalid_declarations/redefine_param_as_identifier_with_linkage.c",
+        "tests/chapter_10/invalid_declarations/undeclared_global_variable.c",
+        "tests/chapter_10/invalid_types/conflicting_function_linkage.c",
+        "tests/chapter_10/invalid_types/conflicting_function_linkage_2.c",
+        "tests/chapter_10/invalid_types/conflicting_global_definitions.c",
+        "tests/chapter_10/invalid_types/conflicting_variable_linkage.c",
+        "tests/chapter_10/invalid_types/conflicting_variable_linkage_2.c",
+        "tests/chapter_10/invalid_types/extern_for_loop_counter.c",
+        "tests/chapter_10/invalid_types/extern_variable_initializer.c",
+        "tests/chapter_10/invalid_types/non_constant_static_initializer.c",
+        "tests/chapter_10/invalid_types/non_constant_static_local_initializer.c",
+        "tests/chapter_10/invalid_types/redeclare_file_scope_var_as_fun.c",
+        "tests/chapter_10/invalid_types/redeclare_fun_as_file_scope_var.c",
+        "tests/chapter_10/invalid_types/redeclare_fun_as_var.c",
+        "tests/chapter_10/invalid_types/static_block_scope_function_declaration.c",
+        "tests/chapter_10/invalid_types/static_for_loop_counter.c",
+        "tests/chapter_10/invalid_types/use_file_scope_variable_as_fun.c",
+    };
+    Settings settings;
+
+    for (const auto &srcFile : srcFiles)
+    {
+        Compiler compiler;
+        try
+        {
+            int status = compiler.compile(Stage::Lexing, std::vector<std::string>{srcFile});
+            ASSERT_TRUE(status == 0);
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+            throw;
+        }
+    }
+}
+
+TEST_CASE(Chapter10ValidLexExtraCredit, "chapter_10", "--lex")
+{
+    std::vector<std::string> srcFiles = {
+        "tests/chapter_10/valid/extra_credit/bitwise_ops_file_scope_vars.c",
+        "tests/chapter_10/valid/extra_credit/compound_assignment_static_var.c",
+        "tests/chapter_10/valid/extra_credit/goto_skip_static_initializer.c",
+        "tests/chapter_10/valid/extra_credit/increment_global_vars.c",
+        "tests/chapter_10/valid/extra_credit/label_file_scope_var_same_name.c",
+        "tests/chapter_10/valid/extra_credit/label_static_var_same_name.c",
+        "tests/chapter_10/valid/extra_credit/switch_on_extern.c",
+        "tests/chapter_10/valid/extra_credit/switch_skip_extern_decl.c",
+        "tests/chapter_10/valid/extra_credit/switch_skip_static_initializer.c",
+        "tests/chapter_10/valid/extra_credit/libraries/same_label_same_fun.c",
+        "tests/chapter_10/valid/extra_credit/libraries/same_label_same_fun_client.c",
+        "tests/chapter_10/invalid_parse/extra_credit/extern_label.c",
+        "tests/chapter_10/invalid_parse/extra_credit/file_scope_label.c",
+        "tests/chapter_10/invalid_parse/extra_credit/static_label.c",
+        "tests/chapter_10/invalid_labels/extra_credit/goto_global_var.c",
+        "tests/chapter_10/invalid_types/extra_credit/static_var_case.c",
+    };
+    Settings settings;
+
+    for (const auto &srcFile : srcFiles)
+    {
+        Compiler compiler;
+        try
+        {
+            int status = compiler.compile(Stage::Lexing, std::vector<std::string>{srcFile});
             ASSERT_TRUE(status == 0);
         }
         catch (const std::exception &e)
