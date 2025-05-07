@@ -13,7 +13,7 @@ block_item = S(Statement) | D(Declaration)
 declaration = Declaration(identifier name, exp? init)
 statement = Return(exp)
     | Expression(exp)
-    | If(exp condition, statement then, statement else)
+    | If(exp condition, statement then, statement? else)
     | Null
     | LabeledStatement(indentifier label, statement)
     | Goto(identifier label)

@@ -454,3 +454,33 @@ TEST_CASE(Chapter10InvalidParseExtraCredit, "chapter_10", "--parse")
         }
     }
 }
+
+TEST_CASE(Chapter11InvalidParse, "chapter_11", "--parse")
+{
+    std::vector<std::string> srcFiles = {
+      "tests/chapter_11/invalid_parse/bad_specifiers.c",
+    "tests/chapter_11/invalid_parse/empty_cast.c",
+    "tests/chapter_11/invalid_parse/fun_name_long.c",
+    "tests/chapter_11/invalid_parse/invalid_cast.c",
+    "tests/chapter_11/invalid_parse/invalid_suffix.c",
+    "tests/chapter_11/invalid_parse/long_constant_as_var.c",
+    "tests/chapter_11/invalid_parse/missing_cast_parentheses.c",
+    "tests/chapter_11/invalid_parse/var_name_long.c",
+    };
+    Settings settings;
+
+    for (const auto &srcFile : srcFiles)
+    {
+        Compiler compiler;
+        try
+        {
+            int status = compiler.compile(Stage::Parsing, std::vector<std::string>{srcFile});
+            ASSERT_TRUE(status != 0);
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+            throw;
+        }
+    }
+}

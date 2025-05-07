@@ -244,13 +244,13 @@ resolve_local_var_helper(id_map, name, storage_class):
 
 ```
 resolve_local_var_declaration(id_map, var_decl):
-    new_map, unique_name = resolve_local_var_helper(id_map, var_decl.name, var.storage_class)
+    new_map, unique_name = resolve_local_var_helper(id_map, var_decl.name, var_decl.storage_class)
 
     resolved_init = null
     if var_decl has init:
         ressolved_init = resolve_exp(var_decl.init)
 
-    return (new_map, (name = unique_name, init=resolved_init, var.storage_class))
+    return (new_map, (name = unique_name, init=resolved_init, var_decl.storage_class))
 ```
 
 ```

@@ -875,3 +875,106 @@ TEST_CASE(Chapter10ValidParseExtraCredit, "chapter_10", "--parse")
         }
     }
 }
+
+TEST_CASE(Chapter11ValidParse, "chapter_11", "--parse")
+{
+    std::vector<std::string> srcFiles = {
+
+        "tests/chapter_11/invalid_types/call_long_as_function.c",
+        "tests/chapter_11/invalid_types/cast_lvalue.c",
+        "tests/chapter_11/invalid_types/conflicting_function_types.c",
+        "tests/chapter_11/invalid_types/conflicting_global_types.c",
+        "tests/chapter_11/invalid_types/conflicting_variable_types.c",
+
+        "tests/chapter_11/valid/explicit_casts/sign_extend.c",
+        "tests/chapter_11/valid/explicit_casts/truncate.c",
+
+        "tests/chapter_11/valid/implicit_casts/common_type.c",
+        "tests/chapter_11/valid/implicit_casts/convert_by_assignment.c",
+        "tests/chapter_11/valid/implicit_casts/convert_function_arguments.c",
+        "tests/chapter_11/valid/implicit_casts/convert_static_initializer.c",
+        "tests/chapter_11/valid/implicit_casts/long_constants.c",
+
+        "tests/chapter_11/valid/libraries/long_args.c",
+        "tests/chapter_11/valid/libraries/long_args_client.c",
+        "tests/chapter_11/valid/libraries/long_global_var.c",
+        "tests/chapter_11/valid/libraries/long_global_var_client.c",
+        "tests/chapter_11/valid/libraries/maintain_stack_alignment.c",
+        "tests/chapter_11/valid/libraries/maintain_stack_alignment_client.c",
+        "tests/chapter_11/valid/libraries/return_long.c",
+        "tests/chapter_11/valid/libraries/return_long_client.c",
+
+        "tests/chapter_11/valid/long_expressions/arithmetic_ops.c",
+        "tests/chapter_11/valid/long_expressions/assign.c",
+        "tests/chapter_11/valid/long_expressions/comparisons.c",
+        "tests/chapter_11/valid/long_expressions/large_constants.c",
+        "tests/chapter_11/valid/long_expressions/logical.c",
+        "tests/chapter_11/valid/long_expressions/long_and_int_locals.c",
+        "tests/chapter_11/valid/long_expressions/long_args.c",
+        "tests/chapter_11/valid/long_expressions/multi_op.c",
+        "tests/chapter_11/valid/long_expressions/return_long.c",
+        "tests/chapter_11/valid/long_expressions/rewrite_large_multiply_regression.c",
+        "tests/chapter_11/valid/long_expressions/simple.c",
+        "tests/chapter_11/valid/long_expressions/static_long.c",
+        "tests/chapter_11/valid/long_expressions/type_specifiers.c",
+    };
+    Settings settings;
+
+    for (const auto &srcFile : srcFiles)
+    {
+        Compiler compiler;
+        try
+        {
+            int status = compiler.compile(Stage::Parsing, std::vector<std::string>{srcFile});
+            if (status != 0)
+            {
+                std::cerr << "Error compiling file " << srcFile << std::endl;
+            }
+            ASSERT_TRUE(status == 0);
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+            throw;
+        }
+    }
+}
+
+TEST_CASE(Chapter11ValidParseExtraCredit, "chapter_11", "--parse")
+{
+    std::vector<std::string> srcFiles = {
+        "tests/chapter_11/invalid_labels/extra_credit/bitshift_duplicate_cases.c",
+        "tests/chapter_11/invalid_labels/extra_credit/switch_duplicate_cases.c",
+        "tests/chapter_11/invalid_labels/extra_credit/switch_duplicate_cases_2.c",
+
+        "tests/chapter_11/valid/extra_credit/bitshift.c",
+        "tests/chapter_11/valid/extra_credit/bitwise_long_op.c",
+        "tests/chapter_11/valid/extra_credit/compound_assign_to_int.c",
+        "tests/chapter_11/valid/extra_credit/compound_assign_to_long.c",
+        "tests/chapter_11/valid/extra_credit/compound_bitshift.c",
+        "tests/chapter_11/valid/extra_credit/compound_bitwise.c",
+        "tests/chapter_11/valid/extra_credit/increment_long.c",
+        "tests/chapter_11/valid/extra_credit/switch_int.c",
+        "tests/chapter_11/valid/extra_credit/switch_long.c",
+    };
+    Settings settings;
+
+    for (const auto &srcFile : srcFiles)
+    {
+        Compiler compiler;
+        try
+        {
+            int status = compiler.compile(Stage::Parsing, std::vector<std::string>{srcFile});
+            if (status != 0)
+            {
+                std::cerr << "Error compiling file " << srcFile << std::endl;
+            }
+            ASSERT_TRUE(status == 0);
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+            throw;
+        }
+    }
+}

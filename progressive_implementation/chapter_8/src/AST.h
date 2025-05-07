@@ -15,7 +15,7 @@ declaration = Declaration(identifier name, exp? init)
 for_init = InitDecl(declaration) | InitExp(exp?)
 statement = Return(exp)
     | Expression(exp)
-    | If(exp condition, statement then, statement else)
+    | If(exp condition, statement then, statement? else)
     | Compound(block)
     | Break
     | Continue

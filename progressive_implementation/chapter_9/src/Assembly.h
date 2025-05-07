@@ -27,7 +27,7 @@ unary_operator = Neg | Not
 binary_operator = Add | Sub | Mult | And | Or | Xor | Sal | Sar
 operand = Imm(int) | Reg(reg) | Pseudo(identifier) | Stack(int)
 cond_code = E | NE | L | LE | G | GE
-reg = AX | CX | DX | R10 | R11
+reg = AX | CX | DX | DI | SI | R8 | R9 | R10 | R11
 */
 
 namespace Assembly

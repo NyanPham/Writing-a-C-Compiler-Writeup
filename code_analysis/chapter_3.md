@@ -125,7 +125,7 @@ convert_instruction(Tacky.Instruction inst):
 					result_reg = op == Divide ? AX : DX
 					
 					return [
-						Mov(asm_src1, Reg(AX),
+						Mov(asm_src1, Reg(AX)),
 						Cdq,
 						Idiv(asm_src2),
 						Mov(Reg(result_reg), asm_dst)

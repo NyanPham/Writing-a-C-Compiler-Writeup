@@ -11,7 +11,8 @@
   - [Chapter 8: Loops](#chapter-8-loops)
   - [Chapter 9: Functions](#chapter-9-functions)
   - [Chapter 10: File Scope Variable Declarations and Storage Class Specifiers](#chapter-10-file-scope-variable-declarations-and-storage-class-specifiers)
-
+- [Part II](#part-ii)
+  - [Chapter 11: Long Integers](#chapter-11-long-integers)
 ---
 
 # Part I
@@ -3472,3 +3473,859 @@ Or we can skip to Part III where we will optimize the compiler.
 ### Reference Implementation Analysis
 
 [Chapter 10 Code Analysis](./code_analysis/chapter_10_.md)
+
+---
+
+# Chapter 11: Long Integers
+
+## Stages of a Compiler
+
+1. **Lexer**
+   - Input: Source code (program.c)
+   - Output: Token list
+2. **Parser**
+   - Input: Token list
+   - Output: Abstract Syntax Tree (AST)
+3. **Semantic Analysis**
+   - Input: AST
+   - Output: Transformed AST
+   - Passes:
+   1. Variable resolution
+   2. Type Checking
+   3. Loop Labeling
+4. **TACKY Generation**
+   - Input: Transformed AST
+   - Output: TAC IR (Tacky)
+5. **Assembly Generation**
+   - Input: Tacky
+   - Output: Assembly code
+   - Passes:
+   1. Converting TACKY to Assembly
+   2. Replacing pseudoregisters
+   3. Instruction fix-up
+6. **Code Emission**
+   - Input: Assembly code
+   - Output: Final assembly file
+
+- _Long_ is a signed integer type.
+- _Long_ is similar to _int_, the only difference is their range of values.
+- We'll add explicit cast operation, which converts a value to a different type.
+
+What we will do:
+
+- Track the types of constants and variables.
+- Attach type information to AST nodes.
+- Identify implicit casts and make them explicit.
+- Determine the operand sizes for assembly instructions.
+
+## Long Integers in Assembly
+
+Don't let the terms get you. The type _long_ in C, nowadays, is different from the long type in assembly.
+
+| C    | x86/x64             |
+| ---- | ------------------- |
+| int  | longword/doubleword |
+| long | quadword            |
+
+## Type conversion
+
+C standard says: "If the value can be represented by the new type, it is unchanged."
+Because _long_ is larger than _int_, it is safe to convert _int_ to _long_ (movsx).
+
+However, convert from _long_ to _int_ is a different matter as the value might be larger than what _int_ can store. And the C standard lets us decide what to do with the case.
+We'll adopt the solution from GCC: to convert to type width N, the value is reduced modulo 2^N. That means we add or subtract the value by mutliple of 2^32 to bring _long_ value into the range of _int_.
+
+To simply put, we'll drop the upper 4 bytes of the _long_ value to an _int_.
+
+A long integer of value -3
+
+```
+11111111 11111111 11111111 11111111 11111111 11111111 11111111 11111101
+```
+
+is represented like this in int type:
+
+```
+									11111111 11111111 11111111 11111101
+```
+
+The above example is simple as -3 can be represented in both _long_ and _int_, so the value after conversion doesn't change.
+But what if we face the case where the _long_ value does not fit in _int_?
+
+A long 2,147,483,648
+
+```
+00000000 00000000 00000000 00000000 10000000 00000000 00000000 00000000
+```
+
+is truncated to int of value –2,147,483,648:
+
+```
+									10000000 00000000 00000000 00000000
+```
+
+## The Lexer
+
+New tokens to recognize
+| Token | Regular expression |
+| ------- | -------------------- |
+| KeywordLong | Long |
+| Long integer constants | [0-9]+[lL]\b |
+
+## The Parser
+
+### AST
+
+<pre><code>program = Program(declaration*)
+declaration = FunDecl(function_declaration) | VarDecl(variable_declaration)
+variable_declaration = (identifier name, exp? init, <strong>type var_type,</strong> storage_class?)
+function_declaration = (identifier name, identifier* params, block? body,<strong>type fun_type,</strong> storage_class?)
+<strong>type = Int | Long | FunType(type* params, type ret)</strong>
+storage_class = Static | Extern
+block_item = S(statement) | D(declaration)
+block = Block(block_item*)
+for_init = InitDecl(variable_declaration) | InitExp(exp?)
+statement = Return(exp) 
+	| Expression(exp) 
+	| If(exp condition, statement then, statement? else)
+	| Compound(block)
+	| Break
+	| Continue
+	| While(exp condition, statement body)
+	| DoWhile(statement body, exp condition)
+	| For(for_init init, exp? condition, exp? post, statement body)
+	| Null 
+exp = Constant(<strong>const</strong>) 
+	| Var(identifier) 
+	<strong>| Cast(type target_type, exp)</strong>
+	| Unary(unary_operator, exp)
+	| Binary(binary_operator, exp, exp)
+	| Assignment(exp, exp) 
+	| Conditional(exp condition, exp, exp)
+	| FunctionCall(identifier, exp* args)
+unary_operator = Complement | Negate | Not
+binary_operator = Add | Subtract | Multiply | Divide | Remainder | And | Or
+				| Equal | NotEqual | LessThan | LessOrEqual
+				| GreaterThan | GreaterOrEqual
+<strong>const = ConstInt(int) | ConstLong(int)</strong></pre></code>
+
+We'll extend the type structure in the symbol table in Chapter 9 instead of defining another data structure.
+If the implementation language has signed 64-bit and 32-bit integer types, use them. Otherwise, we should at least make sure the ConstLong node uses an integer type that can represent all long values.
+
+### EBNF
+
+<pre><code>&lt;program&gt; ::= { &lt;declaration&gt; }
+&lt;declaration&gt; ::= &lt;variable-declaration&gt; | &lt;function-declaration&gt;
+&lt;variable-declaration&gt; ::= { &lt;specifier&gt; }+ &lt;identifier&gt; [ "=" &lt;exp&gt; ] ";"
+&lt;function-declaration&gt; ::= { &lt;specifier&gt; }+ &lt;identifier&gt; "(" &lt;param-list&gt; ")" (&lt;block&gt; | ";")
+&lt;param-list&gt; ::= "void" | <strong>{ &lt;type-specifier&gt; }+</strong> &lt;identifier&gt; { "," <strong>{ &lt;type-specifier&gt; }+</strong>  &lt;identifier&gt; }
+<strong>&lt;type-specifier&gt; ::= "int" | "long"</strong> 
+&lt;specifier&gt; ::= <strong>&lt;type-specifier&gt;</strong> | "static" | "extern"
+&lt;block&gt; ::= "{" { &lt;block-item&gt; } "}"
+&lt;block-item&gt; ::= &lt;statement&gt; | &lt;declaration&gt;
+&lt;for-init&gt; ::= &lt;variable-declaration&gt; | [ &lt;exp&gt; ] ";"
+&lt;statement&gt; ::= "return" &lt;exp&gt; ";" 
+	| &lt;exp&gt; ";" 
+	| "if" "(" &lt;exp&gt; ")" &lt;statement&gt; ["else" &lt;statement&gt;]
+	| &lt;block&gt;
+	| "break" ";"
+	| "continue" ";"
+	| "while" "(" &lt;exp&gt; ")" &lt;statement&gt;
+	| "do" &lt;statement&gt; "while" "(" &lt;exp&gt; ")" ";"
+	| "for" "(" &lt;for-init&gt; [ &lt;exp&gt; ] ";" [ &lt;exp&gt; ] ")" &lt;statement&gt;
+	| ";"
+&lt;exp&gt; ::= &lt;factor&gt; | &lt;exp&gt; &lt;binop&gt; &lt;exp&gt; | &lt;exp&gt; "?" &lt;exp&gt; ":" &lt;exp&gt;
+&lt;factor&gt; ::= <strong>&lt;const&gt;</strong> | &lt;identifier&gt; 
+	<strong>| "(" { &lt;type-specifier&gt; }+ ")" &lt;factor&gt;</strong> 
+	| &lt;unop&gt; &lt;factor&gt; | "(" &lt;exp&gt; ")"
+	| &lt;identifier&gt; "(" [ &lt;argument-list&gt; ] ")"
+&lt;argument-list&gt; ::= &lt;exp&gt; { "," &lt;exp&gt; }
+&lt;unop&gt; ::= "-" | "~" 
+&lt;binop&gt; :: = "+" | "-" | "\*" | "/" | "%" | "&&" | "||"
+				| "==" | "!=" | "&lt;" | "&lt;=" | "&gt;" | "&gt;=" | "="
+<strong>&lt;const&gt; ::= &lt;int&gt; | &lt;long&gt;</strong>
+&lt;identifier&gt; ::= ? An identifier token ?
+&lt;int&gt; ::= ? An int token ?&lt;/pre&gt;&lt;/code&gt;
+<strong>&lt;long&gt; ::= ? An int or long token ?</strong></pre></code>
+
+### Parser
+
+```
+parse_type(specifier_list):
+	if specifier_list == ["int"]:
+		return Int
+	if (specifier_list == ["int", "long"]
+		or specifier_list == ["long", "int"]
+		or specifier_list == ["long"]):
+		return Long
+	fail("Invalid type specifier")
+```
+
+```
+parse_type_and_storage_class(specifier_list):
+	types = []
+	storage_classes = []
+	for specifier in specifier_list:
+		if specifier is "int" or "long":
+			types.append(specifier)
+		else:
+			storage_classes.append(specifier)
+
+	type = parse_type(types)
+
+	if length(storage_classes) > 1:
+		fail("Invalid storage class")
+	if length(storage_classes) == 1:
+		storage_class = parse_storage_class(storage_classes[0])
+	else:
+		storage_class = null
+
+	return (type, storage_class)
+```
+
+The tricky part is how to parse constant tokens.
+
+```
+parse_constant(token):
+	v = integer value of token
+	if v > 2^63 - 1:
+		fail("Constant is too large to represent as an int or long")
+
+	if token is an int token and v <= 2^31 - 1:
+		return ConstInt(v)
+
+	return ConstLong(v)
+```
+
+An _int_ is 32 bits, so it can hold the value in range -2^31 to 2^31 - 1. And a _long_ can hold -2^63 to 2^63 - 1.
+We don't need to check against mininum value, as these tokens cannot represent negative numbers. The negative sign is a separate token we have as Unary.
+
+## Semantic Analysis
+
+### Identifier Resolution
+
+As usual, whenever we have a new expression that has subexpressions, we extend the identifier resolution pass to traverse it.
+
+### Type Checker
+
+In type checker, we'll annotate every expression in the AST with the result type, which we use to generate temporary variables in TACKY to hold immediate results; the type lets us know how many bytes on the stack the temporary variables need.
+Also, we'll identify any implicit type conversions and make them explicit using the new _Cast_ expression.
+
+#### Adding type information to the AST
+
+It depends on your implementation language.
+For object-oriented languages, we can have a common base class for every _exp_, and add a type field to the base class.
+
+```
+class BaseExp {
+	--snip--
+	type expType;
+}
+```
+
+For algebraic data type languages, we define mutually recursive _exp_ and _typed_exp_ nodes.
+
+```
+typed_exp = TypedExp(type, exp)
+exp = Constant(const)
+	| Cast(type target_type, typed_exp)
+	| Unary(unary_operator, typed_exp)
+	--snip--
+```
+
+The pseudocode introduces _set_type(e, t)_ returns a copy of expression, and _get_type(e)_ returns the type annotation from expression. The implementation is up to you.
+
+```
+exp = Constant(const, type)
+	| Var(identifier, type)
+	| Cast(type target_type, exp,type)
+	| Unary(unary_operator, exp, type)
+	| Binary(binary_operator, exp, exp, tye)
+	| Assignment(exp, exp, type)
+	| Conditional(exp condition, exp, exp, type)
+	| FunctionCall(identifier, exp* args, type)
+```
+
+#### Type Checking Expressions
+
+In Part I, the TypeChecker only validates the program, not modifying it. That now changes as we need to annotate each expression with resulting type.
+
+```
+typecheck_exp(e, symbols):
+	match e with:
+	| Var(v) ->
+		v_type = symbols.get(v).type
+		if v_type is a function type:
+			fail("Function name used as variable")
+
+		return set_type(e, v_type)
+	| Constant(c) ->
+		match c with
+		| ConstInt(i) -> return set_type(e, Int)
+		| ConstLong(l) -> return set_type(e, Long)
+	| Cast(t, inner) ->
+		typed_inner = typecheck_exp(inner, symbols)
+		cast_exp = Cast(t, typed_inner)
+		return set_type(cast_exp, t)
+	| Unary(op, inner) ->
+		typed_inner = typecheck_exp(inner)
+		unary_exp = Unary(op, typed_inner)
+		match op with
+		| Not 	-> return set_type(unary_exp, Int)
+		| _ 	-> return set_type(unary_exp, get_type(typed_inner))
+	| Binary(op, e2, e2) ->
+		typed_e1 = typecheck_exp(e1, symbols)
+		typed_e2 = typecheck_exp(e2, symbols)
+		if op is And or Or:
+			binary_exp = Binary(op, typed_e1, typed_e2)
+			return set_type(binary_exp, Int)
+		t1 = get_type(typed_e1)
+		t2 = get_type(typed_e2)
+		common_type = get_common_type(t1, t2)
+		converted_e1 = convert_to(typed_e1, common_type)
+		converted_e2 = convert_to(typed_e1, common_type)
+		binary_exp = Binary(opk, converted_e1, converted_e2)
+		if Op is Add, Subtract, Multiply, Divide or Remainder:
+			return set_type(binary_exp, common_type)
+		else:
+			return set_type(binary_exp, Int) // relational operators for comparisons.
+	| Assignment(left, right) ->
+		typed_left = typecheck_exp(left, symbols)
+		typed_right = typecheck_exp(right, symbols)
+		left_type = get_type(typed_left)
+		converted_right = convert_to(typed_right, left_type)
+		assign_exp = Assignment(typed_left, converted_right)
+		return set_type(assign_exp, left_type)
+	| Conditional(control, then_result, else_result):
+		typecheck_exp(control, symbols)
+		typed_then = typecheck_exp(then_result, symbols)
+		typed_else = typecheck_exp(else_result, symbols)
+
+		then_type = get_type(typed_then)
+		else_type = get_type(typed_else)
+		common_type = get_common_type(then_type, else_type)
+		converted_then = convert_to(typed_then, common_type)
+		converted_else = convert_to(typed_else, common_type)
+
+		conditional_exp = Conditional(control, converted_then, converted_else)
+		return set_type(conditional_exp, common_type)
+	| FunctionCall(f, args) ->
+		f_type = symbols.get(f).type
+
+		match f_type with
+		| FunType(param_types, ret_type) ->
+			if length(param_types) != length(args):
+				fail("Function called with wrong number of arguments")
+			converted_args = []
+			for (arg, param_type) in zip(args, param_types):
+				typed_arg = typecheck_exp(arg, symbol)
+				converted_args.append(convert_to(typed_arg, param_type))
+			call_exp = FunctionCall(f, converted_args)
+			return set_type(call_exp, ret_type)
+		| _ -> fail("Variable used as function name")
+```
+
+```
+get_common_type(type1, type2):
+	if type1 == type2:
+		return type1
+	else:
+		return Long
+
+// A helper function that makes implicit conversions explicit
+// If an expression already has the result type, return it unchanged
+// Otherwise, wrap the expression in a Cast node.
+convert_to(e, t):
+	if get_type(e) == t:
+		return e
+	cast_exp = Cast(t, e)
+	return set_type(cast_exp, t)
+```
+
+- A variable expression will be validated as before, plus the annotation of the type based on the type declared in symbol table.
+- A constant has its own corresponding type; ConstInt has type Int, ConstLong has type Long
+- A cast expression has the type of whatever type we cast it to.
+- Expressions that evaluate to 1 or 0 (true or false), including comparisons and logical operators like !, all have type Int.
+- Arithmetic and bitwise expressions have the same type as their operands. However, binary expressions are more complicated than the rest as their 2 operands may have different types. We'll adopt the _usual arithmetic conversions_, which implicitly convert both operands to the same type, called its _common type_.
+- A conditional expression is similar to binary arithmetic expressions. We type check, find the common type and annotate to both branches. We do typecheck the controlling condition, but there's no need to convert it.
+
+#### Type Checking return Statements
+
+When a function returns a value, it's implicitly converted to the function's return type. We'll the conversion to be explicit. We need a way to keep track which function is enclosing the current return statement. We can simply pass down the function name, and look up the symbol table from there; or pass the whole return type.
+
+#### Type Checking Declarations and Updating the Symbol Table
+
+Here are some steps to typecheck function and variable declarations and store neccesary information in the symbol table:
+
+1. We record the correct type for each entry in the symbol table (they are not only Int anymore).
+2. Whenever we check for conflicting declarations, we validate the current and previous declarations have the same type. (expanded from checking conflicting between variable and function declarations)
+3. When we type check an automatic variable (with initializer), we convert the initializer to the type of the variable. (remember that variable declaration with initialzier is treated as assignment?)
+4. We change the representation of static initializers in the symbol table. (previously, Initial(int) can only hold _Int_, now we need another layer to hold the actual value in Initial)
+
+Previously, we had:
+
+```
+initial_value = Tentative | Initial(int) | NoInitializer
+```
+
+Now, we expand the representation to:
+
+```
+initial_value = Tentative | Initial(static_init) | NoInitializer
+static_init = IntInit(int) | LongInit(int)
+```
+
+_static_init_ is identical to the const AST node definition we just got through for now, but will grealy diverge in later chapters.
+Similar to AST's ConstInt and ConstLong, make sure we use the implementation type that can hold both numbers (we do the checking of range on our own).
+
+Type conversions need to be converted at compile time.
+
+```
+static int i = 100L
+```
+
+In symbol table, this will be stored as:
+
+```
+IntInit(100)
+```
+
+If the value is too large to be hold in _Int_, we use the same technique as with AST's ConstInt and ConstLong; that is subtracting 2<sup>32</sup> from the value.
+
+Some tips to handle static initializers:
+**1. Make your constant type conversion code reusable**. We'll need this in part III.
+**2. Don't call typecheck_exp on static initializer**. The function _typecheck_exp_ transform expressions, which complicates our processing. Instead, convert each static initializer directly to _static_init_.
+
+## TACKY Generation
+
+- Now that the symbol table has the new representation of static variable initial values, called _static_init_, we also inject the _static_init_ the StaticVariable construct in TACKY AST.
+- Update the Constant(int) to be Constant(const), and reuse the _const_ construct from the AST.
+- Conversions from _Long_ to _Int_ may require _Truncate_, and _SignExtend_ from _Int_ to _Long_.
+
+### TACKY
+
+<pre><code>
+program = Program(top_level*)
+top_level = Function(identifier, bool global, identifier* params, instruction* body)
+		| StaticVariable(identifier, bool global, <strong>type t, static_init init</strong>)
+instruction = Return(val) 
+	<strong>| SignExtend(val src, val dst)
+	| Truncate(val src, val dst)</strong>
+	| Unary(unary_operator, val src, val dst)
+	| Binary(binary_operator, val src1, val src2, val dst)
+	| Copy(val src, val dst)
+	| Jump(identifier target)
+	| JumpIfZero(val condition, identifier target)
+	| JumpIfNotZero(val condition, identifier target)
+	| Label(identifier)
+	| FunCall(identifier fun_name, val* args, val dst)
+val = Constant(<strong>const</strong>) | Var(identifier)
+unary_operator = Complement | Negate | Not
+binary_operator = Add | Subtract | Mulitply | Divide | Remainder | Equal | Not Equal
+				| LessThan | LessOrEaual | GreaterThan | GreaterOrEqual
+</pre></code>
+
+### Generating TACKY
+
+- When converting a symbol to TACKY, we look up its _type_ and _attrs_ as StaticAttr. If if the StaticAttr has a Tentative definition, we convert it to ConstInt(0) or ConstLong(0) based on its _type_.
+- _Constant_ nodes are the same between AST and TACKY. The converting is simple enough to not mention.
+- _And_ and _Or_ binary operators in AST resolve to the type _Int_, so in TACKY, we'll emit them as ConstInt(1) and ConstInt(0).
+
+Now we update the emit_tacky function to support new expression - \_Cast\*
+
+```
+emit_tacky(e, instructions, symbols):
+	match e with:
+	| --snip--
+	| Cast(t, inner) ->
+		result = emit_tacky(inner, instructions, symbols)
+		if t == get_type(inner):
+			return result
+		dst_name = make_temporary()
+		symbols.add(dst_name, t, attrs=LocalAttr)
+		dst = Var(dst_name)
+		if t == Long:
+			instructions.append(SignExtend(result, dst))
+		else:
+			instructions.append(Truncate(result, dst))
+		return dst
+```
+
+#### Tracking the Types of Temporary Variables
+
+Previously, several temporary variables in our TackyGen stage do not exist in the symbol table, but still works because our Assembly Generation assume each of them has the type _Int_.
+Now, we need to keep track of the variable during this TackyGen stage as well.
+Every temporary variable holds the result of an expression. To know the type of the temporary variable, we simply check the type of the expression.
+The following is an example:
+
+```
+emit_tacky(e, instructions, symbol):
+	match e with:
+	| --snip--
+	| Binary(op, e1, e2):
+		v1 = emit_tacky(e1, instructions, symbols)
+		v2 = emit_tacky(e2, instructions, symbols)
+		dst_name = make_temporary()
+		symbols.add(dst_name, get_type(e), attrs=LocalAttr)
+		dst = Var(dst_name)
+		tacky_op = convert_binop(op)
+		instructions.append(Binary(tacky_op, v1, v2, dst))
+		return dst
+	| --snip--
+```
+
+The main change is to add _dst_name_ to the symbol table.
+
+This modification is required in several places in our existing code, let's refactor to have a helper function:
+
+```
+make_tacky_variable(var_type, symbols):
+	var_name = make_temporary()
+	symbols.add(var_name, var_type, attrs=LocalAttr)
+	return Var(var_name)
+```
+
+#### Generating Extra Return Instructions
+
+Our extra return instruction is mainly for the function _main_. For other arbitrary functions, the return value is undefined, so it doesn't matter if our return of ConstInt(0) is wrong.
+
+## Assembly Generation
+
+- We tag most instructions with the type of operands to choose the correct suffix for ecah instruction.
+- Cdq also needs a type as 32-bit version of Cdq extends eax into edx:eax, while rax is extended into rdx:rax in 64-bit.
+- Three instructions that take an operand but no need for type:
+
+  - SetCC: the operand is also 1 byte-size
+  - Push: the operand is always a quadwords
+  - Movsx:
+
+- Remove AllocateStack and DeallocateStack as we now support adding/subtracting quadwords.
+
+### Assembly
+
+<pre><code>program = Program(top_level*)
+<strong>assembly_type = LongWord | Quadword</strong>
+top_level = Function(identifier name, bool global, instruction* instructions)
+	| StaticVariable(identifier name, bool global, <strong>int alignment, static_init init</strong>)
+instruction = Mov(<strong>assembly_type,</strong> operand src, operand dst)
+		<strong>| Movsx(operand src, operand dst)</strong>
+		| Unary(unary_operator, <strong>assembly_type,</strong> operand)
+		| Binary(binary_operator, <strong>assembly_type,</strong> operand, operand)
+		| Cmp(<strong>assembly_type,</strong>, operand, operand)
+		| Idiv(<strong>assembly_type,</strong> operand)
+		| Cdq(<strong>assembly_type</strong>)
+		| Jmp(identifier)
+		| JmpCC(cond_code, identifier)
+		| SetCC(cond_code, operand)
+		| Label(identifier)
+		| AllocateStack(int)
+		| DeallocateStack(int)
+		| Push(operand)
+		| Call(identifier) 
+		| Ret
+unary_operator = Neg | Not
+binary_operator = Add | Sub | Mult
+operand = Imm(int) | Reg(reg) | Pseudo(identifier) | Stack(int) | Data(identifier)
+cond_code = E | NE | G | GE | L | LE
+reg = AX | CX | DX | DI | SI | R8 | R9 | R10 | R11 <strong>| SP</strong></pre></code>
+
+### Converting TACKY to Assembly
+
+```
+convert_function_call(FunCall(fun_name, args, dst)):
+	--snip--
+	// pass args on stack
+	for tacky_arg in reverse(stack_args):
+		assembly_arg = convert_val(tacky_arg)
+		if assembly_arg is a Reg or Imm operand or has type Quadword:
+			emit(Push(assembly_arg))
+		else:
+			emit(Mov(LongWord, assembly_arg, Reg(AX)))
+			emit(Push(Reg(AX)))
+	--snip--
+```
+
+#### Converting Top-Level TACKY Constructs to Assembly
+
+| TACKY top-level construct                    | Assembly top-level construct                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| -------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Program(top_level_defs)                      | Program(top_level_defs)                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| Function(name, global, params, instructions) | Function(name, global, [Mov(**\<param1 type>,** Reg(DI), param1), <br>&nbsp;&nbsp;&nbsp;&nbsp;Mov(**\<param2 type>,** Reg(SI), param2), <br>&nbsp;&nbsp;&nbsp;&nbsp;\<copy next four parameters from registers>, <br>&nbsp;&nbsp;&nbsp;&nbsp;Mov(**\<param7 type>,** Stack(16), param7), <br>&nbsp;&nbsp;&nbsp;&nbsp;Mov(**\<param8 type>,** Stack(24), param8), <br>&nbsp;&nbsp;&nbsp;&nbsp;\<copy remaining parameters from stack>] +<br>&nbsp;&nbsp;&nbsp;&nbsp; instructions) |
+| StaticVariable(name, global, **t,** init)    | StaticVariable(name, global, **\<alignment of t,** init)                                                                                                                                                                                                                                                                                                                                                                                                                          |
+
+#### Converting TACKY Instructions to Assembly
+
+| TACKY instruction                            | Assembly instructions                                                                                                                     |
+| -------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| Return(val)                                  | Mov(**\<val type>,** val, Reg(AX))<br>Ret                                                                                                 |
+| Unary(Not, src, dst)                         | Cmp(**\<src type>,** Imm(0), src)<br>Mov(**\<dst type>,** Imm(0), dst)<br>SetCC(E, dst)                                                   |
+| Unary(unary_operator, src, dst)              | Mov(**\<src type>,** src, dst)<br>Unary(unary_operator, **\<src type>,** dst)                                                             |
+| Binary(Divide, src1, src2, dst)              | Mov(**\<src1 type>,** src1, Reg(AX))<br>Cdq(**\<src1 type>,**)<br>Idiv(**\<src1 type>,** src2)<br>Mov(**\<src1 type>,** Reg(AX), dst)     |
+| Binary(Remainder, src1, src2, dst)           | Mov(**\<src1 type>,** src1, Reg(AX))<br>Cdq(**\<src1 type>,**)<br>Idiv(**\<src1 type>,** src2)<br>Mov(**\<src1 type>,** Reg(DX), dst)     |
+| Binary(arithmetic_operator, src1, src2, dst) | Mov(**\<src1 type>,** src1, dst)<br>Binary(arithmetic_operator, **\<src1 type>,** src2, dst)                                              |
+| Binary(relational_operator, src1, src2, dst) | Cmp(**\<src1 type>,** src1, src2)<br>Mov(**\<dst type>,** Imm(0), dst)<br>SetCC(relational_operator, dst)                                 |
+| Jump(target)                                 | Jmp(target)                                                                                                                               |
+| JumpIfZero(condition, target)                | Cmp(**\<condition type>,** Imm(0), condition)<br>SetCC(E, target)                                                                         |
+| JumpIfNotZero(condition, target)             | Cmp(**\<condition type>,** Imm(0), condition)<br>SetCC(NE, target)                                                                        |
+| Copy(src, dst)                               | Mov(**\<src type>,** src, dst)                                                                                                            |
+| Label(identifier)                            | Label(identifier)                                                                                                                         |
+| FunCall(fun_name, args, dst)                 | \<fix stack alignment><br>\<set up arguments><br>Call(fun_name)<br>\<deallocate arguments\/padding><br>Mov(**\<dst type>,** Reg(AX), dst) |
+| **SignExtend(src, dst)**                     | **Movsx(src, dst)**                                                                                                                       |
+| **Truncate(src, dst)**                       | **Mov(Longword, src, dst)**                                                                                                               |
+
+#### Converting TACKY Arithmetic Operators to Assembly
+
+| TACKY operator | Assembly operator |
+| -------------- | ----------------- |
+| Complement     | Not               |
+| Negate         | Neg               |
+| Add            | Add               |
+| Subtract       | Sub               |
+| Multiply       | Mult              |
+
+#### Converting TACKY Comparisons to Assembly
+
+| TACKY comparison | Assembly condition code |
+| ---------------- | ----------------------- |
+| Equal            | E                       |
+| NotEqual         | NE                      |
+| LessThan         | L                       |
+| LessOrEqual      | LE                      |
+| GreaterThan      | G                       |
+| GreaterOrEqual   | GE                      |
+
+#### Converting TACKY Operands to Assembly
+
+| TACKY operand                | Assembly operand   |
+| ---------------------------- | ------------------ |
+| Constant(**ConstInt(int)**)  | Imm(int)           |
+| **Constant(ConstLong(int))** | **Imm(int)**       |
+| Var(identifier)              | Pseudo(identifier) |
+
+#### Converting Types to Assembly
+
+| Source type | Assembly type | Alignment |
+| ----------- | ------------- | --------- |
+| **Int**     | **Longword**  | **4**     |
+| **Long**    | **Quadword**  | **8**     |
+
+#### Tracking Assembly Types in the Backend Symbol Table
+
+Note that in TACKY instruction constructs, we have no type information.
+For example:
+
+```
+Unary(unary_operator, val src, val dst)
+```
+
+But in Assembly, it does need type to determine which suffix to use in the instruction:
+
+```
+Unary(unary_operator, assembly_type, operand)
+```
+
+To get the _assembly_type_, we infer the TACKY's operand type from the symbol table.
+We will need the same information in later passes as well, so it's best to convert the symbol table to a another form, called it Backend Symbol Table.
+Beside the assembly types (already processed from their source types), there are other properties we'll store for later.
+
+Each symbol is converted to _asm_symtab_entry_:
+
+```
+asm_symtab_entry = ObjectEntry(assembly_type, bool is_static)
+	| FunEntry(bool defined)
+```
+
+- ObjEntry is to represent variables, and constants (later chapters)
+- FunEntry needs no assembly_type because subroutines in assembly have no types.
+- If the implementation of FunAttr in symbol table has _stack_frame_size_ field, add the same field of the FunEntry.
+
+At the end of the CodeGen, we iterate over the frontend symbol table and convert each entry to an entry in the backend symbol table.
+For Replace Pseudoregisters, Fix-up Instructions, and Emit stage, we replace any place we refer to the frontend symbol table with the backend symbol table.
+
+### Replacing Pseudoregisters
+
+#### Replacing Longword and Quadword Pseudoregisters
+
+- Extend to replace pseudoregisters in the new _movsx_ instruction.
+- Look up the assembly_type in the backend symbol table when assigning a stack space for a pseudoregister: 8 bytes for Quadword and 4 bytes for Longword.
+- Make sure the address of each Quadword pseudoregister is 8-byte aligned on the stack. We'll round down the misalignment to the next multiple of 8.
+
+### Fixing Up Instructions
+
+- Specify operand sizes for all the rewrite-rules. The operand size is the same as the original instruction being fixed-up.
+- Rewrite _movsx_ instruction if its destination is a memory address, or its source is an immediate value.
+
+The rewrite-rule for _movsx_ is a bit complex, as it might envolve both R10 and R11 registers.
+
+If its both operands are invalid
+
+```
+Movsx(Imm(10), Stack(-16))
+```
+
+it is rewritten to:
+
+```
+Mov(Longword, Imm(10), Reg(R10))
+Movsx(Reg(R10), Reg(R11))
+Mov(Quadword, Reg(R11), Stack(-16))
+```
+
+For _addq_, _imulq_, _subq_, _cmpq_ and _pushq_, immediate values that are outside of the range of _int_ (> 32-bit integer), the values must be copied into register (R10 in our case) before we can use it.
+_movq_ can help us with that; it can move immediate values that are outside the _int_ range, but cannot move it directly to a memory.
+
+```
+Mov(Quadword, Imm(4294967295), Stack(-16))
+```
+
+is fixed up into:
+
+```
+Mov(Quadword, Imm(4294967295), Reg(R10))
+Mov(Quadword, Reg(R10), Stack(-16))
+```
+
+To answer why the _addq_, _imulq_, _subq_, _cmpq_ and _pushq_ instructions cannot deal with integers larger than 32-bit, it's because they all sign extend the immediate operands from 32 to 64 bits. If we have unsigned values that are larger than 32-bit, the sign extending operation will change the value.
+
+We remove AllocateStack so we replace it with:
+
+```
+Binary(Sub, Quadword, Imm(bytes), Reg(SP))
+```
+
+Lastly, our _Truncate_ TACKY instruction is converted to a 4-byte movl instruction; that is we `movl` an 8-byte operand to a 4-byte destination.
+
+```
+Mov(Longword, Imm(4294967299), Reg(R10))
+```
+
+The assemblers will help truncate such values for us, some issue warnings, some don't. To make things predictable, we'll truncate the operand value ourselves.
+
+```
+Mov(Longword, Imm(3), Reg(R10))
+```
+
+## Code Emission
+
+- Add appropriate suffix to instructions
+- Emit alignment and initial value for static variables
+- Handle new _movsx_ instruction
+
+For most instructions, suffix _l_ for 4-byte operands and _q_ for 8-byte operands.
+_Cdq_ is an exception: it's emitted as _cdq_ for 4-byte version and _cdo_ for 8-byte.
+_Movsx_ instruction needs suffixes for both operands. Currently, we only sign extend from _int_ to _long_, so we will hardcode it as _lq_ suffix: movslq.
+
+#### Formatting Top-Level Assembly Constructs
+
+| Assembly top-level construct                                                     | Ouput                                                                                                                                                                                                                                                                                                            |
+| -------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Program(top_levels)                                                              | Printout each top-level construct. <br> On Linux, add at the end of file <br> &nbsp;&nbsp;&nbsp;&nbsp;_.section .note.GNU-stack,"",@progbits_                                                                                                                                                                    |
+| Function(name, global, instructions)                                             | &nbsp;&nbsp;&nbsp;&nbsp;\<global-directive>\<br>&nbsp;&nbsp;&nbsp;&nbsp;.text\<br>&nbsp;&nbsp;&nbsp;&nbsp;.globl \<name> <br> \<name>: <br> &nbsp;&nbsp;&nbsp;&nbsp;push&nbsp;&nbsp;&nbsp;&nbsp;%rbp<br>&nbsp;&nbsp;&nbsp;&nbsp;movq&nbsp;&nbsp;&nbsp;&nbsp;%rsp,%rbp<br>&nbsp;&nbsp;&nbsp;&nbsp;\<instructions> |
+| StaticVariable(name, global, **alignment,** init) (Initialized to zero)          | &nbsp;&nbsp;&nbsp;&nbsp;\<global-directive><br>&nbsp;&nbsp;&nbsp;&nbsp;.bss<br>&nbsp;&nbsp;&nbsp;&nbsp;\<alignment-directive><br>\<name>:<br>&nbsp;&nbsp;&nbsp;&nbsp;**<init>**                                                                                                                                  |
+| StaticVariable(name, global, **alignment,** init) (Initialized to nonzero value) | &nbsp;&nbsp;&nbsp;&nbsp;\<global-directive><br>&nbsp;&nbsp;&nbsp;&nbsp;.data<br>&nbsp;&nbsp;&nbsp;&nbsp;\<alignment-directive><br>\<name>:<br>&nbsp;&nbsp;&nbsp;&nbsp;**<init>**                                                                                                                                 |
+| Gobal directive                                                                  | if global is true:<br>.globl \<identifier><br>Otherwise, omit this directive.                                                                                                                                                                                                                                    |
+| Alignment directive                                                              | For Linux only: .align **<alignment>**<br>For macOS and Linux: .balign **<alignment>**                                                                                                                                                                                                                           |
+
+#### Formatting Static Initializers
+
+| Static Initializer | Output         |
+| ------------------ | -------------- |
+| **IntInit(0)**     | **.zero 4**    |
+| **IntInit(i)**     | **.long \<i>** |
+| **LongInit(0)**    | **.zero 8**    |
+| **LongInit(i)**    | **.quad \<i>** |
+
+#### Formatting Assembly Instructions
+
+| Assembly instruction                     | Output                                                                                 |
+| ---------------------------------------- | -------------------------------------------------------------------------------------- |
+| Mov(**t,** src, dst)                     | mov **\<t>**&nbsp;&nbsp;&nbsp;&nbsp;\<src>, \<dst>                                     |
+| **Movsx(src, dst)**                      | **movslq &nbsp;&nbsp;&nbsp;&nbsp;\<src>, \<dst>**                                      |
+| Ret                                      | ret                                                                                    |
+| Unary(unary_operator, **t,** operand)    | \<unary_operator>**\<t>**&nbsp;&nbsp;&nbsp;&nbsp;\<operand>                            |
+| Binary(binary_operator, **t,** src, dst) | \<binary_operator>**\<t>**&nbsp;&nbsp;&nbsp;&nbsp;\<src>, \<dst>                       |
+| Idiv(**t,** operand)                     | idiv **\<t>**&nbsp;&nbsp;&nbsp;&nbsp;\<operand>                                        |
+| **Cdq(Longword)**                        | cdq                                                                                    |
+| **Cdq(Quadword)**                        | **cdo**                                                                                |
+| AllocateStack(int)                       | subq&nbsp;&nbsp;&nbsp;&nbsp;$\<int>, %rsp                                              |
+| Cmp(**t,** operand, operand)             | cmp **\<t>**&nbsp;&nbsp;&nbsp;&nbsp;\<operand>, \<operand>                             |
+| Jmp(label)                               | jmp&nbsp;&nbsp;&nbsp;&nbsp;.L\<label>                                                  |
+| JmpCC(cond_code, label)                  | j\<cond_code>&nbsp;&nbsp;&nbsp;&nbsp;.L\<label>                                        |
+| SetCC(cond_code, operand)                | set\<cond_code>&nbsp;&nbsp;&nbsp;&nbsp;\<operand>                                      |
+| Label(label)                             | .L\<label>:                                                                            |
+| DeallocateStack(int)                     | addq&nbsp;&nbsp;&nbsp;&nbsp;$\<int>, %rsp                                              |
+| Push(operand)                            | pushq&nbsp;&nbsp;&nbsp;&nbsp;\<operand>                                                |
+| Call(label)                              | call&nbsp;&nbsp;&nbsp;&nbsp;\<label><br>or<br>call&nbsp;&nbsp;&nbsp;&nbsp;\<label>@PLT |
+
+#### Formatting Names for Assembly Operators
+
+| Assembly operator | Instruction name |
+| ----------------- | ---------------- |
+| Neg               | **negl**         |
+| Not               | **not**          |
+| Add               | **add**          |
+| Sub               | **sub**          |
+| Mult              | **imul**         |
+
+#### Instruction Suffixes for Condition Codes
+
+| Condition code | Instruction suffix |
+| -------------- | ------------------ |
+| E              | e                  |
+| NE             | ne                 |
+| L              | l                  |
+| LE             | le                 |
+| G              | g                  |
+| GE             | ge                 |
+
+#### Instruction Suffixes for Assembly Types
+
+| Assembly Type | Instruction suffix |
+| ------------- | ------------------ |
+| **Longword**  | **l**              |
+| **Quadword**  | **q**              |
+
+#### Formatting Assembly Operands
+
+| Assembly operand | Output      |
+| ---------------- | ----------- |
+| Reg(AX) 8-byte   | %rax        |
+| Reg(AX) 4-byte   | %eax        |
+| Reg(AX) 1-byte   | %al         |
+| Reg(DX) 8-byte   | %rdx        |
+| Reg(DX) 4-byte   | %edx        |
+| Reg(DX) 1-byte   | %dl         |
+| Reg(CX) 8-byte   | %rcx        |
+| Reg(CX) 4-byte   | %ecx        |
+| Reg(CX) 1-byte   | %cl         |
+| Reg(DI) 8-byte   | %rdi        |
+| Reg(DI) 4-byte   | %edi        |
+| Reg(DI) 1-byte   | %dil        |
+| Reg(SI) 8-byte   | %rsi        |
+| Reg(SI) 4-byte   | %esi        |
+| Reg(SI) 1-byte   | %sil        |
+| Reg(R8) 8-byte   | %r8         |
+| Reg(R8) 4-byte   | %r8d        |
+| Reg(R8) 1-byte   | %r8b        |
+| Reg(R9) 8-byte   | %r9         |
+| Reg(R9) 4-byte   | %r9d        |
+| Reg(R9) 1-byte   | %r9b        |
+| Reg(R10) 8-byte  | %r10        |
+| Reg(R10) 4-byte  | %r10d       |
+| Reg(R10) 1-byte  | %r10b       |
+| Reg(R11) 8-byte  | %r11        |
+| Reg(R11) 4-byte  | %r11d       |
+| Reg(R11) 1-byte  | %r11b       |
+| **Reg(SP)**      | **%rsp**    |
+| Stack(int)       | <int>(%rbp) |
+| Imm(int)         | $\<int>     |
+
+## Summary
+
+We set foot on the type system now.
+Though our update with Long integers is not a flashy update, it has laid a groundwork for us in later chapters when we need to support more complex types.
+The two types we have now, _int_ and _long_, are both signed. We'll implement unsigned version of them in the next chapter.
+
+### Reference Implementation Analysis
+
+[Chapter 11 Code Analysis](./code_analysis/chapter_11.md)

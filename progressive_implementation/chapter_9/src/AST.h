@@ -17,14 +17,14 @@ block_item = S(Statement) | D(Declaration)
 for_init = InitDecl(variable_declaration) | InitExp(exp?)
 statement = Return(exp)
     | Expression(exp)
-    | If(exp condition, statement then, statement else)
+    | If(exp condition, statement then, statement? else)
     | Compound(block)
     | Break
     | Continue
     | While(exp condition, statement body, identifier id)
     | DoWhile(statement body, exp condition, identifier id)
     | For(for_init init, exp? condition, exp? post, statement body, identifier id)
-    | Switch(exp control, statement body, string* cases, identifier id)
+    | Switch(exp control, statement body, Map<int?, identifier> cases, identifier id)
     | Case(exp, statement body, identifier id)
     | Default(statement body, identifier id)
     | Null

@@ -391,3 +391,55 @@ TEST_CASE(Chapter10InvalidSemanticExtraCredit, "chapter_10", "--validate")
         }
     }
 }
+
+TEST_CASE(Chapter11InvalidSemantic, "chapter_11", "--validate")
+{
+    std::vector<std::string> srcFiles = {
+        "tests/chapter_11/invalid_types/call_long_as_function.c",
+        "tests/chapter_11/invalid_types/cast_lvalue.c",
+        "tests/chapter_11/invalid_types/conflicting_function_types.c",
+        "tests/chapter_11/invalid_types/conflicting_global_types.c",
+        "tests/chapter_11/invalid_types/conflicting_variable_types.c",
+    };
+    Settings settings;
+
+    for (const auto &srcFile : srcFiles)
+    {
+        Compiler compiler;
+        try
+        {
+            int status = compiler.compile(Stage::Validate, std::vector<std::string>{srcFile});
+            ASSERT_TRUE(status != 0);
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+            throw;
+        }
+    }
+}
+
+TEST_CASE(Chapter11InvalidSemanticExtraCredit, "chapter_11", "--validate")
+{
+    std::vector<std::string> srcFiles = {
+        "tests/chapter_11/invalid_labels/extra_credit/bitshift_duplicate_cases.c",
+        "tests/chapter_11/invalid_labels/extra_credit/switch_duplicate_cases.c",
+        "tests/chapter_11/invalid_labels/extra_credit/switch_duplicate_cases_2.c",
+    };
+    Settings settings;
+
+    for (const auto &srcFile : srcFiles)
+    {
+        Compiler compiler;
+        try
+        {
+            int status = compiler.compile(Stage::Validate, std::vector<std::string>{srcFile});
+            ASSERT_TRUE(status != 0);
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+            throw;
+        }
+    }
+}

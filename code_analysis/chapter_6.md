@@ -123,7 +123,7 @@ emit_tacky_for_exp(exp):
 			]
 			
 			return insts
-		case Optional:
+		case Conditional:
 			return emit_conditional_expression(exp)
 ```
 

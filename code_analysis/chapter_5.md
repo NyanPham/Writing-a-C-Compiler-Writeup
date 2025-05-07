@@ -210,7 +210,7 @@ emit_tacky_for_exp(exp):
 			if exp.op is And:
 				return emit_and_expression(exp)
 			else if exp.op is Or:
-				return emit_or_expression(exp
+				return emit_or_expression(exp)
 			else:
 				return emit_binary_expression(exp)
 		case Assignment:
@@ -672,7 +672,7 @@ emit_tacky_for_exp(exp):
 			if exp.op is And:
 				return emit_and_expression(exp)
 			else if exp.op is Or:
-				return emit_or_expression(exp
+				return emit_or_expression(exp)
 			else:
 				return emit_binary_expression(exp)
 		case Assignment:

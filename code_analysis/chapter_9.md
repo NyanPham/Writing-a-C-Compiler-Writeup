@@ -271,19 +271,86 @@ var_entry = {
 The updated _resolve_exp_ is provided in the BOOK_NOTES. I put here for easy reference.
 
 ```
-resolve_exp(e, id_map):
-	match e with:
-	| --snip--
-	| FunctionCall(fun_name, args) ->
-		if fun_name is in identifier_map:
-			new_fun_name = identifier_map.get(fun_name).new_name
-			new_args = []
-			for arg in args:
-				new_args.append(resolve_exp(arg, identifier_map))
+resolve_exp(exp, id_map):
+    match exp.type:
+        case Assignment:
+            if exp.left.type != Var:            // validate that lhs is an lvalue
+                fail("Invalid lvalue!")
+            return Assignment(                  // recursively process lhs and rhs
+                resolve_exp(exp.left, id_map),
+                resolve_exp(exp.right, id_map)
+            )
 
-			return FunctionCall(new_fun_name, new_args)
-		else:
-			fail("Undeclared function!")
+        case CompoundAssignment:
+            if exp.left.type != Var:            // validate that lhs is an lvalue
+                fail("Invalid lvalue!")
+            return CompoundAssignment(          // recursively process lhs and rhs
+                exp.op,
+                resolve_exp(exp.left, id_map),
+                resolve_exp(exp.right, id_map)
+            )
+
+        case PostfixIncr:
+            if exp.inner.type != Var:
+                fail("Invalid lvalue!")
+            return PostfixIncr(
+                resolve_exp(exp.inner, id_map)
+            )
+
+        case PostfixDecr:
+            if exp.inner.type != Var:
+                fail("Invalid lvalue!")
+            return PostfixDecr(
+                resolve_exp(exp.inner, id_map)
+            )
+
+        case Var:
+            if exp.name exists in id_map:                       // rename var from map
+                return Var( id_map.get(exp.name).uniqueName )
+            else:
+                fail("Undeclared variable: " + exp.name)
+
+        // recursively process operands for unary, binary, conditional and function calls
+
+        case Unary:
+            // For unary operators like ++/--, the operand must be a variable.
+            if (exp.op == Incr or exp.op == Decr) and (exp.inner.type != Var):
+                fail("Operand of ++/-- must be an lvalue!")
+            return Unary(
+                exp.op,
+                resolve_exp(exp.inner, id_map)
+            )
+
+        case Binary:
+            return Binary(
+                exp.op,
+                resolve_exp(exp.left, id_map),
+                resolve_exp(exp.right, id_map)
+            )
+
+        case Constant:
+            return exp
+
+        case Conditional:
+            return Conditional(
+                resolve_exp(exp.condition, id_map),
+                resolve_exp(exp.then, id_map),
+                resolve_exp(exp.else, id_map)
+            )
+
+        case FunctionCall(fun_name, args) ->
+            if fun_name is in identifier_map:
+                new_fun_name = identifier_map.get(fun_name).new_name
+                new_args = []
+                for arg in args:
+                    new_args.append(resolve_exp(arg, identifier_map))
+
+                return FunctionCall(new_fun_name, new_args)
+            else:
+                fail("Undeclared function!")
+
+        default:
+            fail("Internal error: Unknown expression")
 ```
 
 Our previous _resolve_declaration_ is only for local variable declarations. We will keep most of the logic, but as we also need to resolve parameters the same way, so we'll split the logic into 2 functions:
@@ -1040,7 +1107,7 @@ convert_function_call(TACKY.FunCall fun_call)
         insts.append(DeallocateStack(bytes_to_remove))
 
     // Retrieve return value
-    assembly_dst = convert_val(dst)
+    assembly_dst = convert_val(fun_call.dst)
     insts.append(Mov(Reg(AX), assembly_dst))
 
     return insts
@@ -1141,7 +1208,7 @@ pass_params(param_list):
     for tacky_param in stack_params:
         stk = Stack(16 + (8*stk_idx))
         assembly_param = Pseudo(tacky_param)
-        inst.append(Mov(stk), assembly_param)
+        inst.append(Mov(stk, assembly_param))
         stk_idx++
 
     return insts
