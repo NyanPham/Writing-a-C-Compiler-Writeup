@@ -13,6 +13,8 @@
   - [Chapter 10: File Scope Variable Declarations and Storage Class Specifiers](#chapter-10-file-scope-variable-declarations-and-storage-class-specifiers)
 - [Part II](#part-ii)
   - [Chapter 11: Long Integers](#chapter-11-long-integers)
+  - [Chapter 12: Unsigned Integers](#chapter-12-unsigned-integers)
+
 ---
 
 # Part I
@@ -137,7 +139,7 @@ On Linux, add this at the end of the file:
 
 #### Formatting Top-Level Assembly Constructs
 
-| Assembly top-level construct | Ouput                                                                                                                                       |
+| Assembly top-level construct | Output                                                                                                                                      |
 | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
 | Program(function_definition) | Printout the function definition <br> On Linux, add at the end of file <br> &nbsp;&nbsp;&nbsp;&nbsp;_.section .note.GNU-stack,"",@progbits_ |
 | Function(name, instructions) | &nbsp;&nbsp;&nbsp;&nbsp;.globl \<name> <br> \<name>: <br> &nbsp;&nbsp;&nbsp;&nbsp;\<instructions>                                           |
@@ -405,7 +407,7 @@ movl 	%r10d, -8(%rbp)
 
 #### Formatting Top-Level Assembly Constructs
 
-| Assembly top-level construct | Ouput                                                                                                                                                                                                                          |
+| Assembly top-level construct | Output                                                                                                                                                                                                                         |
 | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | Program(function_definition) | Printout the function definition <br> On Linux, add at the end of file <br> nbsp;&&nbsp;&nbsp;&nbsp;_.section .note.GNU-stack,"",@progbits_                                                                                    |
 | Function(name, instructions) | &nbsp;&nbsp;&nbsp;&nbsp;.globl \<name> <br> \<name>: <br> &nbsp;&nbsp;&nbsp;&nbsp;push&nbsp;&nbsp;&nbsp;&nbsp;%rbp<br>&nbsp;&nbsp;&nbsp;&nbsp;movq&nbsp;&nbsp;&nbsp;&nbsp;%rsp,%rbp<br>&nbsp;&nbsp;&nbsp;&nbsp;\<instructions> |
@@ -636,7 +638,7 @@ instruction = Return(val)
 	<strong>| Binary(binary_operator, val src1, val src2, val dst)</strong>
 val = Constant(int) | Var(identifier)
 unary_operator = Complement | Negate
-<strong>binary_operator = Add | Subtract | Mulitply | Divide | Remainder</strong>
+<strong>binary_operator = Add | Subtract | Multiply | Divide | Remainder</strong>
 </pre></code>
 
 ### Generating TACKY
@@ -785,7 +787,7 @@ movl 	%r11d, -4(%rbp)
 
 #### Formatting Top-Level Assembly Constructs
 
-| Assembly top-level construct | Ouput                                                                                                                                                                                                                          |
+| Assembly top-level construct | Output                                                                                                                                                                                                                         |
 | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | Program(function_definition) | Printout the function definition <br> On Linux, add at the end of file <br> nbsp;&&nbsp;&nbsp;&nbsp;_.section .note.GNU-stack,"",@progbits_                                                                                    |
 | Function(name, instructions) | &nbsp;&nbsp;&nbsp;&nbsp;.globl \<name> <br> \<name>: <br> &nbsp;&nbsp;&nbsp;&nbsp;push&nbsp;&nbsp;&nbsp;&nbsp;%rbp<br>&nbsp;&nbsp;&nbsp;&nbsp;movq&nbsp;&nbsp;&nbsp;&nbsp;%rsp,%rbp<br>&nbsp;&nbsp;&nbsp;&nbsp;\<instructions> |
@@ -962,8 +964,8 @@ instruction = Return(val)
 	<strong>|Label(identifier)</strong>
 val = Constant(int) | Var(identifier)
 unary_operator = Complement | Negate <strong>| Not</strong>
-binary_operator = Add | Subtract | Mulitply | Divide | Remainder <strong>| Equal | Not Equal</strong>
-				<strong>| LessThan | LessOrEaual | GreaterThan | GreaterOrEqual</strong>
+binary_operator = Add | Subtract | Multiply | Divide | Remainder <strong>| Equal | Not Equal</strong>
+				<strong>| LessThan | LessOrEqual | GreaterThan | GreaterOrEqual</strong>
 </pre></code>
 
 - **Jump** instruction works in goto in C.
@@ -1123,7 +1125,7 @@ The prefix is .L on linux and L on MacOS.
 
 #### Formatting Top-Level Assembly Constructs
 
-| Assembly top-level construct | Ouput                                                                                                                                                                                                                          |
+| Assembly top-level construct | Output                                                                                                                                                                                                                         |
 | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | Program(function_definition) | Printout the function definition <br> On Linux, add at the end of file <br> &nbsp;&nbsp;&nbsp;&nbsp;_.section .note.GNU-stack,"",@progbits_                                                                                    |
 | Function(name, instructions) | &nbsp;&nbsp;&nbsp;&nbsp;.globl \<name> <br> \<name>: <br> &nbsp;&nbsp;&nbsp;&nbsp;push&nbsp;&nbsp;&nbsp;&nbsp;%rbp<br>&nbsp;&nbsp;&nbsp;&nbsp;movq&nbsp;&nbsp;&nbsp;&nbsp;%rsp,%rbp<br>&nbsp;&nbsp;&nbsp;&nbsp;\<instructions> |
@@ -1503,7 +1505,7 @@ Remains unchanged as there are no modifications in the Assembly stage.
 
 #### Formatting Top-Level Assembly Constructs
 
-| Assembly top-level construct | Ouput                                                                                                                                                                                                                          |
+| Assembly top-level construct | Output                                                                                                                                                                                                                         |
 | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | Program(function_definition) | Printout the function definition <br> On Linux, add at the end of file <br> &nbsp;&nbsp;&nbsp;&nbsp;_.section .note.GNU-stack,"",@progbits_                                                                                    |
 | Function(name, instructions) | &nbsp;&nbsp;&nbsp;&nbsp;.globl \<name> <br> \<name>: <br> &nbsp;&nbsp;&nbsp;&nbsp;push&nbsp;&nbsp;&nbsp;&nbsp;%rbp<br>&nbsp;&nbsp;&nbsp;&nbsp;movq&nbsp;&nbsp;&nbsp;&nbsp;%rsp,%rbp<br>&nbsp;&nbsp;&nbsp;&nbsp;\<instructions> |
@@ -2485,8 +2487,8 @@ instruction = Return(val)
 	<strong>| FunCall(identifier fun_name, val* args, val dst)</strong>
 val = Constant(int) | Var(identifier)
 unary_operator = Complement | Negate | Not
-binary_operator = Add | Subtract | Mulitply | Divide | Remainder | Equal | Not Equal
-				| LessThan | LessOrEaual | GreaterThan | GreaterOrEqual
+binary_operator = Add | Subtract | Multiply | Divide | Remainder | Equal | Not Equal
+				| LessThan | LessOrEqual | GreaterThan | GreaterOrEqual
 </pre></code>
 
 The changes correspond closely to the changes to the AST. However, we'll discard function declarations without body the same as variables without initializers.
@@ -2664,7 +2666,7 @@ On Linux, include @PLT after the function names. For example: _foo_ -> _foo@PLT_
 
 #### Formatting Top-Level Assembly Constructs
 
-| Assembly top-level construct      | Ouput                                                                                                                                                                                                                          |
+| Assembly top-level construct      | Output                                                                                                                                                                                                                         |
 | --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | Program(**function_definitions**) | **Printout each function definition** <br> On Linux, add at the end of file <br> &nbsp;&nbsp;&nbsp;&nbsp;_.section .note.GNU-stack,"",@progbits_                                                                               |
 | Function(name, instructions)      | &nbsp;&nbsp;&nbsp;&nbsp;.globl \<name> <br> \<name>: <br> &nbsp;&nbsp;&nbsp;&nbsp;push&nbsp;&nbsp;&nbsp;&nbsp;%rbp<br>&nbsp;&nbsp;&nbsp;&nbsp;movq&nbsp;&nbsp;&nbsp;&nbsp;%rsp,%rbp<br>&nbsp;&nbsp;&nbsp;&nbsp;\<instructions> |
@@ -3229,8 +3231,8 @@ instruction = Return(val)
 	| FunCall(identifier fun_name, val* args, val dst)
 val = Constant(int) | Var(identifier)
 unary_operator = Complement | Negate | Not
-binary_operator = Add | Subtract | Mulitply | Divide | Remainder | Equal | Not Equal
-				| LessThan | LessOrEaual | GreaterThan | GreaterOrEqual
+binary_operator = Add | Subtract | Multiply | Divide | Remainder | Equal | Not Equal
+				| LessThan | LessOrEqual | GreaterThan | GreaterOrEqual
 </pre></code>
 
 ### Generating TACKY
@@ -3377,13 +3379,13 @@ Mov(Reg(R10), Stack(-4))
 
 #### Formatting Top-Level Assembly Constructs
 
-| Assembly top-level construct                                          | Ouput                                                                                                                                                                                                                                                                                                                  |
+| Assembly top-level construct                                          | Output                                                                                                                                                                                                                                                                                                                 |
 | --------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Program(**top_levels**)                                               | **Printout each top-level construct.** <br> On Linux, add at the end of file <br> &nbsp;&nbsp;&nbsp;&nbsp;_.section .note.GNU-stack,"",@progbits_                                                                                                                                                                      |
 | Function(name, global, instructions)                                  | &nbsp;&nbsp;&nbsp;&nbsp;**\<global-directive>**<br>&nbsp;&nbsp;&nbsp;&nbsp;**.text**<br>&nbsp;&nbsp;&nbsp;&nbsp;.globl \<name> <br> \<name>: <br> &nbsp;&nbsp;&nbsp;&nbsp;push&nbsp;&nbsp;&nbsp;&nbsp;%rbp<br>&nbsp;&nbsp;&nbsp;&nbsp;movq&nbsp;&nbsp;&nbsp;&nbsp;%rsp,%rbp<br>&nbsp;&nbsp;&nbsp;&nbsp;\<instructions> |
 | **StaticVariable(name, global, init) (Initialized to zero)**          | **&nbsp;&nbsp;&nbsp;&nbsp;\<global-directive><br>&nbsp;&nbsp;&nbsp;&nbsp;.bss<br>&nbsp;&nbsp;&nbsp;&nbsp;\<alignment-directive><br>\<name>:<br>&nbsp;&nbsp;&nbsp;&nbsp;.zero 4**                                                                                                                                       |
 | **StaticVariable(name, global, init) (Initialized to nonzero value)** | **&nbsp;&nbsp;&nbsp;&nbsp;\<global-directive><br>&nbsp;&nbsp;&nbsp;&nbsp;.data<br>&nbsp;&nbsp;&nbsp;&nbsp;\<alignment-directive><br>\<name>:<br>&nbsp;&nbsp;&nbsp;&nbsp;.long \<init>**                                                                                                                                |
-| **Gobal directive**                                                   | **if global is true:<br>.globl \<identifier><br>Otherwise, omit this directive.**                                                                                                                                                                                                                                      |
+| **Global directive**                                                  | **if global is true:<br>.globl \<identifier><br>Otherwise, omit this directive.**                                                                                                                                                                                                                                      |
 | **Alignment directive**                                               | **For Linux only: .align 4<br>For macOS and Linux: .balign 4**                                                                                                                                                                                                                                                         |
 
 #### Formatting Assembly Instructions
@@ -3473,6 +3475,10 @@ Or we can skip to Part III where we will optimize the compiler.
 ### Reference Implementation Analysis
 
 [Chapter 10 Code Analysis](./code_analysis/chapter_10_.md)
+
+---
+
+# Part II
 
 ---
 
@@ -3921,8 +3927,8 @@ instruction = Return(val)
 	| FunCall(identifier fun_name, val* args, val dst)
 val = Constant(<strong>const</strong>) | Var(identifier)
 unary_operator = Complement | Negate | Not
-binary_operator = Add | Subtract | Mulitply | Divide | Remainder | Equal | Not Equal
-				| LessThan | LessOrEaual | GreaterThan | GreaterOrEqual
+binary_operator = Add | Subtract | Multiply | Divide | Remainder | Equal | Not Equal
+				| LessThan | LessOrEqual | GreaterThan | GreaterOrEqual
 </pre></code>
 
 ### Generating TACKY
@@ -4217,13 +4223,13 @@ _Movsx_ instruction needs suffixes for both operands. Currently, we only sign ex
 
 #### Formatting Top-Level Assembly Constructs
 
-| Assembly top-level construct                                                     | Ouput                                                                                                                                                                                                                                                                                                            |
+| Assembly top-level construct                                                     | Output                                                                                                                                                                                                                                                                                                           |
 | -------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Program(top_levels)                                                              | Printout each top-level construct. <br> On Linux, add at the end of file <br> &nbsp;&nbsp;&nbsp;&nbsp;_.section .note.GNU-stack,"",@progbits_                                                                                                                                                                    |
 | Function(name, global, instructions)                                             | &nbsp;&nbsp;&nbsp;&nbsp;\<global-directive>\<br>&nbsp;&nbsp;&nbsp;&nbsp;.text\<br>&nbsp;&nbsp;&nbsp;&nbsp;.globl \<name> <br> \<name>: <br> &nbsp;&nbsp;&nbsp;&nbsp;push&nbsp;&nbsp;&nbsp;&nbsp;%rbp<br>&nbsp;&nbsp;&nbsp;&nbsp;movq&nbsp;&nbsp;&nbsp;&nbsp;%rsp,%rbp<br>&nbsp;&nbsp;&nbsp;&nbsp;\<instructions> |
 | StaticVariable(name, global, **alignment,** init) (Initialized to zero)          | &nbsp;&nbsp;&nbsp;&nbsp;\<global-directive><br>&nbsp;&nbsp;&nbsp;&nbsp;.bss<br>&nbsp;&nbsp;&nbsp;&nbsp;\<alignment-directive><br>\<name>:<br>&nbsp;&nbsp;&nbsp;&nbsp;**<init>**                                                                                                                                  |
 | StaticVariable(name, global, **alignment,** init) (Initialized to nonzero value) | &nbsp;&nbsp;&nbsp;&nbsp;\<global-directive><br>&nbsp;&nbsp;&nbsp;&nbsp;.data<br>&nbsp;&nbsp;&nbsp;&nbsp;\<alignment-directive><br>\<name>:<br>&nbsp;&nbsp;&nbsp;&nbsp;**<init>**                                                                                                                                 |
-| Gobal directive                                                                  | if global is true:<br>.globl \<identifier><br>Otherwise, omit this directive.                                                                                                                                                                                                                                    |
+| Global directive                                                                 | if global is true:<br>.globl \<identifier><br>Otherwise, omit this directive.                                                                                                                                                                                                                                    |
 | Alignment directive                                                              | For Linux only: .align **<alignment>**<br>For macOS and Linux: .balign **<alignment>**                                                                                                                                                                                                                           |
 
 #### Formatting Static Initializers
@@ -4261,7 +4267,7 @@ _Movsx_ instruction needs suffixes for both operands. Currently, we only sign ex
 
 | Assembly operator | Instruction name |
 | ----------------- | ---------------- |
-| Neg               | **negl**         |
+| Neg               | **neg**          |
 | Not               | **not**          |
 | Add               | **add**          |
 | Sub               | **sub**          |
@@ -4329,3 +4335,582 @@ The two types we have now, _int_ and _long_, are both signed. We'll implement un
 ### Reference Implementation Analysis
 
 [Chapter 11 Code Analysis](./code_analysis/chapter_11.md)
+
+---
+
+# Chapter 12: Unsigned Integers
+
+## Stages of a Compiler
+
+1. **Lexer**
+   - Input: Source code (program.c)
+   - Output: Token list
+2. **Parser**
+   - Input: Token list
+   - Output: Abstract Syntax Tree (AST)
+3. **Semantic Analysis**
+   - Input: AST
+   - Output: Transformed AST
+   - Passes:
+   1. Variable resolution
+   2. Type Checking
+   3. Loop Labeling
+4. **TACKY Generation**
+   - Input: Transformed AST
+   - Output: TAC IR (Tacky)
+5. **Assembly Generation**
+   - Input: Tacky
+   - Output: Assembly code
+   - Passes:
+   1. Converting TACKY to Assembly
+   2. Replacing pseudoregisters
+   3. Instruction fix-up
+6. **Code Emission**
+   - Input: Assembly code
+   - Output: Final assembly file
+
+We already have 2 types: Int and Long.
+In this chapter, we'll implement their unsigned counterparts: Unsigned Int, Unsigned Long.
+
+## Type Conversions, Again
+
+We'll need to take two aspects into consideration while doing the conversions:
+
+1. How the value is changed
+2. How the binary representation is changed
+
+Let's break down our conversions into 4 cases:
+
+### Converting Between Signed and Unsigned Types of the Same Size
+
+- Cases:
+  - Int vs Unsigned Int
+  - Long vs Unsigned Long
+
+Their binary representations won't change, but how we interpret them is; that is whether to use the two's complement or not.
+
+If a signed integer is positive, its upper bit is 0. So interpreting it as an unsigned number won't change its value.
+Also, if an unsigned integer is within the maximum value that the signed counterpart can hold, interpreting it with 2's complement still won't change its value.
+Issues only occur when an integer has its upper bit set.
+
+Converting a negative signed integer to the unsigned one, we add its value by a multiple of 2<sup>N</sup> (N is the number of bit of the type).
+Conversely, converting an unsigned integer with a leading 1 bit requires us to subtract 2<sup>N</sup> from the value.
+To keep things short, "the value is reduced modulo 2^N to be within range of the type."
+
+### Converting Unsigned Int to a Larger Type
+
+- Cases:
+  - Unsigned Int -> Long
+  - Unsigned Int -> Unsigned Long
+
+As both Long and Unsigned Long can represent any Unsigned Int, we simply _zero extend_ the integer.
+
+### Converting Signed Int to a Larger Type
+
+- Cases:
+  - Int -> Long
+  - Int -> Unsigned Long
+
+We've already handled Int to Long in Chapter 11. We'll do the same to convert from _Int_ to _Unsigned Long_.
+If an _Int_ is positive, both _Long_ and _Unsigned Long_ can hold the value.
+If an _Int_ is negative, sign extends work for _Long_, but for _Unsigned Long_, we add 2<sup>64</sup> to the value.
+
+### Converting from Larger to Smaller Types
+
+- Cases:
+  - Long -> Int
+  - Long -> Unsigned Int
+  - Unsigned Long -> Int
+  - Unsigned Long -> Unsigned Int
+
+We always do the Truncate for these conversions by reducing the value modulo 2<sup>32</sup> until the value is in range of the new type.
+
+## The Lexer
+
+New tokens to recognize
+| Token | Regular expression |
+| ------- | -------------------- |
+| KeywordSigned | signed |
+| KeywordUnsigned | unsigned |
+| Unsigned integer constants | [0-9]+[uU]\b |
+| Unsigned long integer constants | [0-9]+([lL][uU]|[uU][lL])\b |
+
+## The Parser
+
+### AST
+
+<pre><code>program = Program(declaration*)
+declaration = FunDecl(function_declaration) | VarDecl(variable_declaration)
+variable_declaration = (identifier name, exp? init, type var_type, storage_class?)
+function_declaration = (identifier name, identifier* params, block? body,type fun_type, storage_class?)
+type = Int | Long | <strong>UInt | ULong |</strong> FunType(type* params, type ret)
+storage_class = Static | Extern
+block_item = S(statement) | D(declaration)
+block = Block(block_item*)
+for_init = InitDecl(variable_declaration) | InitExp(exp?)
+statement = Return(exp) 
+	| Expression(exp) 
+	| If(exp condition, statement then, statement? else)
+	| Compound(block)
+	| Break
+	| Continue
+	| While(exp condition, statement body)
+	| DoWhile(statement body, exp condition)
+	| For(for_init init, exp? condition, exp? post, statement body)
+	| Null 
+exp = Constant(const) 
+	| Var(identifier) 
+	| Cast(type target_type, exp)
+	| Unary(unary_operator, exp)
+	| Binary(binary_operator, exp, exp)
+	| Assignment(exp, exp) 
+	| Conditional(exp condition, exp, exp)
+	| FunctionCall(identifier, exp* args)
+unary_operator = Complement | Negate | Not
+binary_operator = Add | Subtract | Multiply | Divide | Remainder | And | Or
+				| Equal | NotEqual | LessThan | LessOrEqual
+				| GreaterThan | GreaterOrEqual
+const = ConstInt(int) | ConstLong(int) <strong>| ConstUInt(int) | ConstULong(int)</strong></pre></code>
+
+We'll extend the type structure in the symbol table in Chapter 9 instead of defining another data structure.
+If the implementation language has signed 64-bit and 32-bit integer types, use them. Otherwise, we should at least make sure the ConstLong node uses an integer type that can represent all long values.
+
+### EBNF
+
+<pre><code>&lt;program&gt; ::= { &lt;declaration&gt; }
+&lt;declaration&gt; ::= &lt;variable-declaration&gt; | &lt;function-declaration&gt;
+&lt;variable-declaration&gt; ::= { &lt;specifier&gt; }+ &lt;identifier&gt; [ "=" &lt;exp&gt; ] ";"
+&lt;function-declaration&gt; ::= { &lt;specifier&gt; }+ &lt;identifier&gt; "(" &lt;param-list&gt; ")" (&lt;block&gt; | ";")
+&lt;param-list&gt; ::= "void" | { &lt;type-specifier&gt; }+ &lt;identifier&gt; { "," { &lt;type-specifier&gt; }+  &lt;identifier&gt; }
+&lt;type-specifier&gt; ::= "int" | "long" <strong>| "unsigned" | "signed"</strong>
+&lt;specifier&gt; ::= &lt;type-specifier&gt; | "static" | "extern"
+&lt;block&gt; ::= "{" { &lt;block-item&gt; } "}"
+&lt;block-item&gt; ::= &lt;statement&gt; | &lt;declaration&gt;
+&lt;for-init&gt; ::= &lt;variable-declaration&gt; | [ &lt;exp&gt; ] ";"
+&lt;statement&gt; ::= "return" &lt;exp&gt; ";" 
+	| &lt;exp&gt; ";" 
+	| "if" "(" &lt;exp&gt; ")" &lt;statement&gt; ["else" &lt;statement&gt;]
+	| &lt;block&gt;
+	| "break" ";"
+	| "continue" ";"
+	| "while" "(" &lt;exp&gt; ")" &lt;statement&gt;
+	| "do" &lt;statement&gt; "while" "(" &lt;exp&gt; ")" ";"
+	| "for" "(" &lt;for-init&gt; [ &lt;exp&gt; ] ";" [ &lt;exp&gt; ] ")" &lt;statement&gt;
+	| ";"
+&lt;exp&gt; ::= &lt;factor&gt; | &lt;exp&gt; &lt;binop&gt; &lt;exp&gt; | &lt;exp&gt; "?" &lt;exp&gt; ":" &lt;exp&gt;
+&lt;factor&gt; ::= &lt;const&gt; | &lt;identifier&gt; 
+	| "(" { &lt;type-specifier&gt; }+ ")" &lt;factor&gt; 
+	| &lt;unop&gt; &lt;factor&gt; | "(" &lt;exp&gt; ")"
+	| &lt;identifier&gt; "(" [ &lt;argument-list&gt; ] ")"
+&lt;argument-list&gt; ::= &lt;exp&gt; { "," &lt;exp&gt; }
+&lt;unop&gt; ::= "-" | "~" 
+&lt;binop&gt; :: = "+" | "-" | "\*" | "/" | "%" | "&&" | "||"
+				| "==" | "!=" | "&lt;" | "&lt;=" | "&gt;" | "&gt;=" | "="
+&lt;const&gt; ::= &lt;int&gt; | &lt;long&gt; <strong>| &lt;uint&gt; | &lt;ulong&gt;</strong>
+&lt;identifier&gt; ::= ? An identifier token ?
+&lt;int&gt; ::= ? An int token ?&lt;/pre&gt;&lt;/code&gt;
+&lt;long&gt; ::= ? An int or long token ?
+<strong>&lt;uint&gt; ::= ? An unsigned int token ?&lt;/pre&gt;&lt;/code&gt;
+&lt;ulong&gt; ::= ? An unsigned int or unsigned long token ?</strong>
+</pre></code>
+
+### Parser
+
+Parsing type now is complicated as the order is not important.
+
+```
+parse_type(specifier_list):
+	if (specifier_list is empty
+		or specifier_list contains the same specifier twice
+		or specifier_list contains both "signed" and "unsigned"):
+		fail("Invalid type specifier")
+	if specifier_list contains "unsigned" and "long":
+		return ULong
+	if specifier_list contains "unsigned":
+		return UInt
+	if specifier_list contains "long":
+		return Long
+	return Int
+```
+
+I won't provide pseudocode for ConstUInt and ConstULong. We parse an unsigned integer constant token as ConstUInt if its value is within _unsigned int_. Otherwise, it's ConstULong.
+
+## Semantic Analysis
+
+Pheww! We don't need to change the Loop Labeling and Idenfier Resolution passes. We only deal with _unsigned_ types during TypeChecking.
+
+### Type Checker
+
+The C standard defines how we should do the usual arithmetic conversions:
+
+- [x] If both operands have the same type, then no further conversion is needed.
+- [x] Otherwise, if both operands have signed integer types or both have unsigned integer types, the operand with the type of the lesser integer conversion rank is converted to the type of the operand with greater rank.
+- [x] Otherwise, if the operand that has unsigned integer type has rank greater or equal to the rank of the type of the other operand, then the operand with signed integer type is converted to the type of the operand with unsigned integer type.
+- [x] Otherwise, if the type of the operand with signed integer type can represent all of the values of the type of the operand with unsigned integer type, then the operand with unsigned integer type is converted to the type of the operand with signed integer type.
+- [ ] Otherwise, both operands are converted to the unsigned integer type corresponding to the type of the operand with signed integer type.
+
+The fifth and final rule doesn't apply to us, as in our case, _int_ and _long_ don't have the same size.
+The rules lead us to three rules for finding the common type:
+
+```
+get_common_type(type1, type2):
+	if type1 == type2:
+		return type1
+	if size(type1) == size(type2):
+		if type1 is signed:
+			return type2
+		else:
+			return type1
+	if size(type1) > size(type2):
+		return type1
+	else:
+		return type2
+```
+
+We add two new kinds of static initializers.
+
+```
+static_init = IntInit(int) | LongInit(int) | UIntInit(int) | ULongInit(int)
+```
+
+Make sure we do the convert each initializer to the type of the variable. For example:
+
+```
+static unsigned int u = 4294967299L;
+```
+
+is converted into
+
+```
+UIntInit(3)
+```
+
+because 4294967299 is outside of the range of unsigned int, so we subtracting 2<sup>32</sup> from it to make it within range. Also,
+
+```
+static int i = 4294967246u;
+```
+
+is also out of range for signed int, so it is converted into:
+
+```
+IntInit(-50)
+```
+
+## TACKY Generation
+
+### TACKY
+
+<pre><code>
+program = Program(top_level*)
+top_level = Function(identifier, bool global, identifier* params, instruction* body)
+		| StaticVariable(identifier, bool global, type t, static_init init)
+instruction = Return(val) 
+	| SignExtend(val src, val dst)
+	| Truncate(val src, val dst)
+	<strong>| ZeroExtend(val src, val dst)</strong>
+	| Unary(unary_operator, val src, val dst)
+	| Binary(binary_operator, val src1, val src2, val dst)
+	| Copy(val src, val dst)
+	| Jump(identifier target)
+	| JumpIfZero(val condition, identifier target)
+	| JumpIfNotZero(val condition, identifier target)
+	| Label(identifier)
+	| FunCall(identifier fun_name, val* args, val dst)
+val = Constant(const) | Var(identifier)
+unary_operator = Complement | Negate | Not
+binary_operator = Add | Subtract | Multiply | Divide | Remainder | Equal | Not Equal
+				| LessThan | LessOrEqual | GreaterThan | GreaterOrEqual
+</pre></code>
+
+### Generating TACKY
+
+```
+emit_tacky(e, instructions, symbols):
+	match e with
+	| --snip--
+	| Cast(t, inner) ->
+		result = emit_tacky(inner, instructions, symbols)
+		inner_type = get_type(inner)
+		if t == inner_type :
+			return result
+		dst = make_tacky_variable(t, symbols)
+		if size(t) == size(inner_type):
+			instructions.append(Copy(result, dst))
+		else if size(t) < size(inner_type):
+			instructions.append(Truncate(result, dst))
+		else if inner_type is signed:
+			instructions.append(SignExtend(result, dst))
+		else:
+			instructions.append(ZeroExtend(result, dst))
+		return dst
+```
+
+## Assembly Generation
+
+### Assembly
+
+<pre><code>program = Program(top_level*)
+assembly_type = LongWord | Quadword
+top_level = Function(identifier name, bool global, instruction* instructions)
+	| StaticVariable(identifier name, bool global, int alignment, static_init init)
+instruction = Mov(assembly_type, operand src, operand dst)
+		| Movsx(operand src, operand dst)
+		<strong>| MovZeroExtend(operand src, operand dst)</strong>
+		| Unary(unary_operator, assembly_type, operand)
+		| Binary(binary_operator, assembly_type, operand, operand)
+		| Cmp(assembly_type,, operand, operand)
+		| Idiv(assembly_type, operand)
+		<strong>| Div(assembly_type, operand)</strong>
+		| Cdq(assembly_type)
+		| Jmp(identifier)
+		| JmpCC(cond_code, identifier)
+		| SetCC(cond_code, operand)
+		| Label(identifier)
+		| AllocateStack(int)
+		| DeallocateStack(int)
+		| Push(operand)
+		| Call(identifier) 
+		| Ret
+unary_operator = Neg | Not
+binary_operator = Add | Sub | Mult
+operand = Imm(int) | Reg(reg) | Pseudo(identifier) | Stack(int) | Data(identifier)
+cond_code = E | NE | G | GE | L | LE <strong>| A | AE | B | BE</strong>
+reg = AX | CX | DX | DI | SI | R8 | R9 | R10 | R11 | SP</pre></code>
+
+Note that MovZeroExtend is a placeholder for now. In the Fix-Up pass, we replace it with either one or two mov instructions depending on the destination is a memory and a register.
+In PART II, the destination is always in memory, but it will be different in PART III.
+
+### Converting TACKY to Assembly
+
+#### Converting Top-Level TACKY Constructs to Assembly
+
+| TACKY top-level construct                    | Assembly top-level construct                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| -------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Program(top_level_defs)                      | Program(top_level_defs)                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| Function(name, global, params, instructions) | Function(name, global, [Mov(\<param1 type>, Reg(DI), param1), <br>&nbsp;&nbsp;&nbsp;&nbsp;Mov(\<param2 type>, Reg(SI), param2), <br>&nbsp;&nbsp;&nbsp;&nbsp;\<copy next four parameters from registers>, <br>&nbsp;&nbsp;&nbsp;&nbsp;Mov(\<param7 type>, Stack(16), param7), <br>&nbsp;&nbsp;&nbsp;&nbsp;Mov(\<param8 type>, Stack(24), param8), <br>&nbsp;&nbsp;&nbsp;&nbsp;\<copy remaining parameters from stack>] +<br>&nbsp;&nbsp;&nbsp;&nbsp; instructions) |
+| StaticVariable(name, global, t, init)        | StaticVariable(name, global, \<alignment of t, init)                                                                                                                                                                                                                                                                                                                                                                                                              |
+
+#### Converting TACKY Instructions to Assembly
+
+| TACKY instruction                                 | Assembly instructions                                                                                                                    |
+| ------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| Return(val)                                       | Mov(\<val type>, val, Reg(AX))<br>Ret                                                                                                    |
+| Unary(Not, src, dst)                              | Cmp(\<src type>, Imm(0), src)<br>Mov(\<dst type>, Imm(0), dst)<br>SetCC(E, dst)                                                          |
+| Unary(unary_operator, src, dst)                   | Mov(\<src type>, src, dst)<br>Unary(unary_operator, \<src type>, dst)                                                                    |
+| Binary(Divide, src1, src2, dst) (Signed)          | Mov(\<src1 type>, src1, Reg(AX))<br>Cdq(\<src1 type>)<br>Idiv(\<src1 type>, src2)<br>Mov(\<src1 type>, Reg(AX), dst)                     |
+| **Binary(Divide, src1, src2, dst) (Unsigned)**    | **Mov(\<src1 type>, src1, Reg(AX))<br>Mov(\<src1 type>, Imm(0), Reg(DX))<br>Div(\<src1 type>, src2)<br>Mov(\<src1 type>, Reg(AX), dst)** |
+| Binary(Remainder, src1, src2, dst) (Signed)       | Mov(\<src1 type>, src1, Reg(AX))<br>Cdq(\<src1 type>)<br>Idiv(\<src1 type>, src2)<br>Mov(\<src1 type>, Reg(DX), dst)                     |
+| **Binary(Remainder, src1, src2, dst) (Unsigned)** | **Mov(\<src1 type>, src1, Reg(AX))<br>Mov(\<src1 type>, Imm(0), Reg(DX))<br>Div(\<src1 type>, src2)<br>Mov(\<src1 type>, Reg(DX), dst)** |
+| Binary(arithmetic_operator, src1, src2, dst)      | Mov(\<src1 type>, src1, dst)<br>Binary(arithmetic_operator, \<src1 type>, src2, dst)                                                     |
+| Binary(relational_operator, src1, src2, dst)      | Cmp(\<src1 type>, src1, src2)<br>Mov(\<dst type>, Imm(0), dst)<br>SetCC(relational_operator, dst)                                        |
+| Jump(target)                                      | Jmp(target)                                                                                                                              |
+| JumpIfZero(condition, target)                     | Cmp(\<condition type>, Imm(0), condition)<br>SetCC(E, target)                                                                            |
+| JumpIfNotZero(condition, target)                  | Cmp(\<condition type>, Imm(0), condition)<br>SetCC(NE, target)                                                                           |
+| Copy(src, dst)                                    | Mov(\<src type>, src, dst)                                                                                                               |
+| Label(identifier)                                 | Label(identifier)                                                                                                                        |
+| FunCall(fun_name, args, dst)                      | \<fix stack alignment><br>\<set up arguments><br>Call(fun_name)<br>\<deallocate arguments\/padding><br>Mov(\<dst type>, Reg(AX), dst)    |
+| SignExtend(src, dst)                              | Movsx(src, dst)                                                                                                                          |
+| Truncate(src, dst)                                | Mov(Longword, src, dst)                                                                                                                  |
+| **ZeroExtend(src, dst)**                          | **MovZeroExtend(src, dst)**                                                                                                              |
+
+#### Converting TACKY Arithmetic Operators to Assembly
+
+| TACKY operator | Assembly operator |
+| -------------- | ----------------- |
+| Complement     | Not               |
+| Negate         | Neg               |
+| Add            | Add               |
+| Subtract       | Sub               |
+| Multiply       | Mult              |
+
+#### Converting TACKY Comparisons to Assembly
+
+| TACKY comparison | Assembly condition code (signed) | **Assembly condition code (unsigned)** |
+| ---------------- | -------------------------------- | -------------------------------------- |
+| Equal            | E                                | **E**                                  |
+| NotEqual         | NE                               | **NE**                                 |
+| LessThan         | L                                | **B**                                  |
+| LessOrEqual      | LE                               | **BE**                                 |
+| GreaterThan      | G                                | **A**                                  |
+| GreaterOrEqual   | GE                               | **AE**                                 |
+
+#### Converting TACKY Operands to Assembly
+
+| TACKY operand                 | Assembly operand   |
+| ----------------------------- | ------------------ |
+| Constant(ConstInt(int))       | Imm(int)           |
+| **Constant(ConstUInt(int))**  | **Imm(int)**       |
+| Constant(ConstLong(int))      | Imm(int)           |
+| **Constant(ConstULong(int))** | **Imm(int)**       |
+| Var(identifier)               | Pseudo(identifier) |
+
+#### Converting Types to Assembly
+
+| Source type | Assembly type | Alignment |
+| ----------- | ------------- | --------- |
+| Int         | Longword      | 4         |
+| **UInt**    | **Longword**  | **4**     |
+| Long        | Quadword      | 8         |
+| **ULong**   | **Quadword**  | **8**     |
+
+### Replacing Pseudoregisters
+
+We add two more Assembly instructions that have operands: MovZeroExtend and Div.
+Extend the pass to replace pseudos in them.
+
+### Fixing Up Instructions
+
+We'll rewrite _Div_ exactly the same as _Idiv_. For _MovZeroExtend_, we look at the destination.
+If the destination is a register, we issue a single movl instruction. For example
+
+```
+MovZeroExtend(Stack(-16), Reg(AX))
+```
+
+is rewritten to this
+
+```
+Mov(Longword, Stack(-16), Reg(AX))
+```
+
+Otherwise, the destination is a memory, so we _movl_ the source to R11, then move from R11 to the destination. For example
+
+```
+MovZeroExtend(Imm(100), Stack(-16))
+```
+
+is rewritten to
+
+```
+Mov(Longword, Imm(100), Reg(R11))
+Mov(Quadword, Reg(R11), Stack(-16))
+```
+
+## Code Emission
+
+- Extend to emit _div_ instruction and new condition code.
+- Static initializers, UIntInit and ULongInit, are emitted exactly the same as their signed counterparts.
+
+#### Formatting Top-Level Assembly Constructs
+
+| Assembly top-level construct                                                 | Output                                                                                                                                                                                                                                                                                                           |
+| ---------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Program(top_levels)                                                          | Printout each top-level construct. <br> On Linux, add at the end of file <br> &nbsp;&nbsp;&nbsp;&nbsp;_.section .note.GNU-stack,"",@progbits_                                                                                                                                                                    |
+| Function(name, global, instructions)                                         | &nbsp;&nbsp;&nbsp;&nbsp;\<global-directive>\<br>&nbsp;&nbsp;&nbsp;&nbsp;.text\<br>&nbsp;&nbsp;&nbsp;&nbsp;.globl \<name> <br> \<name>: <br> &nbsp;&nbsp;&nbsp;&nbsp;push&nbsp;&nbsp;&nbsp;&nbsp;%rbp<br>&nbsp;&nbsp;&nbsp;&nbsp;movq&nbsp;&nbsp;&nbsp;&nbsp;%rsp,%rbp<br>&nbsp;&nbsp;&nbsp;&nbsp;\<instructions> |
+| StaticVariable(name, global, alignment, init) (Initialized to zero)          | &nbsp;&nbsp;&nbsp;&nbsp;\<global-directive><br>&nbsp;&nbsp;&nbsp;&nbsp;.bss<br>&nbsp;&nbsp;&nbsp;&nbsp;\<alignment-directive><br>\<name>:<br>&nbsp;&nbsp;&nbsp;&nbsp;<init>                                                                                                                                      |
+| StaticVariable(name, global, alignment, init) (Initialized to nonzero value) | &nbsp;&nbsp;&nbsp;&nbsp;\<global-directive><br>&nbsp;&nbsp;&nbsp;&nbsp;.data<br>&nbsp;&nbsp;&nbsp;&nbsp;\<alignment-directive><br>\<name>:<br>&nbsp;&nbsp;&nbsp;&nbsp;<init>                                                                                                                                     |
+| Global directive                                                             | if global is true:<br>.globl \<identifier><br>Otherwise, omit this directive.                                                                                                                                                                                                                                    |
+| Alignment directive                                                          | For Linux only: .align <alignment><br>For macOS and Linux: .balign <alignment>                                                                                                                                                                                                                                   |
+
+#### Formatting Static Initializers
+
+| Static Initializer | Output         |
+| ------------------ | -------------- |
+| IntInit(0)         | .zero 4        |
+| IntInit(i)         | .long \<i>     |
+| LongInit(0)        | .zero 8        |
+| LongInit(i)        | .quad \<i>     |
+| **UIntInit(0)**    | **.zero 4**    |
+| **UIntInit(i)**    | **.long \<i>** |
+| **ULongInit(0)**   | **.zero 8**    |
+| **ULongInit(i)**   | **.quad \<i>** |
+
+#### Formatting Assembly Instructions
+
+| Assembly instruction                 | Output                                                                                 |
+| ------------------------------------ | -------------------------------------------------------------------------------------- |
+| Mov(t, src, dst)                     | mov \<t>&nbsp;&nbsp;&nbsp;&nbsp;\<src>, \<dst>                                         |
+| Movsx(src, dst)                      | movslq &nbsp;&nbsp;&nbsp;&nbsp;\<src>, \<dst>                                          |
+| Ret                                  | ret                                                                                    |
+| Unary(unary_operator, t, operand)    | \<unary_operator>\<t>&nbsp;&nbsp;&nbsp;&nbsp;\<operand>                                |
+| Binary(binary_operator, t, src, dst) | \<binary_operator>\<t>&nbsp;&nbsp;&nbsp;&nbsp;\<src>, \<dst>                           |
+| Idiv(t, operand)                     | idiv \<t>&nbsp;&nbsp;&nbsp;&nbsp;\<operand>                                            |
+| **Div(t, operand)**                  | **div \<t>&nbsp;&nbsp;&nbsp;&nbsp;\<operand>**                                         |
+| Cdq(Longword)                        | cdq                                                                                    |
+| Cdq(Quadword)                        | cdo                                                                                    |
+| AllocateStack(int)                   | subq&nbsp;&nbsp;&nbsp;&nbsp;$\<int>, %rsp                                              |
+| Cmp(t, operand, operand)             | cmp \<t>&nbsp;&nbsp;&nbsp;&nbsp;\<operand>, \<operand>                                 |
+| Jmp(label)                           | jmp&nbsp;&nbsp;&nbsp;&nbsp;.L\<label>                                                  |
+| JmpCC(cond_code, label)              | j\<cond_code>&nbsp;&nbsp;&nbsp;&nbsp;.L\<label>                                        |
+| SetCC(cond_code, operand)            | set\<cond_code>&nbsp;&nbsp;&nbsp;&nbsp;\<operand>                                      |
+| Label(label)                         | .L\<label>:                                                                            |
+| DeallocateStack(int)                 | addq&nbsp;&nbsp;&nbsp;&nbsp;$\<int>, %rsp                                              |
+| Push(operand)                        | pushq&nbsp;&nbsp;&nbsp;&nbsp;\<operand>                                                |
+| Call(label)                          | call&nbsp;&nbsp;&nbsp;&nbsp;\<label><br>or<br>call&nbsp;&nbsp;&nbsp;&nbsp;\<label>@PLT |
+
+#### Formatting Names for Assembly Operators
+
+| Assembly operator | Instruction name |
+| ----------------- | ---------------- |
+| Neg               | neg              |
+| Not               | not              |
+| Add               | add              |
+| Sub               | sub              |
+| Mult              | imul             |
+
+#### Instruction Suffixes for Condition Codes
+
+| Condition code | Instruction suffix |
+| -------------- | ------------------ |
+| E              | e                  |
+| NE             | ne                 |
+| L              | l                  |
+| LE             | le                 |
+| G              | g                  |
+| GE             | ge                 |
+| **B**          | **b**              |
+| **BE**         | **be**             |
+| **A**          | **a**              |
+| **AE**         | **ae**             |
+
+#### Instruction Suffixes for Assembly Types
+
+| Assembly Type | Instruction suffix |
+| ------------- | ------------------ |
+| Longword      | l                  |
+| Quadword      | q                  |
+
+#### Formatting Assembly Operands
+
+| Assembly operand | Output      |
+| ---------------- | ----------- |
+| Reg(AX) 8-byte   | %rax        |
+| Reg(AX) 4-byte   | %eax        |
+| Reg(AX) 1-byte   | %al         |
+| Reg(DX) 8-byte   | %rdx        |
+| Reg(DX) 4-byte   | %edx        |
+| Reg(DX) 1-byte   | %dl         |
+| Reg(CX) 8-byte   | %rcx        |
+| Reg(CX) 4-byte   | %ecx        |
+| Reg(CX) 1-byte   | %cl         |
+| Reg(DI) 8-byte   | %rdi        |
+| Reg(DI) 4-byte   | %edi        |
+| Reg(DI) 1-byte   | %dil        |
+| Reg(SI) 8-byte   | %rsi        |
+| Reg(SI) 4-byte   | %esi        |
+| Reg(SI) 1-byte   | %sil        |
+| Reg(R8) 8-byte   | %r8         |
+| Reg(R8) 4-byte   | %r8d        |
+| Reg(R8) 1-byte   | %r8b        |
+| Reg(R9) 8-byte   | %r9         |
+| Reg(R9) 4-byte   | %r9d        |
+| Reg(R9) 1-byte   | %r9b        |
+| Reg(R10) 8-byte  | %r10        |
+| Reg(R10) 4-byte  | %r10d       |
+| Reg(R10) 1-byte  | %r10b       |
+| Reg(R11) 8-byte  | %r11        |
+| Reg(R11) 4-byte  | %r11d       |
+| Reg(R11) 1-byte  | %r11b       |
+| Reg(SP)          | %rsp        |
+| Stack(int)       | <int>(%rbp) |
+| Imm(int)         | $\<int>     |
+
+## Summary
+
+Thanks to the groundwork we established in chapter 11, supporting unsigned integer types requires much less effort.
+Our next target is Floating-point numbers, which are processed differently from integers in the hardware levels as they have their own dedicated registers.
+
+### Reference Implementation Analysis
+
+[Chapter 12 Code Analysis](./code_analysis/chapter_12.md)

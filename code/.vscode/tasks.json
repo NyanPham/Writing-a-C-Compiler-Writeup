@@ -82,6 +82,7 @@
                 "${workspaceFolder}/src/Emit.cpp", 
                 "-o",
                 "${workspaceFolder}/bin/test_compiler.exe"
+
             ],
             "options": {
                 "cwd": "${workspaceFolder}"

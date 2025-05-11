@@ -458,14 +458,14 @@ TEST_CASE(Chapter10InvalidParseExtraCredit, "chapter_10", "--parse")
 TEST_CASE(Chapter11InvalidParse, "chapter_11", "--parse")
 {
     std::vector<std::string> srcFiles = {
-      "tests/chapter_11/invalid_parse/bad_specifiers.c",
-    "tests/chapter_11/invalid_parse/empty_cast.c",
-    "tests/chapter_11/invalid_parse/fun_name_long.c",
-    "tests/chapter_11/invalid_parse/invalid_cast.c",
-    "tests/chapter_11/invalid_parse/invalid_suffix.c",
-    "tests/chapter_11/invalid_parse/long_constant_as_var.c",
-    "tests/chapter_11/invalid_parse/missing_cast_parentheses.c",
-    "tests/chapter_11/invalid_parse/var_name_long.c",
+        "tests/chapter_11/invalid_parse/bad_specifiers.c",
+        "tests/chapter_11/invalid_parse/empty_cast.c",
+        "tests/chapter_11/invalid_parse/fun_name_long.c",
+        "tests/chapter_11/invalid_parse/invalid_cast.c",
+        "tests/chapter_11/invalid_parse/invalid_suffix.c",
+        "tests/chapter_11/invalid_parse/long_constant_as_var.c",
+        "tests/chapter_11/invalid_parse/missing_cast_parentheses.c",
+        "tests/chapter_11/invalid_parse/var_name_long.c",
     };
     Settings settings;
 
@@ -484,3 +484,220 @@ TEST_CASE(Chapter11InvalidParse, "chapter_11", "--parse")
         }
     }
 }
+
+// Chapter 12
+TEST_CASE(Chapter12InvalidParse, "chapter_12", "--parse")
+{
+    std::vector<std::string> srcFiles = {
+        "tests/chapter_12/invalid_parse/bad_specifiers.c",
+        "tests/chapter_12/invalid_parse/bad_specifiers_2.c",
+    };
+    Settings settings;
+
+    for (const auto &srcFile : srcFiles)
+    {
+        Compiler compiler;
+        try
+        {
+            int status = compiler.compile(Stage::Parsing, std::vector<std::string>{srcFile});
+            ASSERT_TRUE(status != 0);
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+            throw;
+        }
+    }
+}
+
+// // Chapter 13
+// TEST_CASE(Chapter13InvalidParse, "chapter_13", "--parse")
+// {
+//     std::vector<std::string> srcFiles = {
+
+//     };
+//     Settings settings;
+
+//     for (const auto &srcFile : srcFiles)
+//     {
+//         Compiler compiler;
+//         try
+//         {
+//             int status = compiler.compile(Stage::Parsing, std::vector<std::string>{srcFile});
+//             ASSERT_TRUE(status != 0);
+//         }
+//         catch (const std::exception &e)
+//         {
+//             std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+//             throw;
+//         }
+//     }
+// }
+
+// // Chapter 14
+// TEST_CASE(Chapter14InvalidParse, "chapter_14", "--parse")
+// {
+//     std::vector<std::string> srcFiles = {
+
+//     };
+//     Settings settings;
+
+//     for (const auto &srcFile : srcFiles)
+//     {
+//         Compiler compiler;
+//         try
+//         {
+//             int status = compiler.compile(Stage::Parsing, std::vector<std::string>{srcFile});
+//             ASSERT_TRUE(status != 0);
+//         }
+//         catch (const std::exception &e)
+//         {
+//             std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+//             throw;
+//         }
+//     }
+// }
+
+// // Chapter 15
+// TEST_CASE(Chapter15InvalidParse, "chapter_15", "--parse")
+// {
+//     std::vector<std::string> srcFiles = {
+
+//     };
+//     Settings settings;
+
+//     for (const auto &srcFile : srcFiles)
+//     {
+//         Compiler compiler;
+//         try
+//         {
+//             int status = compiler.compile(Stage::Parsing, std::vector<std::string>{srcFile});
+//             ASSERT_TRUE(status != 0);
+//         }
+//         catch (const std::exception &e)
+//         {
+//             std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+//             throw;
+//         }
+//     }
+// }
+
+// // Chapter 16
+// TEST_CASE(Chapter16InvalidParse, "chapter_16", "--parse")
+// {
+//     std::vector<std::string> srcFiles = {
+
+//     };
+//     Settings settings;
+
+//     for (const auto &srcFile : srcFiles)
+//     {
+//         Compiler compiler;
+//         try
+//         {
+//             int status = compiler.compile(Stage::Parsing, std::vector<std::string>{srcFile});
+//             ASSERT_TRUE(status != 0);
+//         }
+//         catch (const std::exception &e)
+//         {
+//             std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+//             throw;
+//         }
+//     }
+// }
+
+// // Chapter 17
+// TEST_CASE(Chapter17InvalidParse, "chapter_17", "--parse")
+// {
+//     std::vector<std::string> srcFiles = {
+
+//     };
+//     Settings settings;
+
+//     for (const auto &srcFile : srcFiles)
+//     {
+//         Compiler compiler;
+//         try
+//         {
+//             int status = compiler.compile(Stage::Parsing, std::vector<std::string>{srcFile});
+//             ASSERT_TRUE(status != 0);
+//         }
+//         catch (const std::exception &e)
+//         {
+//             std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+//             throw;
+//         }
+//     }
+// }
+
+// // Chapter 18
+// TEST_CASE(Chapter18InvalidParse, "chapter_18", "--parse")
+// {
+//     std::vector<std::string> srcFiles = {
+
+//     };
+//     Settings settings;
+
+//     for (const auto &srcFile : srcFiles)
+//     {
+//         Compiler compiler;
+//         try
+//         {
+//             int status = compiler.compile(Stage::Parsing, std::vector<std::string>{srcFile});
+//             ASSERT_TRUE(status != 0);
+//         }
+//         catch (const std::exception &e)
+//         {
+//             std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+//             throw;
+//         }
+//     }
+// }
+
+// // Chapter 19
+// TEST_CASE(Chapter19InvalidParse, "chapter_19", "--parse")
+// {
+//     std::vector<std::string> srcFiles = {
+
+//     };
+//     Settings settings;
+
+//     for (const auto &srcFile : srcFiles)
+//     {
+//         Compiler compiler;
+//         try
+//         {
+//             int status = compiler.compile(Stage::Parsing, std::vector<std::string>{srcFile});
+//             ASSERT_TRUE(status != 0);
+//         }
+//         catch (const std::exception &e)
+//         {
+//             std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+//             throw;
+//         }
+//     }
+// }
+
+// // Chapter 20
+// TEST_CASE(Chapter20InvalidParse, "chapter_20", "--parse")
+// {
+//     std::vector<std::string> srcFiles = {
+
+//     };
+//     Settings settings;
+
+//     for (const auto &srcFile : srcFiles)
+//     {
+//         Compiler compiler;
+//         try
+//         {
+//             int status = compiler.compile(Stage::Parsing, std::vector<std::string>{srcFile});
+//             ASSERT_TRUE(status != 0);
+//         }
+//         catch (const std::exception &e)
+//         {
+//             std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+//             throw;
+//         }
+//     }
+// }

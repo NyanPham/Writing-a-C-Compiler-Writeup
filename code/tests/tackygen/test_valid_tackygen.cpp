@@ -798,3 +798,456 @@ TEST_CASE(Chapter11ValidTackyGenExtraCredit, "chapter_11", "--tacky")
         }
     }
 }
+
+// Chapter 12
+TEST_CASE(Chapter12ValidTackyGen, "chapter_12", "--tacky")
+{
+    std::vector<std::string> srcFiles = {
+
+        "tests/chapter_12/valid/explicit_casts/chained_casts.c",
+        "tests/chapter_12/valid/explicit_casts/extension.c",
+        "tests/chapter_12/valid/explicit_casts/rewrite_movz_regression.c",
+        "tests/chapter_12/valid/explicit_casts/round_trip_casts.c",
+        "tests/chapter_12/valid/explicit_casts/same_size_conversion.c",
+        "tests/chapter_12/valid/explicit_casts/truncate.c",
+
+        "tests/chapter_12/valid/implicit_casts/common_type.c",
+        "tests/chapter_12/valid/implicit_casts/convert_by_assignment.c",
+        "tests/chapter_12/valid/implicit_casts/promote_constants.c",
+        "tests/chapter_12/valid/implicit_casts/static_initializers.c",
+
+        "tests/chapter_12/valid/libraries/unsigned_args.c",
+        "tests/chapter_12/valid/libraries/unsigned_args_client.c",
+        "tests/chapter_12/valid/libraries/unsigned_global_var.c",
+        "tests/chapter_12/valid/libraries/unsigned_global_var_client.c",
+
+        "tests/chapter_12/valid/type_specifiers/signed_type_specifiers.c",
+        "tests/chapter_12/valid/type_specifiers/unsigned_type_specifiers.c",
+
+        "tests/chapter_12/valid/unsigned_expressions/arithmetic_ops.c",
+        "tests/chapter_12/valid/unsigned_expressions/arithmetic_wraparound.c",
+        "tests/chapter_12/valid/unsigned_expressions/comparisons.c",
+        "tests/chapter_12/valid/unsigned_expressions/locals.c",
+        "tests/chapter_12/valid/unsigned_expressions/logical.c",
+        "tests/chapter_12/valid/unsigned_expressions/simple.c",
+        "tests/chapter_12/valid/unsigned_expressions/static_variables.c",
+    };
+    Settings settings;
+
+    for (const auto &srcFile : srcFiles)
+    {
+        Compiler compiler;
+        try
+        {
+            int status = compiler.compile(Stage::Tacky, std::vector<std::string>{srcFile});
+            // Check that the compilation succeeded
+            ASSERT_TRUE(status == 0);
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+            throw;
+        }
+    }
+}
+
+TEST_CASE(Chapter12ValidTackyGenExtraCredit, "chapter_12", "--tacky")
+{
+    std::vector<std::string> srcFiles = {
+        "tests/chapter_12/valid/extra_credit/bitwise_unsigned_ops.c",
+        "tests/chapter_12/valid/extra_credit/bitwise_unsigned_shift.c",
+        "tests/chapter_12/valid/extra_credit/compound_assign_uint.c",
+        "tests/chapter_12/valid/extra_credit/compound_bitshift.c",
+        "tests/chapter_12/valid/extra_credit/compound_bitwise.c",
+        "tests/chapter_12/valid/extra_credit/postfix_precedence.c",
+        "tests/chapter_12/valid/extra_credit/switch_uint.c",
+        "tests/chapter_12/valid/extra_credit/unsigned_incr_decr.c",
+    };
+    Settings settings;
+
+    for (const auto &srcFile : srcFiles)
+    {
+        Compiler compiler;
+        try
+        {
+            int status = compiler.compile(Stage::Tacky, std::vector<std::string>{srcFile});
+            // Check that the compilation succeeded
+            ASSERT_TRUE(status == 0);
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+            throw;
+        }
+    }
+}
+
+// // Chapter 13
+// TEST_CASE(Chapter13ValidTackyGen, "chapter_13", "--tacky")
+// {
+//     std::vector<std::string> srcFiles = {};
+//     Settings settings;
+
+//     for (const auto &srcFile : srcFiles)
+//     {
+//         Compiler compiler;
+//         try
+//         {
+//             int status = compiler.compile(Stage::Tacky, std::vector<std::string>{srcFile});
+//             // Check that the compilation succeeded
+//             ASSERT_TRUE(status == 0);
+//         }
+//         catch (const std::exception &e)
+//         {
+//             std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+//             throw;
+//         }
+//     }
+// }
+
+// TEST_CASE(Chapter13ValidTackyGenExtraCredit, "chapter_13", "--tacky")
+// {
+//     std::vector<std::string> srcFiles = {
+
+//     };
+//     Settings settings;
+
+//     for (const auto &srcFile : srcFiles)
+//     {
+//         Compiler compiler;
+//         try
+//         {
+//             int status = compiler.compile(Stage::Tacky, std::vector<std::string>{srcFile});
+//             // Check that the compilation succeeded
+//             ASSERT_TRUE(status == 0);
+//         }
+//         catch (const std::exception &e)
+//         {
+//             std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+//             throw;
+//         }
+//     }
+// }
+
+// // Chapter 14
+// TEST_CASE(Chapter14ValidTackyGen, "chapter_14", "--tacky")
+// {
+//     std::vector<std::string> srcFiles = {};
+//     Settings settings;
+
+//     for (const auto &srcFile : srcFiles)
+//     {
+//         Compiler compiler;
+//         try
+//         {
+//             int status = compiler.compile(Stage::Tacky, std::vector<std::string>{srcFile});
+//             // Check that the compilation succeeded
+//             ASSERT_TRUE(status == 0);
+//         }
+//         catch (const std::exception &e)
+//         {
+//             std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+//             throw;
+//         }
+//     }
+// }
+
+// TEST_CASE(Chapter14ValidTackyGenExtraCredit, "chapter_14", "--tacky")
+// {
+//     std::vector<std::string> srcFiles = {
+
+//     };
+//     Settings settings;
+
+//     for (const auto &srcFile : srcFiles)
+//     {
+//         Compiler compiler;
+//         try
+//         {
+//             int status = compiler.compile(Stage::Tacky, std::vector<std::string>{srcFile});
+//             // Check that the compilation succeeded
+//             ASSERT_TRUE(status == 0);
+//         }
+//         catch (const std::exception &e)
+//         {
+//             std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+//             throw;
+//         }
+//     }
+// }
+// // Chapter 15
+// TEST_CASE(Chapter15ValidTackyGen, "chapter_15", "--tacky")
+// {
+//     std::vector<std::string> srcFiles = {};
+//     Settings settings;
+
+//     for (const auto &srcFile : srcFiles)
+//     {
+//         Compiler compiler;
+//         try
+//         {
+//             int status = compiler.compile(Stage::Tacky, std::vector<std::string>{srcFile});
+//             // Check that the compilation succeeded
+//             ASSERT_TRUE(status == 0);
+//         }
+//         catch (const std::exception &e)
+//         {
+//             std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+//             throw;
+//         }
+//     }
+// }
+
+// TEST_CASE(Chapter15ValidTackyGenExtraCredit, "chapter_15", "--tacky")
+// {
+//     std::vector<std::string> srcFiles = {
+
+//     };
+//     Settings settings;
+
+//     for (const auto &srcFile : srcFiles)
+//     {
+//         Compiler compiler;
+//         try
+//         {
+//             int status = compiler.compile(Stage::Tacky, std::vector<std::string>{srcFile});
+//             // Check that the compilation succeeded
+//             ASSERT_TRUE(status == 0);
+//         }
+//         catch (const std::exception &e)
+//         {
+//             std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+//             throw;
+//         }
+//     }
+// }
+// // Chapter 16
+// TEST_CASE(Chapter16ValidTackyGen, "chapter_16", "--tacky")
+// {
+//     std::vector<std::string> srcFiles = {};
+//     Settings settings;
+
+//     for (const auto &srcFile : srcFiles)
+//     {
+//         Compiler compiler;
+//         try
+//         {
+//             int status = compiler.compile(Stage::Tacky, std::vector<std::string>{srcFile});
+//             // Check that the compilation succeeded
+//             ASSERT_TRUE(status == 0);
+//         }
+//         catch (const std::exception &e)
+//         {
+//             std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+//             throw;
+//         }
+//     }
+// }
+
+// TEST_CASE(Chapter16ValidTackyGenExtraCredit, "chapter_16", "--tacky")
+// {
+//     std::vector<std::string> srcFiles = {
+
+//     };
+//     Settings settings;
+
+//     for (const auto &srcFile : srcFiles)
+//     {
+//         Compiler compiler;
+//         try
+//         {
+//             int status = compiler.compile(Stage::Tacky, std::vector<std::string>{srcFile});
+//             // Check that the compilation succeeded
+//             ASSERT_TRUE(status == 0);
+//         }
+//         catch (const std::exception &e)
+//         {
+//             std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+//             throw;
+//         }
+//     }
+// }
+// // Chapter 17
+// TEST_CASE(Chapter17ValidTackyGen, "chapter_17", "--tacky")
+// {
+//     std::vector<std::string> srcFiles = {};
+//     Settings settings;
+
+//     for (const auto &srcFile : srcFiles)
+//     {
+//         Compiler compiler;
+//         try
+//         {
+//             int status = compiler.compile(Stage::Tacky, std::vector<std::string>{srcFile});
+//             // Check that the compilation succeeded
+//             ASSERT_TRUE(status == 0);
+//         }
+//         catch (const std::exception &e)
+//         {
+//             std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+//             throw;
+//         }
+//     }
+// }
+
+// TEST_CASE(Chapter17ValidTackyGenExtraCredit, "chapter_17", "--tacky")
+// {
+//     std::vector<std::string> srcFiles = {
+
+//     };
+//     Settings settings;
+
+//     for (const auto &srcFile : srcFiles)
+//     {
+//         Compiler compiler;
+//         try
+//         {
+//             int status = compiler.compile(Stage::Tacky, std::vector<std::string>{srcFile});
+//             // Check that the compilation succeeded
+//             ASSERT_TRUE(status == 0);
+//         }
+//         catch (const std::exception &e)
+//         {
+//             std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+//             throw;
+//         }
+//     }
+// }
+// // Chapter 18
+// TEST_CASE(Chapter18ValidTackyGen, "chapter_18", "--tacky")
+// {
+//     std::vector<std::string> srcFiles = {};
+//     Settings settings;
+
+//     for (const auto &srcFile : srcFiles)
+//     {
+//         Compiler compiler;
+//         try
+//         {
+//             int status = compiler.compile(Stage::Tacky, std::vector<std::string>{srcFile});
+//             // Check that the compilation succeeded
+//             ASSERT_TRUE(status == 0);
+//         }
+//         catch (const std::exception &e)
+//         {
+//             std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+//             throw;
+//         }
+//     }
+// }
+
+// TEST_CASE(Chapter18ValidTackyGenExtraCredit, "chapter_18", "--tacky")
+// {
+//     std::vector<std::string> srcFiles = {
+
+//     };
+//     Settings settings;
+
+//     for (const auto &srcFile : srcFiles)
+//     {
+//         Compiler compiler;
+//         try
+//         {
+//             int status = compiler.compile(Stage::Tacky, std::vector<std::string>{srcFile});
+//             // Check that the compilation succeeded
+//             ASSERT_TRUE(status == 0);
+//         }
+//         catch (const std::exception &e)
+//         {
+//             std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+//             throw;
+//         }
+//     }
+// }
+// // Chapter 19
+// TEST_CASE(Chapter19ValidTackyGen, "chapter_19", "--tacky")
+// {
+//     std::vector<std::string> srcFiles = {};
+//     Settings settings;
+
+//     for (const auto &srcFile : srcFiles)
+//     {
+//         Compiler compiler;
+//         try
+//         {
+//             int status = compiler.compile(Stage::Tacky, std::vector<std::string>{srcFile});
+//             // Check that the compilation succeeded
+//             ASSERT_TRUE(status == 0);
+//         }
+//         catch (const std::exception &e)
+//         {
+//             std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+//             throw;
+//         }
+//     }
+// }
+
+// TEST_CASE(Chapter19ValidTackyGenExtraCredit, "chapter_19", "--tacky")
+// {
+//     std::vector<std::string> srcFiles = {
+
+//     };
+//     Settings settings;
+
+//     for (const auto &srcFile : srcFiles)
+//     {
+//         Compiler compiler;
+//         try
+//         {
+//             int status = compiler.compile(Stage::Tacky, std::vector<std::string>{srcFile});
+//             // Check that the compilation succeeded
+//             ASSERT_TRUE(status == 0);
+//         }
+//         catch (const std::exception &e)
+//         {
+//             std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+//             throw;
+//         }
+//     }
+// }
+// // Chapter 20
+// TEST_CASE(Chapter20ValidTackyGen, "chapter_20", "--tacky")
+// {
+//     std::vector<std::string> srcFiles = {};
+//     Settings settings;
+
+//     for (const auto &srcFile : srcFiles)
+//     {
+//         Compiler compiler;
+//         try
+//         {
+//             int status = compiler.compile(Stage::Tacky, std::vector<std::string>{srcFile});
+//             // Check that the compilation succeeded
+//             ASSERT_TRUE(status == 0);
+//         }
+//         catch (const std::exception &e)
+//         {
+//             std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+//             throw;
+//         }
+//     }
+// }
+
+// TEST_CASE(Chapter20ValidTackyGenExtraCredit, "chapter_20", "--tacky")
+// {
+//     std::vector<std::string> srcFiles = {
+
+//     };
+//     Settings settings;
+
+//     for (const auto &srcFile : srcFiles)
+//     {
+//         Compiler compiler;
+//         try
+//         {
+//             int status = compiler.compile(Stage::Tacky, std::vector<std::string>{srcFile});
+//             // Check that the compilation succeeded
+//             ASSERT_TRUE(status == 0);
+//         }
+//         catch (const std::exception &e)
+//         {
+//             std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+//             throw;
+//         }
+//     }
+// }

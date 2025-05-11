@@ -1061,3 +1061,462 @@ TEST_CASE(Chapter11ValidLexExtraCredit, "chapter_11", "--lex")
         }
     }
 }
+
+// Chapter 12
+TEST_CASE(Chapter12ValidLex, "chapter_12", "--lex")
+{
+    std::vector<std::string> srcFiles = {
+        "tests/chapter_12/invalid_parse/bad_specifiers.c",
+        "tests/chapter_12/invalid_parse/bad_specifiers_2.c",
+        "tests/chapter_12/invalid_types/conflicting_signed_unsigned.c",
+        "tests/chapter_12/invalid_types/conflicting_uint_ulong.c",
+        "tests/chapter_12/valid/explicit_casts/chained_casts.c",
+        "tests/chapter_12/valid/explicit_casts/extension.c",
+        "tests/chapter_12/valid/explicit_casts/rewrite_movz_regression.c",
+        "tests/chapter_12/valid/explicit_casts/round_trip_casts.c",
+        "tests/chapter_12/valid/explicit_casts/same_size_conversion.c",
+        "tests/chapter_12/valid/explicit_casts/truncate.c",
+        "tests/chapter_12/valid/implicit_casts/common_type.c",
+        "tests/chapter_12/valid/implicit_casts/convert_by_assignment.c",
+        "tests/chapter_12/valid/implicit_casts/promote_constants.c",
+        "tests/chapter_12/valid/implicit_casts/static_initializers.c",
+        "tests/chapter_12/valid/libraries/unsigned_args.c",
+        "tests/chapter_12/valid/libraries/unsigned_args_client.c",
+        "tests/chapter_12/valid/libraries/unsigned_global_var.c",
+        "tests/chapter_12/valid/libraries/unsigned_global_var_client.c",
+        "tests/chapter_12/valid/type_specifiers/signed_type_specifiers.c",
+        "tests/chapter_12/valid/type_specifiers/unsigned_type_specifiers.c",
+        "tests/chapter_12/valid/unsigned_expressions/arithmetic_ops.c",
+        "tests/chapter_12/valid/unsigned_expressions/arithmetic_wraparound.c",
+        "tests/chapter_12/valid/unsigned_expressions/comparisons.c",
+        "tests/chapter_12/valid/unsigned_expressions/locals.c",
+        "tests/chapter_12/valid/unsigned_expressions/logical.c",
+        "tests/chapter_12/valid/unsigned_expressions/simple.c",
+        "tests/chapter_12/valid/unsigned_expressions/static_variables.c",
+
+    };
+    Settings settings;
+
+    for (const auto &srcFile : srcFiles)
+    {
+        Compiler compiler;
+        try
+        {
+            int status = compiler.compile(Stage::Lexing, std::vector<std::string>{srcFile});
+            ASSERT_TRUE(status == 0);
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+            throw;
+        }
+    }
+}
+
+TEST_CASE(Chapter12ValidLexExtraCredit, "chapter_12", "--lex")
+{
+    std::vector<std::string> srcFiles = {
+        "tests/chapter_12/invalid_labels/extra_credit/switch_duplicate_cases.c",
+
+        "tests/chapter_12/valid/extra_credit/bitwise_unsigned_ops.c",
+        "tests/chapter_12/valid/extra_credit/bitwise_unsigned_shift.c",
+        "tests/chapter_12/valid/extra_credit/compound_assign_uint.c",
+        "tests/chapter_12/valid/extra_credit/compound_bitshift.c",
+        "tests/chapter_12/valid/extra_credit/compound_bitwise.c",
+        "tests/chapter_12/valid/extra_credit/postfix_precedence.c",
+        "tests/chapter_12/valid/extra_credit/switch_uint.c",
+        "tests/chapter_12/valid/extra_credit/unsigned_incr_decr.c",
+    };
+    Settings settings;
+
+    for (const auto &srcFile : srcFiles)
+    {
+        Compiler compiler;
+        try
+        {
+            int status = compiler.compile(Stage::Lexing, std::vector<std::string>{srcFile});
+            ASSERT_TRUE(status == 0);
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+            throw;
+        }
+    }
+}
+
+// // Chapter 13
+// TEST_CASE(Chapter13ValidLex, "chapter_13", "--lex")
+// {
+//     std::vector<std::string> srcFiles = {
+
+//     };
+//     Settings settings;
+
+//     for (const auto &srcFile : srcFiles)
+//     {
+//         Compiler compiler;
+//         try
+//         {
+//             int status = compiler.compile(Stage::Lexing, std::vector<std::string>{srcFile});
+//             ASSERT_TRUE(status == 0);
+//         }
+//         catch (const std::exception &e)
+//         {
+//             std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+//             throw;
+//         }
+//     }
+// }
+
+// TEST_CASE(Chapter13ValidLexExtraCredit, "chapter_13", "--lex")
+// {
+//     std::vector<std::string> srcFiles = {
+
+//     };
+//     Settings settings;
+
+//     for (const auto &srcFile : srcFiles)
+//     {
+//         Compiler compiler;
+//         try
+//         {
+//             int status = compiler.compile(Stage::Lexing, std::vector<std::string>{srcFile});
+//             ASSERT_TRUE(status == 0);
+//         }
+//         catch (const std::exception &e)
+//         {
+//             std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+//             throw;
+//         }
+//     }
+// }
+
+// // Chapter 14
+// TEST_CASE(Chapter14ValidLex, "chapter_14", "--lex")
+// {
+//     std::vector<std::string> srcFiles = {
+
+//     };
+//     Settings settings;
+
+//     for (const auto &srcFile : srcFiles)
+//     {
+//         Compiler compiler;
+//         try
+//         {
+//             int status = compiler.compile(Stage::Lexing, std::vector<std::string>{srcFile});
+//             ASSERT_TRUE(status == 0);
+//         }
+//         catch (const std::exception &e)
+//         {
+//             std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+//             throw;
+//         }
+//     }
+// }
+
+// TEST_CASE(Chapter14ValidLexExtraCredit, "chapter_14", "--lex")
+// {
+//     std::vector<std::string> srcFiles = {
+
+//     };
+//     Settings settings;
+
+//     for (const auto &srcFile : srcFiles)
+//     {
+//         Compiler compiler;
+//         try
+//         {
+//             int status = compiler.compile(Stage::Lexing, std::vector<std::string>{srcFile});
+//             ASSERT_TRUE(status == 0);
+//         }
+//         catch (const std::exception &e)
+//         {
+//             std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+//             throw;
+//         }
+//     }
+// }
+
+// // Chapter 15
+// TEST_CASE(Chapter15ValidLex, "chapter_15", "--lex")
+// {
+//     std::vector<std::string> srcFiles = {
+
+//     };
+//     Settings settings;
+
+//     for (const auto &srcFile : srcFiles)
+//     {
+//         Compiler compiler;
+//         try
+//         {
+//             int status = compiler.compile(Stage::Lexing, std::vector<std::string>{srcFile});
+//             ASSERT_TRUE(status == 0);
+//         }
+//         catch (const std::exception &e)
+//         {
+//             std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+//             throw;
+//         }
+//     }
+// }
+
+// TEST_CASE(Chapter15ValidLexExtraCredit, "chapter_15", "--lex")
+// {
+//     std::vector<std::string> srcFiles = {
+
+//     };
+//     Settings settings;
+
+//     for (const auto &srcFile : srcFiles)
+//     {
+//         Compiler compiler;
+//         try
+//         {
+//             int status = compiler.compile(Stage::Lexing, std::vector<std::string>{srcFile});
+//             ASSERT_TRUE(status == 0);
+//         }
+//         catch (const std::exception &e)
+//         {
+//             std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+//             throw;
+//         }
+//     }
+// }
+
+// // Chapter 16
+// TEST_CASE(Chapter16ValidLex, "chapter_16", "--lex")
+// {
+//     std::vector<std::string> srcFiles = {
+
+//     };
+//     Settings settings;
+
+//     for (const auto &srcFile : srcFiles)
+//     {
+//         Compiler compiler;
+//         try
+//         {
+//             int status = compiler.compile(Stage::Lexing, std::vector<std::string>{srcFile});
+//             ASSERT_TRUE(status == 0);
+//         }
+//         catch (const std::exception &e)
+//         {
+//             std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+//             throw;
+//         }
+//     }
+// }
+
+// TEST_CASE(Chapter16ValidLexExtraCredit, "chapter_16", "--lex")
+// {
+//     std::vector<std::string> srcFiles = {
+
+//     };
+//     Settings settings;
+
+//     for (const auto &srcFile : srcFiles)
+//     {
+//         Compiler compiler;
+//         try
+//         {
+//             int status = compiler.compile(Stage::Lexing, std::vector<std::string>{srcFile});
+//             ASSERT_TRUE(status == 0);
+//         }
+//         catch (const std::exception &e)
+//         {
+//             std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+//             throw;
+//         }
+//     }
+// }
+
+// // Chapter 17
+// TEST_CASE(Chapter17ValidLex, "chapter_17", "--lex")
+// {
+//     std::vector<std::string> srcFiles = {
+
+//     };
+//     Settings settings;
+
+//     for (const auto &srcFile : srcFiles)
+//     {
+//         Compiler compiler;
+//         try
+//         {
+//             int status = compiler.compile(Stage::Lexing, std::vector<std::string>{srcFile});
+//             ASSERT_TRUE(status == 0);
+//         }
+//         catch (const std::exception &e)
+//         {
+//             std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+//             throw;
+//         }
+//     }
+// }
+
+// TEST_CASE(Chapter17ValidLexExtraCredit, "chapter_17", "--lex")
+// {
+//     std::vector<std::string> srcFiles = {
+
+//     };
+//     Settings settings;
+
+//     for (const auto &srcFile : srcFiles)
+//     {
+//         Compiler compiler;
+//         try
+//         {
+//             int status = compiler.compile(Stage::Lexing, std::vector<std::string>{srcFile});
+//             ASSERT_TRUE(status == 0);
+//         }
+//         catch (const std::exception &e)
+//         {
+//             std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+//             throw;
+//         }
+//     }
+// }
+
+// // Chapter 18
+// TEST_CASE(Chapter18ValidLex, "chapter_18", "--lex")
+// {
+//     std::vector<std::string> srcFiles = {
+
+//     };
+//     Settings settings;
+
+//     for (const auto &srcFile : srcFiles)
+//     {
+//         Compiler compiler;
+//         try
+//         {
+//             int status = compiler.compile(Stage::Lexing, std::vector<std::string>{srcFile});
+//             ASSERT_TRUE(status == 0);
+//         }
+//         catch (const std::exception &e)
+//         {
+//             std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+//             throw;
+//         }
+//     }
+// }
+
+// TEST_CASE(Chapter18ValidLexExtraCredit, "chapter_18", "--lex")
+// {
+//     std::vector<std::string> srcFiles = {
+
+//     };
+//     Settings settings;
+
+//     for (const auto &srcFile : srcFiles)
+//     {
+//         Compiler compiler;
+//         try
+//         {
+//             int status = compiler.compile(Stage::Lexing, std::vector<std::string>{srcFile});
+//             ASSERT_TRUE(status == 0);
+//         }
+//         catch (const std::exception &e)
+//         {
+//             std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+//             throw;
+//         }
+//     }
+// }
+
+// // Chapter 19
+// TEST_CASE(Chapter19ValidLex, "chapter_19", "--lex")
+// {
+//     std::vector<std::string> srcFiles = {
+
+//     };
+//     Settings settings;
+
+//     for (const auto &srcFile : srcFiles)
+//     {
+//         Compiler compiler;
+//         try
+//         {
+//             int status = compiler.compile(Stage::Lexing, std::vector<std::string>{srcFile});
+//             ASSERT_TRUE(status == 0);
+//         }
+//         catch (const std::exception &e)
+//         {
+//             std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+//             throw;
+//         }
+//     }
+// }
+
+// TEST_CASE(Chapter19ValidLexExtraCredit, "chapter_19", "--lex")
+// {
+//     std::vector<std::string> srcFiles = {
+
+//     };
+//     Settings settings;
+
+//     for (const auto &srcFile : srcFiles)
+//     {
+//         Compiler compiler;
+//         try
+//         {
+//             int status = compiler.compile(Stage::Lexing, std::vector<std::string>{srcFile});
+//             ASSERT_TRUE(status == 0);
+//         }
+//         catch (const std::exception &e)
+//         {
+//             std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+//             throw;
+//         }
+//     }
+// }
+
+// // Chapter 20
+// TEST_CASE(Chapter20ValidLex, "chapter_20", "--lex")
+// {
+//     std::vector<std::string> srcFiles = {
+
+//     };
+//     Settings settings;
+
+//     for (const auto &srcFile : srcFiles)
+//     {
+//         Compiler compiler;
+//         try
+//         {
+//             int status = compiler.compile(Stage::Lexing, std::vector<std::string>{srcFile});
+//             ASSERT_TRUE(status == 0);
+//         }
+//         catch (const std::exception &e)
+//         {
+//             std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+//             throw;
+//         }
+//     }
+// }
+
+// TEST_CASE(Chapter20ValidLexExtraCredit, "chapter_20", "--lex")
+// {
+//     std::vector<std::string> srcFiles = {
+
+//     };
+//     Settings settings;
+
+//     for (const auto &srcFile : srcFiles)
+//     {
+//         Compiler compiler;
+//         try
+//         {
+//             int status = compiler.compile(Stage::Lexing, std::vector<std::string>{srcFile});
+//             ASSERT_TRUE(status == 0);
+//         }
+//         catch (const std::exception &e)
+//         {
+//             std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+//             throw;
+//         }
+//     }
+// }

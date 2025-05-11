@@ -443,3 +443,419 @@ TEST_CASE(Chapter11InvalidSemanticExtraCredit, "chapter_11", "--validate")
         }
     }
 }
+
+// Chapter 12
+TEST_CASE(Chapter12InvalidSemantic, "chapter_12", "--validate")
+{
+    std::vector<std::string> srcFiles = {
+        "tests/chapter_12/invalid_types/conflicting_signed_unsigned.c",
+        "tests/chapter_12/invalid_types/conflicting_uint_ulong.c",
+    };
+    Settings settings;
+
+    for (const auto &srcFile : srcFiles)
+    {
+        Compiler compiler;
+        try
+        {
+            int status = compiler.compile(Stage::Validate, std::vector<std::string>{srcFile});
+            ASSERT_TRUE(status != 0);
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+            throw;
+        }
+    }
+}
+
+TEST_CASE(Chapter12InvalidSemanticExtraCredit, "chapter_12", "--validate")
+{
+    std::vector<std::string> srcFiles = {
+        "tests/chapter_12/invalid_labels/extra_credit/switch_duplicate_cases.c",
+    };
+    Settings settings;
+
+    for (const auto &srcFile : srcFiles)
+    {
+        Compiler compiler;
+        try
+        {
+            int status = compiler.compile(Stage::Validate, std::vector<std::string>{srcFile});
+            ASSERT_TRUE(status != 0);
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+            throw;
+        }
+    }
+}
+
+// // Chapter 13
+// TEST_CASE(Chapter13InvalidSemantic, "chapter_13", "--validate")
+// {
+//     std::vector<std::string> srcFiles = {
+//     };
+//     Settings settings;
+
+//     for (const auto &srcFile : srcFiles)
+//     {
+//         Compiler compiler;
+//         try
+//         {
+//             int status = compiler.compile(Stage::Validate, std::vector<std::string>{srcFile});
+//             ASSERT_TRUE(status != 0);
+//         }
+//         catch (const std::exception &e)
+//         {
+//             std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+//             throw;
+//         }
+//     }
+// }
+
+// TEST_CASE(Chapter12InvalidSemanticExtraCredit, "chapter_12", "--validate")
+// {
+//     std::vector<std::string> srcFiles = {
+    
+//     };
+//     Settings settings;
+
+//     for (const auto &srcFile : srcFiles)
+//     {
+//         Compiler compiler;
+//         try
+//         {
+//             int status = compiler.compile(Stage::Validate, std::vector<std::string>{srcFile});
+//             ASSERT_TRUE(status != 0);
+//         }
+//         catch (const std::exception &e)
+//         {
+//             std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+//             throw;
+//         }
+//     }
+// }
+
+// // Chapter 14
+// TEST_CASE(Chapter14InvalidSemantic, "chapter_14", "--validate")
+// {
+//     std::vector<std::string> srcFiles = {
+//     };
+//     Settings settings;
+
+//     for (const auto &srcFile : srcFiles)
+//     {
+//         Compiler compiler;
+//         try
+//         {
+//             int status = compiler.compile(Stage::Validate, std::vector<std::string>{srcFile});
+//             ASSERT_TRUE(status != 0);
+//         }
+//         catch (const std::exception &e)
+//         {
+//             std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+//             throw;
+//         }
+//     }
+// }
+
+// TEST_CASE(Chapter14InvalidSemanticExtraCredit, "chapter_14", "--validate")
+// {
+//     std::vector<std::string> srcFiles = {
+    
+//     };
+//     Settings settings;
+
+//     for (const auto &srcFile : srcFiles)
+//     {
+//         Compiler compiler;
+//         try
+//         {
+//             int status = compiler.compile(Stage::Validate, std::vector<std::string>{srcFile});
+//             ASSERT_TRUE(status != 0);
+//         }
+//         catch (const std::exception &e)
+//         {
+//             std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+//             throw;
+//         }
+//     }
+// }
+
+// // Chapter 15
+// TEST_CASE(Chapter15InvalidSemantic, "chapter_15", "--validate")
+// {
+//     std::vector<std::string> srcFiles = {
+//     };
+//     Settings settings;
+
+//     for (const auto &srcFile : srcFiles)
+//     {
+//         Compiler compiler;
+//         try
+//         {
+//             int status = compiler.compile(Stage::Validate, std::vector<std::string>{srcFile});
+//             ASSERT_TRUE(status != 0);
+//         }
+//         catch (const std::exception &e)
+//         {
+//             std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+//             throw;
+//         }
+//     }
+// }
+
+// TEST_CASE(Chapter15InvalidSemanticExtraCredit, "chapter_15", "--validate")
+// {
+//     std::vector<std::string> srcFiles = {
+    
+//     };
+//     Settings settings;
+
+//     for (const auto &srcFile : srcFiles)
+//     {
+//         Compiler compiler;
+//         try
+//         {
+//             int status = compiler.compile(Stage::Validate, std::vector<std::string>{srcFile});
+//             ASSERT_TRUE(status != 0);
+//         }
+//         catch (const std::exception &e)
+//         {
+//             std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+//             throw;
+//         }
+//     }
+// }
+
+// // Chapter 16
+// TEST_CASE(Chapter16InvalidSemantic, "chapter_16", "--validate")
+// {
+//     std::vector<std::string> srcFiles = {
+//     };
+//     Settings settings;
+
+//     for (const auto &srcFile : srcFiles)
+//     {
+//         Compiler compiler;
+//         try
+//         {
+//             int status = compiler.compile(Stage::Validate, std::vector<std::string>{srcFile});
+//             ASSERT_TRUE(status != 0);
+//         }
+//         catch (const std::exception &e)
+//         {
+//             std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+//             throw;
+//         }
+//     }
+// }
+
+// TEST_CASE(Chapter16InvalidSemanticExtraCredit, "chapter_16", "--validate")
+// {
+//     std::vector<std::string> srcFiles = {
+    
+//     };
+//     Settings settings;
+
+//     for (const auto &srcFile : srcFiles)
+//     {
+//         Compiler compiler;
+//         try
+//         {
+//             int status = compiler.compile(Stage::Validate, std::vector<std::string>{srcFile});
+//             ASSERT_TRUE(status != 0);
+//         }
+//         catch (const std::exception &e)
+//         {
+//             std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+//             throw;
+//         }
+//     }
+// }
+
+// // Chapter 17
+// TEST_CASE(Chapter17InvalidSemantic, "chapter_17", "--validate")
+// {
+//     std::vector<std::string> srcFiles = {
+//     };
+//     Settings settings;
+
+//     for (const auto &srcFile : srcFiles)
+//     {
+//         Compiler compiler;
+//         try
+//         {
+//             int status = compiler.compile(Stage::Validate, std::vector<std::string>{srcFile});
+//             ASSERT_TRUE(status != 0);
+//         }
+//         catch (const std::exception &e)
+//         {
+//             std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+//             throw;
+//         }
+//     }
+// }
+
+// TEST_CASE(Chapter17InvalidSemanticExtraCredit, "chapter_17", "--validate")
+// {
+//     std::vector<std::string> srcFiles = {
+    
+//     };
+//     Settings settings;
+
+//     for (const auto &srcFile : srcFiles)
+//     {
+//         Compiler compiler;
+//         try
+//         {
+//             int status = compiler.compile(Stage::Validate, std::vector<std::string>{srcFile});
+//             ASSERT_TRUE(status != 0);
+//         }
+//         catch (const std::exception &e)
+//         {
+//             std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+//             throw;
+//         }
+//     }
+// }
+
+// // Chapter 18
+// TEST_CASE(Chapter18InvalidSemantic, "chapter_18", "--validate")
+// {
+//     std::vector<std::string> srcFiles = {
+//     };
+//     Settings settings;
+
+//     for (const auto &srcFile : srcFiles)
+//     {
+//         Compiler compiler;
+//         try
+//         {
+//             int status = compiler.compile(Stage::Validate, std::vector<std::string>{srcFile});
+//             ASSERT_TRUE(status != 0);
+//         }
+//         catch (const std::exception &e)
+//         {
+//             std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+//             throw;
+//         }
+//     }
+// }
+
+// TEST_CASE(Chapter18InvalidSemanticExtraCredit, "chapter_18", "--validate")
+// {
+//     std::vector<std::string> srcFiles = {
+    
+//     };
+//     Settings settings;
+
+//     for (const auto &srcFile : srcFiles)
+//     {
+//         Compiler compiler;
+//         try
+//         {
+//             int status = compiler.compile(Stage::Validate, std::vector<std::string>{srcFile});
+//             ASSERT_TRUE(status != 0);
+//         }
+//         catch (const std::exception &e)
+//         {
+//             std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+//             throw;
+//         }
+//     }
+// }
+
+// // Chapter 19
+// TEST_CASE(Chapter19InvalidSemantic, "chapter_19", "--validate")
+// {
+//     std::vector<std::string> srcFiles = {
+//     };
+//     Settings settings;
+
+//     for (const auto &srcFile : srcFiles)
+//     {
+//         Compiler compiler;
+//         try
+//         {
+//             int status = compiler.compile(Stage::Validate, std::vector<std::string>{srcFile});
+//             ASSERT_TRUE(status != 0);
+//         }
+//         catch (const std::exception &e)
+//         {
+//             std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+//             throw;
+//         }
+//     }
+// }
+
+// TEST_CASE(Chapter19InvalidSemanticExtraCredit, "chapter_19", "--validate")
+// {
+//     std::vector<std::string> srcFiles = {
+    
+//     };
+//     Settings settings;
+
+//     for (const auto &srcFile : srcFiles)
+//     {
+//         Compiler compiler;
+//         try
+//         {
+//             int status = compiler.compile(Stage::Validate, std::vector<std::string>{srcFile});
+//             ASSERT_TRUE(status != 0);
+//         }
+//         catch (const std::exception &e)
+//         {
+//             std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+//             throw;
+//         }
+//     }
+// }
+
+// // Chapter 20
+// TEST_CASE(Chapter20InvalidSemantic, "chapter_20", "--validate")
+// {
+//     std::vector<std::string> srcFiles = {
+//     };
+//     Settings settings;
+
+//     for (const auto &srcFile : srcFiles)
+//     {
+//         Compiler compiler;
+//         try
+//         {
+//             int status = compiler.compile(Stage::Validate, std::vector<std::string>{srcFile});
+//             ASSERT_TRUE(status != 0);
+//         }
+//         catch (const std::exception &e)
+//         {
+//             std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+//             throw;
+//         }
+//     }
+// }
+
+// TEST_CASE(Chapter20InvalidSemanticExtraCredit, "chapter_20", "--validate")
+// {
+//     std::vector<std::string> srcFiles = {
+    
+//     };
+//     Settings settings;
+
+//     for (const auto &srcFile : srcFiles)
+//     {
+//         Compiler compiler;
+//         try
+//         {
+//             int status = compiler.compile(Stage::Validate, std::vector<std::string>{srcFile});
+//             ASSERT_TRUE(status != 0);
+//         }
+//         catch (const std::exception &e)
+//         {
+//             std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+//             throw;
+//         }
+//     }
+// }

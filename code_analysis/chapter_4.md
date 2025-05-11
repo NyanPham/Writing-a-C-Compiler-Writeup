@@ -1,4 +1,5 @@
 # Table of Contents
+
 - [Token, Lexer, AST](#token-lexer-ast)
 - [Parser](#parser)
 - [TACKY](#tacky)
@@ -16,17 +17,22 @@
 ---
 
 # Token, Lexer, AST
+
 The BOOK_NOTES guide is sufficient to update this file for the chapter.
 
 # Parser
+
 The BOOK_NOTES guide is sufficient to update this file for the chapter.
 We will extend our get_precendence, parse_unop, parse_binop, parse_factor and parse_exp.
 
 # TACKY
+
 The BOOK_NOTES guide is sufficient to update this file for the chapter.
 
 # TACKYGEN
+
 We've had a separate helper class as UniqueIds generator. Update the class to have make_label function
+
 ```
 make_label(label):
 	return "{label}.{counter++}"
@@ -34,7 +40,7 @@ make_label(label):
 
 Extend convert_unop and convert_binop
 
-Two short-circuiting operators && and || are handled differently. 
+Two short-circuiting operators && and || are handled differently.
 Relational operators should be in the same function with other binary operators such as +, -.
 
 ```
@@ -42,7 +48,7 @@ emit_tacky_for_exp(exp):
 	match exp type:
 		case AST.Constant: return TACKY.Constant
 		case Unary: return emit_unary_expression(exp)
-		case Binary: 
+		case Binary:
 			if exp.op is And:
 				return emit_and_expression(exp)
 			else if exp.op is Or:
@@ -50,6 +56,7 @@ emit_tacky_for_exp(exp):
 			else:
 				return emit_binary_expression(exp)
 ```
+
 ```
 emit_and_expression(and_exp):
 	eval_1, v1 = emit_tacky_for_exp(and_exp.exp1)
@@ -58,7 +65,7 @@ emit_and_expression(and_exp):
 	end_label = UniqueIds.make_label('and_end')
 	dst_name = Uniqueids.make_temporary()
 	dst = Var(dst_name)
-	
+
 	insts = [
 		...eval_1,
 		JumpIfZero(v1, false_label),
@@ -70,9 +77,10 @@ emit_and_expression(and_exp):
 		Copy(Contant(0), dst),
 		Label(end_label)
 	]
-	
+
 	return insts
 ```
+
 ```
 emit_or_expression():
 	eval_1, v1 = emit_tacky_for_exp(and_exp.exp1)
@@ -81,7 +89,7 @@ emit_or_expression():
 	end_label = UniqueIds.make_label('or_end')
 	dst_name = Uniqueids.make_temporary()
 	dst = Var(dst_name)
-	
+
 	insts = [
 		...eval_1,
 		JumpIfNotZero(v1, true_label),
@@ -93,14 +101,16 @@ emit_or_expression():
 		Copy(Contant(1), dst),
 		Label(end_label)
 	]
-	
+
 	return insts
 ```
 
 # Assembly
+
 The BOOK_NOTES guide is sufficient to update this file for the chapter.
 
 # CodeGen
+
 Though Not is a unary operator during the Parse and Tacky stages, but in Assembly, Not operator in high-level languages is like comparing the value with 0.
 We do need to handle Not differently in this stage.
 
@@ -115,11 +125,11 @@ convert_unop(op):
 ```
 convert_binop(Tacky.Binop op):
 	match op:
-		case Add: 
+		case Add:
 			return Assembly.Add
-		case Subtract: 
+		case Subtract:
 			return Assembly.Sub
-		case Multiply: 
+		case Multiply:
 			return Assembly.Mult
 		case Divide:
 		case Mod:
@@ -151,9 +161,9 @@ convert_instruction(Tacky.Instruction inst):
 		case Copy:
 			asm_src = convert_val(inst.src)
 			asm_dst = convert_dst(inst.dst)
-			
+
 			return [Mov(asm_src, asm_dst)]
-		
+
 		case Return:
 			--snip--
 		case Unary:
@@ -161,7 +171,7 @@ convert_instruction(Tacky.Instruction inst):
 				case Not:
 					asm_src = convert_val(inst.src)
 					asm_dst = convert_val(inst.dst)
-					
+
 					return [
 						Cmp(Imm(0), asm_src),
 						Mov(Imm(0), asm_dst),
@@ -173,7 +183,7 @@ convert_instruction(Tacky.Instruction inst):
 			asm_src1 = convert_val(inst.src1)
 			asm_src2 = convert_val(inst.src2)
 			asm_dst = convert_dst(inst.dst)
-			
+
 			match inst.op:
 				(* Relational operator *)
 				case Equal:
@@ -183,7 +193,7 @@ convert_instruction(Tacky.Instruction inst):
 				case LessThan:
 				case LessOrEqual:
 					cond_code = convert_cond_code(inst.op)
-					
+
 					return [
 						Cmp(asm_src2, asm_src1),
 						Mov(Imm(0), asm_dst),
@@ -193,28 +203,29 @@ convert_instruction(Tacky.Instruction inst):
 					--snip--
 		case Jump:
 			return [ Jmp(inst.target) ]
-		
+
 		case JumpIfZero:
 			asm_cond = convert_val(inst.cond)
-			
+
 			return [
 				Cmp(Imm(0), asm_cond),
 				JmpCC(E, inst.target),
 			]
-			
+
 		case JumpIfNotZero:
 			asm_cond = convert_val(inst.cond)
-			
+
 			return [
 				Cmp(Imm(0), asm_cond),
 				JmpCC(NE, inst.target),
 			]
-		
+
 		case Label:
 			return [ Assembly.Label(inst.name) ]
 ```
 
 # ReplacePseudo
+
 ```
 replace_pseudos_in_instruction(Assembly.Instruction inst, state):
 	match inst.type:
@@ -225,14 +236,14 @@ replace_pseudos_in_instruction(Assembly.Instruction inst, state):
 			state1, new_op1 = replace_operand(inst.src, state)
 			state2, new_op2 = replace_operand(inst.dst, state1)
 			new_cmp = Cmp(new_op1, new_op2)
-			
+
 			return (state2, new_cmp)
 		case Idiv:
 			--snip--
 		case SetCC:
 			state1, new_operand = replace_operand(inst.operand, state)
 			new_setcc = SetCC(inst.cond_code, new_operand)
-			
+
 			return (state1, new_setcc)
 		case Ret:
 		case Cdq:
@@ -245,6 +256,7 @@ replace_pseudos_in_instruction(Assembly.Instruction inst, state):
 ```
 
 # Instruction Fixup
+
 ```
 fixup_instruction(Assembly.Instruction inst):
 	match inst.type:
@@ -256,7 +268,7 @@ fixup_instruction(Assembly.Instruction inst):
 				Mov(inst.src, Reg(R10)),
 				Cmp(Reg(10), inst.dst)
 			]
-		
+
 		else if dst of cmp is an immediate:
 			return [
 				Mov(Imm(inst.dst.value), Reg(R11)),
@@ -267,6 +279,7 @@ fixup_instruction(Assembly.Instruction inst):
 ```
 
 # Emit
+
 We need a function to emit 1-byte variants of registers for the operand of SetCC.
 
 ```
@@ -279,14 +292,16 @@ show_byte_operand(operand):
 		default:
 			return show_operand(operand)
 ```
+
 ```
 show_local_label(string name):
 	if on OS_X:
 		return "L" + name
 	else:
 		return ".L" + name
-		
+
 ```
+
 ```
 show_cond_code(cond_code):
 	match cond_code:
@@ -297,6 +312,7 @@ show_cond_code(cond_code):
 		case L: return 'l'
 		case LE: return 'le'
 ```
+
 ```
 emit_instruction(inst):
 	match inst type:
@@ -324,7 +340,9 @@ emit_instruction(inst):
 ```
 
 # Output
+
 From C:
+
 ```C
 int main(void) {
     return (0 == 0 && 3 == 2 + 1 > 1) + 1;
@@ -332,6 +350,7 @@ int main(void) {
 ```
 
 To assembly:
+
 ```asm
 	.globl main
 main:
@@ -373,15 +392,19 @@ main:
 ```
 
 # Legacy Extra Credit Integration
+
 The following changes are to make our code compatible with **Extra Credit** sections of previous chapters.
 
 ## Emit
-In Extra Credit in Chapter 3, we treat %cl in bitshift emission as a special case. 
+
+In Extra Credit in Chapter 3, we treat %cl in bitshift emission as a special case.
 But now, as we already support 1-byte register in chapter 4, we can simply use the convert_byte_operand to emit %cl for Reg(CX).
 So we don't need to check if it's CX register along with Sal | Sar operator anymore.
 
 ## Output
+
 From C:
+
 ```C
 int main(void) {
     return 20 & 7 >> 4 <= 3 ^ 7 < 5 | 7 != 5;
@@ -389,6 +412,7 @@ int main(void) {
 ```
 
 To assembly:
+
 ```asm
 	.globl main
 main:

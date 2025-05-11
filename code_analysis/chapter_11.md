@@ -232,7 +232,7 @@ parse_constant(tokens):
     if tok is "int" and tok.value <= MAX_INT32:
         return Const.ConstInt(cast_to_int_32(tok.value))
     else:
-        return Const.ConstLong(cast_to_int_64(tok.value)
+        return Const.ConstLong(cast_to_int_64(tok.value))
 ```
 
 ```
