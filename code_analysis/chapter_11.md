@@ -2405,6 +2405,8 @@ show_operand(asm_type, operand):
         return "${operand.value}"
     else if operand is Stack:
         return "%{operand.offset}(%rbp)"
+    else if operand is Data:
+        return "{operand.name}(%rip)"
     else if operand is pseudo: // For debugging
         return operand.name
 ```

@@ -201,7 +201,7 @@ TypeChecker::typeCheckCompoundAssignment(const std::shared_ptr<AST::CompoundAssi
     // We cannot add Cast expressions for the last two because LHS should be evaluated only once,
     // so we don't have two separate places to put Cast expression in this AST node. But we have
     // enough type information to allow us to insert these casts during TACKY generation
-    auto typedCompoundAssign = std::make_shared<AST::CompoundAssignment>(compoundAssign->getOp(), typedLhs, convertedRhs, resultType);
+    auto typedCompoundAssign = std::make_shared<AST::CompoundAssignment>(compoundAssign->getOp(), typedLhs, convertedRhs, std::make_optional(resultType));
     typedCompoundAssign->setDataType(std::make_optional(lhsType));
     return typedCompoundAssign;
 }

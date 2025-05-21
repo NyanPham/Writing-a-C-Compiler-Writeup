@@ -121,33 +121,39 @@ TEST_CASE(Chapter12InvalidLex, "chapter_12", "--lex")
     }
 }
 
-// // Chapter 13
-// TEST_CASE(Chapter13InvalidLex, "chapter_13", "--lex")
-// {
-//     std::vector<std::string> srcFiles = {
+// Chapter 13
+TEST_CASE(Chapter13InvalidLex, "chapter_13", "--lex")
+{
+    std::vector<std::string> srcFiles = {
+        "tests/chapter_13/invalid_lex/another_bad_constant.c",
+        "tests/chapter_13/invalid_lex/bad_exponent_suffix.c",
+        "tests/chapter_13/invalid_lex/malformed_const.c",
+        "tests/chapter_13/invalid_lex/malformed_exponent.c",
+        "tests/chapter_13/invalid_lex/missing_exponent.c",
+        "tests/chapter_13/invalid_lex/missing_negative_exponent.c",
+        "tests/chapter_13/invalid_lex/yet_another_bad_constant.c",
+    };
+    Settings settings;
 
-//     };
-//     Settings settings;
-
-//     for (const auto &srcFile : srcFiles)
-//     {
-//         Compiler compiler;
-//         try
-//         {
-//             int status = compiler.compile(Stage::Lexing, std::vector<std::string>{srcFile});
-//             if (status == 0)
-//             {
-//                 std::cerr << "Expected error compiling file " << srcFile << std::endl;
-//             }
-//             ASSERT_TRUE(status != 0);
-//         }
-//         catch (const std::exception &e)
-//         {
-//             std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
-//             throw;
-//         }
-//     }
-// }
+    for (const auto &srcFile : srcFiles)
+    {
+        Compiler compiler;
+        try
+        {
+            int status = compiler.compile(Stage::Lexing, std::vector<std::string>{srcFile});
+            if (status == 0)
+            {
+                std::cerr << "Expected error compiling file " << srcFile << std::endl;
+            }
+            ASSERT_TRUE(status != 0);
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+            throw;
+        }
+    }
+}
 
 // // Chapter 14
 // TEST_CASE(Chapter14InvalidLex, "chapter_14", "--lex")

@@ -1145,52 +1145,116 @@ TEST_CASE(Chapter12ValidLexExtraCredit, "chapter_12", "--lex")
     }
 }
 
-// // Chapter 13
-// TEST_CASE(Chapter13ValidLex, "chapter_13", "--lex")
-// {
-//     std::vector<std::string> srcFiles = {
+// Chapter 13
+TEST_CASE(Chapter13ValidLex, "chapter_13", "--lex")
+{
+    std::vector<std::string> srcFiles = {
+        "tests/chapter_13/invalid_parse/invalid_type_specifier.c",
+        "tests/chapter_13/invalid_parse/invalid_type_specifier_2.c",
 
-//     };
-//     Settings settings;
+        "tests/chapter_13/invalid_types/complement_double.c",
+        "tests/chapter_13/invalid_types/mod_double.c",
+        "tests/chapter_13/invalid_types/mod_double_2.c",
 
-//     for (const auto &srcFile : srcFiles)
-//     {
-//         Compiler compiler;
-//         try
-//         {
-//             int status = compiler.compile(Stage::Lexing, std::vector<std::string>{srcFile});
-//             ASSERT_TRUE(status == 0);
-//         }
-//         catch (const std::exception &e)
-//         {
-//             std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
-//             throw;
-//         }
-//     }
-// }
+        "tests/chapter_13/valid/constants/constant_doubles.c",
+        "tests/chapter_13/valid/constants/round_constants.c",
+        "tests/chapter_13/valid/explicit_casts/cvttsd2si_rewrite.c",
+        "tests/chapter_13/valid/explicit_casts/double_to_signed.c",
+        "tests/chapter_13/valid/explicit_casts/double_to_unsigned.c",
+        "tests/chapter_13/valid/explicit_casts/rewrite_cvttsd2si_regression.c",
+        "tests/chapter_13/valid/explicit_casts/signed_to_double.c",
+        "tests/chapter_13/valid/explicit_casts/unsigned_to_double.c",
 
-// TEST_CASE(Chapter13ValidLexExtraCredit, "chapter_13", "--lex")
-// {
-//     std::vector<std::string> srcFiles = {
+        "tests/chapter_13/valid/floating_expressions/arithmetic_ops.c",
+        "tests/chapter_13/valid/floating_expressions/comparisons.c",
+        "tests/chapter_13/valid/floating_expressions/logical.c",
+        "tests/chapter_13/valid/floating_expressions/loop_controlling_expression.c",
+        "tests/chapter_13/valid/floating_expressions/simple.c",
+        "tests/chapter_13/valid/floating_expressions/static_initialized_double.c",
+        "tests/chapter_13/valid/function_calls/double_and_int_parameters.c",
+        "tests/chapter_13/valid/function_calls/double_and_int_params_recursive.c",
+        "tests/chapter_13/valid/function_calls/double_parameters.c",
+        "tests/chapter_13/valid/function_calls/push_xmm.c",
+        "tests/chapter_13/valid/function_calls/return_double.c",
+        "tests/chapter_13/valid/function_calls/standard_library_call.c",
+        "tests/chapter_13/valid/function_calls/use_arg_after_fun_call.c",
+        "tests/chapter_13/valid/implicit_casts/common_type.c",
+        "tests/chapter_13/valid/implicit_casts/complex_arithmetic_common_type.c",
+        "tests/chapter_13/valid/implicit_casts/convert_for_assignment.c",
+        "tests/chapter_13/valid/implicit_casts/static_initializers.c",
+        "tests/chapter_13/valid/libraries/double_and_int_params_recursive.c",
+        "tests/chapter_13/valid/libraries/double_and_int_params_recursive_client.c",
+        "tests/chapter_13/valid/libraries/double_parameters.c",
+        "tests/chapter_13/valid/libraries/double_parameters_client.c",
+        "tests/chapter_13/valid/libraries/double_params_and_result.c",
+        "tests/chapter_13/valid/libraries/double_params_and_result_client.c",
+        "tests/chapter_13/valid/libraries/extern_double.c",
+        "tests/chapter_13/valid/libraries/extern_double_client.c",
+        "tests/chapter_13/valid/libraries/use_arg_after_fun_call.c",
+        "tests/chapter_13/valid/libraries/use_arg_after_fun_call_client.c",
+        "tests/chapter_13/valid/special_values/infinity.c",
+        "tests/chapter_13/valid/special_values/negative_zero.c",
+        "tests/chapter_13/valid/special_values/subnormal_not_zero.c",
 
-//     };
-//     Settings settings;
+        //"tests/chapter_13/helper_libs/nan.c",
+    };
+    Settings settings;
 
-//     for (const auto &srcFile : srcFiles)
-//     {
-//         Compiler compiler;
-//         try
-//         {
-//             int status = compiler.compile(Stage::Lexing, std::vector<std::string>{srcFile});
-//             ASSERT_TRUE(status == 0);
-//         }
-//         catch (const std::exception &e)
-//         {
-//             std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
-//             throw;
-//         }
-//     }
-// }
+    for (const auto &srcFile : srcFiles)
+    {
+        Compiler compiler;
+        try
+        {
+            int status = compiler.compile(Stage::Lexing, std::vector<std::string>{srcFile});
+            ASSERT_TRUE(status == 0);
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+            throw;
+        }
+    }
+}
+
+TEST_CASE(Chapter13ValidLexExtraCredit, "chapter_13", "--lex")
+{
+    std::vector<std::string> srcFiles = {
+        "tests/chapter_13/invalid_types/extra_credit/bitwise_and.c",
+        "tests/chapter_13/invalid_types/extra_credit/bitwise_or.c",
+        "tests/chapter_13/invalid_types/extra_credit/bitwise_shift_double.c",
+        "tests/chapter_13/invalid_types/extra_credit/bitwise_shift_double_2.c",
+        "tests/chapter_13/invalid_types/extra_credit/bitwise_xor.c",
+        "tests/chapter_13/invalid_types/extra_credit/compound_bitwise_and.c",
+        "tests/chapter_13/invalid_types/extra_credit/compound_bitwise_xor.c",
+        "tests/chapter_13/invalid_types/extra_credit/compound_left_bitshift.c",
+        "tests/chapter_13/invalid_types/extra_credit/compound_mod.c",
+        "tests/chapter_13/invalid_types/extra_credit/compound_mod_2.c",
+        "tests/chapter_13/invalid_types/extra_credit/compound_right_bitshift.c",
+        "tests/chapter_13/invalid_types/extra_credit/switch_double_case.c",
+        "tests/chapter_13/invalid_types/extra_credit/switch_on_double.c",
+
+        "tests/chapter_13/valid/extra_credit/compound_assign.c",
+        "tests/chapter_13/valid/extra_credit/compound_assign_implicit_cast.c",
+        "tests/chapter_13/valid/extra_credit/incr_and_decr.c",
+        "tests/chapter_13/valid/extra_credit/nan.c",
+    };
+    Settings settings;
+
+    for (const auto &srcFile : srcFiles)
+    {
+        Compiler compiler;
+        try
+        {
+            int status = compiler.compile(Stage::Lexing, std::vector<std::string>{srcFile});
+            ASSERT_TRUE(status == 0);
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+            throw;
+        }
+    }
+}
 
 // // Chapter 14
 // TEST_CASE(Chapter14ValidLex, "chapter_14", "--lex")

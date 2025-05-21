@@ -546,7 +546,7 @@ Types::DataType Parser::parseType(const std::vector<Token> &typeList)
     }
 
     if (containsToken(typeList, TokenType::KEYWORD_UNSIGNED) && containsToken(typeList, TokenType::KEYWORD_LONG))
-        return Types::makeLongType();
+        return Types::makeULongType();
     else if (containsToken(typeList, TokenType::KEYWORD_UNSIGNED))
         return Types::makeUIntType();
     else if (containsToken(typeList, TokenType::KEYWORD_LONG))

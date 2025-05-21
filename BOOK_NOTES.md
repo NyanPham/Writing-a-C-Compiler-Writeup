@@ -4914,3 +4914,1196 @@ Our next target is Floating-point numbers, which are processed differently from 
 ### Reference Implementation Analysis
 
 [Chapter 12 Code Analysis](./code_analysis/chapter_12.md)
+
+---
+
+# Chapter 13: Floating-point numbers
+
+## Stages of a Compiler
+
+1. **Lexer**
+   - Input: Source code (program.c)
+   - Output: Token list
+2. **Parser**
+   - Input: Token list
+   - Output: Abstract Syntax Tree (AST)
+3. **Semantic Analysis**
+   - Input: AST
+   - Output: Transformed AST
+   - Passes:
+   1. Variable resolution
+   2. Type Checking
+   3. Loop Labeling
+4. **TACKY Generation**
+   - Input: Transformed AST
+   - Output: TAC IR (Tacky)
+5. **Assembly Generation**
+   - Input: Tacky
+   - Output: Assembly code
+   - Passes:
+   1. Converting TACKY to Assembly
+   2. Replacing pseudoregisters
+   3. Instruction fix-up
+6. **Code Emission**
+   - Input: Assembly code
+   - Output: Final assembly file
+
+We already have 4 integer types, now we'll support a floating-point binary representation type called _double_.
+Many aspects of floating-point numbers are implementation-defined, based on the C standards. So we'll need to work on the two tasks:
+
+- Figure out the behavior based on IEEE 754.
+- New set of Assembly instructions and registers are required to operate on floating-point numbers.
+
+## The IEEE 754 Double-Precision format
+
+```
+			  64-bit IEEE 754 Double Precision Layout
+
+   Bit Index:      63        62                      52         51              0
+				   +---------+-----------------------+---------+----------------+
+				   |   S     |       Exponent        |         |    Fraction    |
+				   | (1 bit) |      (11 bits)        |         |   (52 bits)    |
+				   +---------+-----------------------+---------+----------------+
+```
+
+The bianry representation of a floating-point number has 3 fields:
+
+- S: sign bit
+- E: Exponent
+- F: Fraction, sometimes also called _Significant_ or _Mantissa_
+
+The binary fraction has an implicit integer part: 1.
+The 52 bit of the significand only encodes the the fractional part, representing negative powers of 2: 1/2, 1/4, 1/8, so on.
+
+For example, the representation
+
+```
+1000000000000000000000000000000000000000000000000000
+```
+
+is the binary fraction 1.1, which is 1.5 in decimal notation.
+
+The Sign bit is 1, indicating the floating-number to be negative, positive otherwise.
+
+The Exponent has value between -1,022 and 1,023. It uses _biased encoding_: get the binary value of it, subtract 1,023 to get the exponent. For example:
+
+```
+00000000010
+```
+
+is means 2 in decimal, so the exponent is 2 - 1,023 = -1,021.
+All 11 bits of the Exponent being set to 0 or 1 indicates special values as follow
+
+### Zero and negative zero
+
+```
+if S == 0 AND E == 0 AND F == 0:
+	X = 0.0
+else if S == 1 AND E == 0 AND F == 0:
+	X = -0.0
+```
+
+0.0 and -0.0 equal when compared, mainly to follows the usual rules for determining the sign of arithmetic results: -1.0 _ 0.0 == 1.0 _ -0.0 == -0.0
+
+### Subnormal numbers
+
+```
+if E == 0s:
+	F has significand of 0 instead of 1
+	E has value of -1,022
+```
+
+The significand part has a value between 1 and 2. We say that floating-point numbers are _normalized_.
+The smallest number that it can represent is 1x2<sup>-1,022</sup>.
+But what if we want to represent number closer to 0?
+We'll use _subnormal_ numbers. It's enabled when the **Exponent is all 0s**, indicating an exponent of still -1,022, but the significand now is 0 instead of 1.
+Subnormal numbers are slower to work, so many implementations have allowed users to disable them and round any results to zero.
+
+### Infinity
+
+```
+if E == 1s AND F == 0s:
+	if S = 0:
+		X = Positive Infinity
+	else:
+		X = Negative Infinity
+```
+
+The largest magnitude a floating-number can represent is ~2<sup>1,023</sup>.
+Anything larger than that is rounded to Infinity, represented by **Exponent is all 1s** and **Fraction is all 0s**.
+Positive or Negative Infinity is detemrined by the sign bit.
+For example: -1.0 / 0.0 = Negative Infinity
+
+### NaN
+
+```
+if E == 1s AND F != 0s:
+	X = NaN
+```
+
+Not-A-Number is a floating-point number whose **Exponent is all 1s** and **Fraction is nonzero**.
+
+We'll support the first 3 values, and leaving Quiet NaN for Extra Credit.
+
+## Rounding Behavior
+
+### Rounding Modes
+
+There are several modes:
+
+- Rounding to nearest
+- Rounding toward zero
+- Rounding toward positive infinity
+- Rounding toward negative infinity
+
+All of the four modes above are supported modern processors, and we'll support 2 of them in our compiler: _round-to-nearest_ and _ties-to-even_.
+
+Round-to-nearest rounds the value to the nearest representable double.
+Ties-to-even rounds the value to one whose least significand bit is 0, of the two representable value.
+
+### Rounding Constants
+
+Most of the time, double constants cannot be represented exactly in binary floating point.
+For example, a constant is 0.1, and in binary floating point, there is no adding-up of any power of 2 in the fractions to get 0.1.
+In decimal notation, the value is rounded to the nearest representable value: `0.1000000000000000055511151231257827021181583404541015625`
+
+However, in binary floating point of 53-bit, the 0.1 is shown as: `1.100110011001100110011001100110011001100110011001101 * 2^-4`
+
+### Rounding Type Conversions
+
+An integer may be converted to a double because of the spacing between double's representable values.
+Let's take a decimal format three-digit realm as an example.
+992 -> 9.92 x 10<sup>2</sup>
+993 -> 9.93 x 10<sup>2</sup>
+...
+1000 -> 1.00 x 10<sup>3</sup>
+
+Now, for numbers larger than 1000
+
+1001 -> ??? 1.01 x 10<sup>3</sup> is 1010.
+There's a gap of 10; and the gap increase as the magnitude grows.
+We have the same problem when converting _Long_ and _Unsigned Long_ to double.
+
+_Long_ and _Unsigned Long_ have 64-bit precision, while double has only 53-bit precision in its fraction.
+
+### Rounding Arithmetic Operations
+
+We may also need to round results of operations like addition, subtraction, multiplication, also because of the gap between representable values.
+For example in the decimal format three-digit realm again:
+993 + 45 = 1,038; the value is more than 3 digits, so we'll round it to 1.04 x 10<sup>3</sup>.
+Division is also a pain, just like 1/3 cannot be represented in any decimal digits, but rounding to 0.33333.
+
+This rounding error is handled by the hardware, so we're good with this.
+
+## The Lexer
+
+Support floating-point numbers requires to change the way to recognize integers.
+
+Old tokens to recognize
+| Token | Regular expression |
+| ------- | -------------------- |
+| Signed integer constant | ([0-9]+)[^\w.] |
+| Unsigned integer constant | ([0-9]+[uU])[^\w.] |
+| Unsigned long integer constant| ([0-9]+([lL][uU]|[uU][lL]))[^\w.] |
+| Signed integer constant | ([0-9]+)[^\w.] |
+
+New tokens to recognize
+| Token | Regular expression |
+| ------- | -------------------- |
+| KeywordDouble | double |
+| Floating-point constants | (([0-9]_\.[0-9]+|[0-9]+\.?)[Ee][+-]?[0-9]+|[0-9]_\.[0-9]+|[0-9]+\.)[^\w.] |
+
+The changes for integer will match `100;` for example. Make sure you process it to remove the trailing `;`.
+
+## The Parser
+
+### AST
+
+<pre><code>program = Program(declaration*)
+declaration = FunDecl(function_declaration) | VarDecl(variable_declaration)
+variable_declaration = (identifier name, exp? init, type var_type, storage_class?)
+function_declaration = (identifier name, identifier* params, block? body,type fun_type, storage_class?)
+type = Int | Long | UInt | ULong <strong>| Double</strong> | FunType(type* params, type ret)
+storage_class = Static | Extern
+block_item = S(statement) | D(declaration)
+block = Block(block_item*)
+for_init = InitDecl(variable_declaration) | InitExp(exp?)
+statement = Return(exp) 
+	| Expression(exp) 
+	| If(exp condition, statement then, statement? else)
+	| Compound(block)
+	| Break
+	| Continue
+	| While(exp condition, statement body)
+	| DoWhile(statement body, exp condition)
+	| For(for_init init, exp? condition, exp? post, statement body)
+	| Null 
+exp = Constant(const) 
+	| Var(identifier) 
+	| Cast(type target_type, exp)
+	| Unary(unary_operator, exp)
+	| Binary(binary_operator, exp, exp)
+	| Assignment(exp, exp) 
+	| Conditional(exp condition, exp, exp)
+	| FunctionCall(identifier, exp* args)
+unary_operator = Complement | Negate | Not
+binary_operator = Add | Subtract | Multiply | Divide | Remainder | And | Or
+				| Equal | NotEqual | LessThan | LessOrEqual
+				| GreaterThan | GreaterOrEqual
+const = ConstInt(int) | ConstLong(int) | ConstUInt(int) | ConstULong(int) <strong>| ConstDouble(double)</strong></pre></code>
+
+We'll extend the type structure in the symbol table in Chapter 9 instead of defining another data structure.
+If the implementation language has signed 64-bit and 32-bit integer types, use them. Otherwise, we should at least make sure the ConstLong node uses an integer type that can represent all long values.
+
+### EBNF
+
+<pre><code>&lt;program&gt; ::= { &lt;declaration&gt; }
+&lt;declaration&gt; ::= &lt;variable-declaration&gt; | &lt;function-declaration&gt;
+&lt;variable-declaration&gt; ::= { &lt;specifier&gt; }+ &lt;identifier&gt; [ "=" &lt;exp&gt; ] ";"
+&lt;function-declaration&gt; ::= { &lt;specifier&gt; }+ &lt;identifier&gt; "(" &lt;param-list&gt; ")" (&lt;block&gt; | ";")
+&lt;param-list&gt; ::= "void" | { &lt;type-specifier&gt; }+ &lt;identifier&gt; { "," { &lt;type-specifier&gt; }+  &lt;identifier&gt; }
+&lt;type-specifier&gt; ::= "int" | "long" | "unsigned" | "signed" <strong>| "double"</strong>
+&lt;specifier&gt; ::= &lt;type-specifier&gt; | "static" | "extern"
+&lt;block&gt; ::= "{" { &lt;block-item&gt; } "}"
+&lt;block-item&gt; ::= &lt;statement&gt; | &lt;declaration&gt;
+&lt;for-init&gt; ::= &lt;variable-declaration&gt; | [ &lt;exp&gt; ] ";"
+&lt;statement&gt; ::= "return" &lt;exp&gt; ";" 
+	| &lt;exp&gt; ";" 
+	| "if" "(" &lt;exp&gt; ")" &lt;statement&gt; ["else" &lt;statement&gt;]
+	| &lt;block&gt;
+	| "break" ";"
+	| "continue" ";"
+	| "while" "(" &lt;exp&gt; ")" &lt;statement&gt;
+	| "do" &lt;statement&gt; "while" "(" &lt;exp&gt; ")" ";"
+	| "for" "(" &lt;for-init&gt; [ &lt;exp&gt; ] ";" [ &lt;exp&gt; ] ")" &lt;statement&gt;
+	| ";"
+&lt;exp&gt; ::= &lt;factor&gt; | &lt;exp&gt; &lt;binop&gt; &lt;exp&gt; | &lt;exp&gt; "?" &lt;exp&gt; ":" &lt;exp&gt;
+&lt;factor&gt; ::= &lt;const&gt; | &lt;identifier&gt; 
+	| "(" { &lt;type-specifier&gt; }+ ")" &lt;factor&gt; 
+	| &lt;unop&gt; &lt;factor&gt; | "(" &lt;exp&gt; ")"
+	| &lt;identifier&gt; "(" [ &lt;argument-list&gt; ] ")"
+&lt;argument-list&gt; ::= &lt;exp&gt; { "," &lt;exp&gt; }
+&lt;unop&gt; ::= "-" | "~" 
+&lt;binop&gt; :: = "+" | "-" | "\*" | "/" | "%" | "&&" | "||"
+				| "==" | "!=" | "&lt;" | "&lt;=" | "&gt;" | "&gt;=" | "="
+&lt;const&gt; ::= &lt;int&gt; | &lt;long&gt; | &lt;uint&gt; | &lt;ulong&gt; | &lt;double&gt;
+&lt;identifier&gt; ::= ? An identifier token ?
+&lt;int&gt; ::= ? An int token ?&lt;/pre&gt;&lt;/code&gt;
+&lt;long&gt; ::= ? An int or long token ?
+&lt;uint&gt; ::= ? An unsigned int token ?&lt;/pre&gt;&lt;/code&gt;
+&lt;ulong&gt; ::= ? An unsigned int or unsigned long token ?
+<strong>&lt;double&gt; ::= ? A floating-point constant token ?</strong>
+</pre></code>
+
+### Parser
+
+There are many combination of integer type specifiers, but for double, we have only one.
+
+```
+parse_type(specifier_list):
+	if specifier_list == ["double"]:
+		return Double
+	if specifier_list contains "double":
+		fail("Can't combine 'double with other type specifiers")
+	--snip--
+```
+
+**Notes**:
+
+- The implementation language should handle the rounding from decimal constants to binary floating point.
+- Floating-point constants can't go out of range as they support positive/negative infinity; its range includes all real numbers.
+
+## Semantic Analysis
+
+### Type Checker
+
+- Annotate the double constant with type Double
+- Update how to get the common real type of two values
+
+```
+get_common_type(type1, type2):
+	if type1 == type2:
+		return type1
+	if  type1 == Double or type2 == Double:
+		return Double
+	--snip--
+```
+
+The bitwise complemnt `~` and remainer `%` accept only integer operands.
+
+Here is the pseudocode for the update for `~` operator. We do the same for `%`.
+
+```
+typecheck_exp(e, symbols):
+	match e with:
+	| --snip--
+	| Unary(complement, inner) ->
+		typed_inner = typecheck_exp(inner, symbols)
+		if get_type(typed_inner) == Double:
+			fail("Can't take the bitwise complement of a double")
+		unary_exp = Unary(complement, typed_inner)
+		return set_type(unary_exp, get_type(typed_inner))
+```
+
+We add a new kind of initializer for static variables.
+
+```
+static_init = IntInit(int) | LongInit(int) | UIntInit(int) | ULongInit(int) | DoubleInit(double)
+```
+
+Here, if we convert from double to an integer, we truncate toward zero. For example: 2.7 -> 2.
+Otherwise, if we convert from an integer to a double, we preverse the value if it can be represented exactly; round to the nearest representable value otherwise.
+
+## TACKY Generation
+
+### TACKY
+
+<pre><code>
+program = Program(top_level*)
+top_level = Function(identifier, bool global, identifier* params, instruction* body)
+		| StaticVariable(identifier, bool global, type t, static_init init)
+instruction = Return(val) 
+	| SignExtend(val src, val dst)
+	| Truncate(val src, val dst)
+	| ZeroExtend(val src, val dst)
+	<strong>| DoubleToInt(val src, val dst)
+	| DoubleToUInt(val src, val dst)
+	| IntToDouble(val src, val dst)
+	| UIntToDouble(val src, val dst)</strong>
+	| Unary(unary_operator, val src, val dst)
+	| Binary(binary_operator, val src1, val src2, val dst)
+	| Copy(val src, val dst)
+	| Jump(identifier target)
+	| JumpIfZero(val condition, identifier target)
+	| JumpIfNotZero(val condition, identifier target)
+	| Label(identifier)
+	| FunCall(identifier fun_name, val* args, val dst)
+val = Constant(const) | Var(identifier)
+unary_operator = Complement | Negate | Not
+binary_operator = Add | Subtract | Multiply | Divide | Remainder | Equal | Not Equal
+				| LessThan | LessOrEqual | GreaterThan | GreaterOrEqual
+</pre></code>
+
+We have no distinctions in the size of integer operands when converting to or from double.
+
+### Generating TACKY
+
+To update this pass, emit the appropriate cast instruction when we encounter a cast from or to _double_.
+
+## Assembly Generation
+
+SSE instructions an't use general-purpose registers, and non-SSE intructions can't use XMM registers.
+Both SSE and non-SSE instructions can refer to values in memory.
+
+SSE instructions can't use immediate operands. If we need to use a contants in an SSE instruction, we'll define that constant in read-only memory.
+For example, here is a program with a subroutine to compute 1.0 + 1.0
+
+```
+	.section .rodata
+	.align 8
+.L_one:
+	.double 1.0
+	.text
+one_plus_one:
+	movsd .L_one(%rip), %xmm0
+	addsd .L_one(%rip), %xmm0
+	--snip--
+```
+
+#### Calling conventions
+
+A function's first 8 floating-point arguments are passed in registers XMM0 through XMM7.
+Any remaining floating point-arguments are pushed onto the stack in reverse order.
+Floating-point return values are passed in XMM0 instead of RAX.
+
+```
+int pass_paramenters(
+	double d1, double d2, int i1,
+	double d3, double d4, double d5,
+	double d6, unsigned int i2, long i3,
+	double d7, double d8, unsigned long i4,
+	double d9, int i5, double d10,
+	int i6, int i7, double d11,
+	int i8, int i9);
+```
+
+```
+General-purpose				Floating point					Stack contents
+registers					registers
++-------+------+			+--------+--------+				+-----------+ 		+-----------+
+|  RDI  |  i1  | 			|  XMM0  |   d1   | 			|  d9       |   <-- |    RSP	|
+|  RSI  |  i2  |			|  XMM1  |   d2   |				|  d10      |		+-----------+
+|  RDX  |  i3  |			|  XMM2  |   d3   |				|  i7       |
+|  RCX  |  i4  | 			|  XMM3  |   d4   | 			|  d11      |
+|  R8   |  i5  | 			|  XMM4  |   d5   | 			|  i8       |
+|  R9   |  i6  |			|  XMM5  |   d6   |				|  i9       |
++-------+------+			|  XMM6  |   d7   |				+-----------+
+							|  XMM7  |   d8   |				|   Caller  |
+							+--------+--------+				|   stack   |
+															|   frame   |
+															+-----------+
+```
+
+#### Arithmetic with SSE instructions
+
+We have addsd, subsd, mulsd and divsd.
+All of these require an XMM register or memory address as a source and an XMM register as a destination.
+There's no negation for floating-point numbers. We use `xorpd` (16 bytes aligned only) with `-0.0` constant to flip the sign bit.
+
+To zero an XMM register, we also use `xorpd` it with itself. This trick works for general-purpose registers as well, but we didn't apply as we prioritize clarity and simplicity.
+But for XMM registers, XORing them is the simplest way so we don't have to make a `0.0` constant in the read-only memory.
+
+#### Comparing floating-point numbers
+
+We use `comisd` instruction.
+
+```
+Executing comisd a, b
+if a < b:
+	CF = 1
+else:
+	CF = 0
+
+SF = 0
+OF = 0
+```
+
+Floating-point numbers are always signed, and the comparisons result in only the Carry flag, we use condition code: A, AE, B and BE.
+
+#### Converting between Floating-point and Integer types
+
+The SSE instruction set includes conversions to and from signed integer types, so implementing `IntToDouble` and `DoubleToInt` is easy.
+Implementing `UIntToDouble` and `DoubleToUInt` takes more effort.
+
+##### Converting a double to a Signed Integer
+
+We use `cvttsd2si` instruction for `DoubleToInt`. We don't care if the value of double is outside the range of the target integer type: Int (suffix l) and Long (suffix q).
+
+##### Converting a double to an Unsigned Integer
+
+To convert a double to an unsigned int, we'll convert it to signed long, and truncate the value. This is because any value that is in range of unsigned int is also in range of signed long.
+
+```
+	cvttsd2si %xmm0, %rax
+	movl %eax, -4(%rbp)
+```
+
+Converting from double to unsigned long is trickier.
+First, we check if the value is in range of signed long.
+If yes, we use the cvttsd2siq as usual.
+If not, we subtract the value of LONG_MAX + 1 from the double to make it in range of signed long, convert it to signed long using cvttsd2siq, then add the LONG_MAX + 1 after the conversion.
+We use LONG_MAX + 1 (2<supt>63</sup>), not LONG_MAX because LONG_MAX + 1 is the representable value of double so we minimize any unecessary rounding.
+
+```
+	.section .rodata
+	.align 8
+.L_upper_bound:
+	.double 9223372036854775808.0
+	.text
+	--snip--
+	comisd 	.L_upper_bound(%rip), %xmm0
+	jae .L_out_of_range
+	cvttsd2siq	%xmm0, %rax
+	jmp .L_end
+.L_out_of_range:
+	movsd	%xmm0, %xmm1
+	subsd 	.L_upper_bound(%rip), %xmm1
+	cvttsd2siq	%xmm1, %rax
+	movq	$9223372036854775808, %rdx
+	addq	%rdx, %rax
+.L_end:
+```
+
+##### Converting a Signed Integer to a Double
+
+The `cvtsi2sd` instruction converts a signed int (suffix l) or long (suffix q) to a double.
+If the result is not representable, the CPU helps round it for us.
+
+##### Converting an Unsigned Integer to a Double
+
+To convert an unsigned int to a double, we zero extend it to a long, and convert it to a double with cvtsi2sdq.
+For example, we want to convert 4294967290 to a double:
+
+```
+	movl $4294967290, %rax
+	cvtsi2sdq %rax, %xmm0
+```
+
+For the conversion from unsigned long to a double, we'll first check whether the value is in the range of signed long. If it is, we use `cvtsi2sdq` directly. Otherwise, we halve the source value, convert it with `cvtsi2sdq`, and double back the result.
+
+```
+	cmpq 	$0, -8(%rbp)
+	jl 	.L_out_of_range
+	cvtsi2dsq 	-8(rbp), %xmm0
+	jmp .L_end
+.L_out_of_range:
+	movq 	-8(%rbp), %rax
+	movq 	%rax, %rdx
+	shrq 	%rdx
+	andq 	$1, %rax
+	orq 	%rax, %rdx
+	cvtsi2sdq	%rdx, %xmm0
+	addsd	%xmm0, %xmm0
+.L_end:
+```
+
+Note that before halving the source value, we check if it's odd or even, and add 1 if needed to the halfed value before converting to make sure we don't commit the double rounding error.
+
+### Assembly
+
+<pre><code>program = Program(top_level*)
+assembly_type = LongWord | Quadword <strong>| Double</strong>
+top_level = Function(identifier name, bool global, instruction* instructions)
+	| StaticVariable(identifier name, bool global, int alignment, static_init init)
+	<strong>| StaticConstant(identifier name, int alignment, static_init init)</strong>
+instruction = Mov(assembly_type, operand src, operand dst)
+		| Movsx(operand src, operand dst)
+		| MovZeroExtend(operand src, operand dst)
+		<strong>| Cvttsd2si(assembly_type dst_type, operand src, operand dst)
+		| Cvtsi2sd(assembly_type src_type, operand src, operand dst)</strong>
+		| Unary(unary_operator, assembly_type, operand)
+		| Binary(binary_operator, assembly_type, operand, operand)
+		| Cmp(assembly_type,, operand, operand)
+		| Idiv(assembly_type, operand)
+		| Div(assembly_type, operand)
+		| Cdq(assembly_type)
+		| Jmp(identifier)
+		| JmpCC(cond_code, identifier)
+		| SetCC(cond_code, operand)
+		| Label(identifier)
+		| AllocateStack(int)
+		| DeallocateStack(int)
+		| Push(operand)
+		| Call(identifier) 
+		| Ret
+unary_operator = Neg | Not <strong>| Shr</strong>
+binary_operator = Add | Sub | Mult <strong>| DivDouble | And | Or | Xor</strong>
+operand = Imm(int) | Reg(reg) | Pseudo(identifier) | Stack(int) | Data(identifier)
+cond_code = E | NE | G | GE | L | LE | A | AE | B | BE
+reg = AX | CX | DX | DI | SI | R8 | R9 | R10 | R11 | SP 
+	<strong>| XMM0 | XMM1 | XMM2 | XMM3 | XMM4 | XMM5 | XMM6 | XMM7 | XMM14 | XMM15</strong></pre></code>
+
+**Note**:
+
+- _Cmp_ and _Binary_ instructions are reused for _comsid_ and _addsd_, _subsd_, and so on.
+- _DivDouble_ is added, as _Div_ and _Idiv_ don't follow other arithmetic instructions' pattern.
+- _Xor_ binary operator is added to negate the floating-point values, as well as bitwise _And_ and _Or_ to convert unsigned long to double. (If you haven't worked on the previous extra credit)
+- _Shr_ unary operator is necessary for type conversion too. (If you haven't worked on the previous extra credit)
+
+#### Floating-point constants
+
+When we encounter an integer constant in TACKY, we convert it to Imm in Assembly.
+For Double constants, it's not possible. We have to create _StaticConstant_ with a unique identifier, and refer to it with _Data_ operand, similar to _StaticVariable_.
+So, this TACKY instruction
+
+```
+Copy(Constant(ConstDouble(1.0)), Var("x"))
+```
+
+is converted to this
+
+```
+StaticConstant(const_label, 8, DoubleInit(1.0))
+--snip--
+Mov(Double, Data(const_label), Pseudo("x"))
+```
+
+Ensure to keep track of every _StaticConstant_ you define throughout the entire assembly generation pass.
+Then, add these constants to the top-level constructs.
+
+**Notes**:
+
+- Avoid duplicate constants: don't generate every StaticConstant everytime, check if one already exists first with the same value and alignment.
+- Using local labels for top-level constants: don't add the local label prefix now, but in the code emission pass.
+
+To distinguish static constants with static variables in the Assembly Symbol Table, we simply add a new boolean _is_constant_ field.
+
+```
+asm_symtab_entry = ObjEntry(assembly_type, bool is_static, bool is_constant)
+	| FunEntry(bool defined)
+```
+
+During the code emission pass, we'll base on the _is_constant_ to determine to add the local label prefix to their names.
+If a variable is a constant, is_static must be true as well.
+
+#### Unary instructions, Binary Instructions, and Conditional Instructions
+
+Floating-point addition, subtraction, multiplciation have similar patterns to their integer equivalents.
+Double division also does the same, though the integer division does not.
+
+The instruction
+
+```
+Division(Double, Var("src1"), Var("src2"), Var("dst"))
+```
+
+is converted to
+
+```
+Mov(Double, Pseudo("src1"), Pseudo("dst"))
+Binary(DivDouble, Double, Pseudo("src2"), Pseudo("dst"))
+```
+
+Floating-point negation is more complicated than the integer counterpart.
+We need to XOR it with -0.0 to flip the sign bit.
+For example, the instruction
+
+```
+Unary(Negate, Var("src"), Var("dst"))
+```
+
+is converted to
+
+```
+StaticConstant(const, 16, DoubleInit(-0.0))
+--snip--
+Mov(Double, Pseudo("src"), Pseudo("dst"))
+Binary(Xor, Double, Data(const), Pseudo("dst"))
+```
+
+We need to align the -0.0 16-byte as we'll emit the `xorpd` instruction.
+We don't care the alignment of the _dst_ because _xorpd_'s destination is always a register. We'll take care of it during the instruction-fixup pass.
+
+Finally, for relational operators, we treat floating-point comparisions the same as unsigned integer comparisons because _comisd_ only sets CF and ZF, the SF and OF are always 0.
+An example:
+
+```
+Binary(LessThan, Var("x"), Var("y"), Var("dst"))
+```
+
+is converted to
+
+```
+Cmp(Double, Pseudo("y"), Pseudo("x"))
+Mov(Longword, Imm(0), Pseudo("dst"))
+SetCC(B, Pseudo("dst"))
+```
+
+This approach is also applied to the three TACKY instructions that compare a value to zero: JumpIfZero, JumpIfNotZero, and Not
+
+For example, the instruction
+
+```
+JumpIfZero(var("x"), "label")
+```
+
+is converted to
+
+```
+Binary(Xor, Double, Reg(XMM0), Reg(XMM0))
+Cmp(Double, Pseudo("x"), Reg(XMM0))
+JmpCC(E, "label")
+```
+
+It doesn't have to be XMM0 here, but make sure you don't use scratch registers for the rewrite pass to avoid conflicting uses.
+
+#### Type Conversion
+
+We already covered this part in the beginning. There are some notes:
+
+- Avoid the callee-saved registers: RBX, R12, R13, R14 and R15
+- Avoid the registers used for rewrite pass: R10, R11, XMM14 and XMM15.
+- Emit the instruction _MovZeroExtend_ when converting _unsigned int_ to _double_.
+
+For example, if `x` is an _unsigned int_, then the instrution
+
+```
+UIntToDouble(Var("x"), Var("y"))
+```
+
+is converted to Assembly:
+
+```
+MovZeroExtend(Var("x"), Reg(AX))
+Cvtsi2sd(Quadword, Reg(AX), Pseudo("y"))
+```
+
+#### Function Calls
+
+There are two places we need to determine which register, or stack, is needed for an argument: In function body, and in function call.
+We'll write a helper function _classify_parameters_ to handle the bookkeeping we need in both places.
+The function split the arguments list into 3:
+
+- Arguments to be passed in general-purpose registers
+- Arguments to be passed in XMM registers
+- Arguments to be passed on the stack
+
+```
+classify_parameters(values):
+	int_reg_args = []
+	double_reg_args = []
+	stack_args = []
+
+	for v in values:
+		operand = convert_val(v)
+		t = assembly_type_of(v)
+		typed_operand = (t, operand)
+		if t == Double:
+			if length(double_reg_args) < 8:
+				double_reg_args.append(operand)
+			else:
+				stack_args.append(typed_operand)
+		else:
+			if length(int_reg_args) < 6:
+				int_reg_args.append(typed_operand)
+			else:
+				stack_args.append(typed_operand)
+
+	return (int_reg_args, double_reg_args, stack_args )
+```
+
+Note that when we're building the stack_args list, we preserve the order they appear.
+
+In a function body, we copy every parameter from their initial locations into pseudoregisters.
+
+```
+set_up_parameters(parameters):
+
+	// classify them
+	int_reg_params, double_reg_params, stack_params = classify_parameters(parameters)
+
+	// copy parameters from general-purpose registers
+	int_regs = [ DI, SI, DX, CX, R8, R9 ]
+	reg_index = 0
+	for (param_type, param) in int_reg_params:
+		r = int_regs[reg_index]
+		emit(Mov(param_type, Reg(r), param))
+		reg_index += 1
+
+	// copy parameters from XMM registers
+	double_regs = [ XMM0, XMM1, XMM2, XMM3, XMM4, XMM5, XMM6, XMM7 ]
+	reg_index = 0
+	for param in double_reg_params:
+		r = double_regs[reg_index]
+		emit(Mov(Double, Reg(r), param))
+		reg_index += 1
+
+	// Copy parameters from stack
+	offset = 16
+	for (param_type, param) in stack_params:
+		emit(Mov(param_type, Stack(offset), param))
+		offset += 8
+```
+
+We also use _classify_parameters_ in TACKY FunCall.
+
+```
+convert_function_call(FunCall(fun_name, args, dst)):
+	int_registers = [ DI, SI, DX, CX, R8, R9 ]
+	double_registers = [ XMM0, XMM1, XMM2, XMM3, XMM4, XMM5, XMM6, XMM7 ]
+
+	// classify arguments
+	int_args, double_args, stack_args = classify_parameters(args)
+
+	// adjust stack alignment
+	if length(stack_args) is odd:
+		stack_padding = 8
+	else:
+		stack_padding = 0
+
+	if stack_padding != 0:
+		emit(Binary(Sub, Quadword, Imm(stack_padding), Reg(SP)))
+
+	// pass args in registers
+	reg_index = 0
+	for (assembly_type, assembly_arg) in int_args:
+		r = int_registers[reg_index]
+		emit(Mov(assembly_type, assembly_arg, Reg(r)))
+		reg_index += 1
+
+	reg_index = 0
+	for assembly_arg in double_args:
+		r = double_registers[reg_index]
+		emit(Mov(Double, assembly_arg, Reg(r)))
+		reg_index += 1
+
+	// pass args on stack
+	for (assembly_type, assembly_arg) in reverse(stack_args):
+		if (assembly_arg is a Reg or Imm operand
+			or assembly_type == Quadword
+			or assembly_type == Double):
+			emit(Push(assembly_arg))
+		else:
+			emit(Mov(assembly_type, assembly_arg, Reg(AX)))
+			emit(Push(Reg(AX)))
+
+	// emit call instructions
+	emit(Call(fun_name))
+
+	// adjust stack pointer
+	bytes_to_remove = 8 * length(stack_args) + stack_padding
+	if bytes_to_remove != 0:
+		emit(Binary(Add, Quadword, Imm(bytes_to_remove), Reg(SP)))
+
+	// Retrieve return value
+	assembly_dst = convert_val(dst)
+	return_type = assembly_type_of(dst)
+	if return_type == Double:
+		emit(Mov(Double, Reg(XMM0), assembly_dst))
+	else:
+		emit(Mov(return_type, Reg(AX), assembly_dst))
+```
+
+#### Return Instructions
+
+```
+Return(Var("x"))
+```
+
+We first look up the type of x in the backend symbol table. If it's an integer, we copy the value to AX. If it's a double, we copy the value to XMM0 for the return.
+
+```
+Mov(Double, Pseudo("x"), Reg(XMM0))
+Ret
+```
+
+### Converting TACKY to Assembly
+
+#### Converting Top-Level TACKY Constructs to Assembly
+
+| TACKY top-level construct                    | Assembly top-level construct                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| -------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Program(top_level_defs)                      | Program(top_level_defs **+ \<all StaticConstant constructs for floating-point constants>**)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| Function(name, global, params, instructions) | Function(name, global, [<br>&nbsp;&nbsp;&nbsp;&nbsp;Mov(**\<first int param type>**, Reg(DI), **\<first int param>**), <br>&nbsp;&nbsp;&nbsp;&nbsp;Mov(**\<second int param type>**, Reg(SI), **\<second int param>**), <br>&nbsp;&nbsp;&nbsp;&nbsp;\<copy next four integer parameters from registers>, <br>&nbsp;&nbsp;&nbsp;&nbsp;**Mov(\<first double param type>, Reg(XMM0), \<first double param>), <br>&nbsp;&nbsp;&nbsp;&nbsp;Mov(\<second double param type>, Reg(XMM1), \<second double param>), <br>&nbsp;&nbsp;&nbsp;&nbsp;\<copy next six double parameters from registers>**<br>&nbsp;&nbsp;&nbsp;&nbsp;Mov(**\<first stack param type>**, Stack(16), **\<first stack param>**), <br>&nbsp;&nbsp;&nbsp;&nbsp;Mov(**\<second stack param type>**, Stack(24), **\<second stack param>**), <br>&nbsp;&nbsp;&nbsp;&nbsp;\<copy remaining parameters from stack>] +<br>&nbsp;&nbsp;&nbsp;&nbsp; instructions) |
+| StaticVariable(name, global, t, init)        | StaticVariable(name, global, \<alignment of t, init)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+
+#### Converting TACKY Instructions to Assembly
+
+| TACKY instruction                             | Assembly instructions                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| --------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Return(val) (Integer)                         | Mov(\<val type>, val, Reg(AX))<br>Ret                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| **Return(val) (Double)**                      | **Mov(\<Double>, val, Reg(XMM0))<br>Ret**                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| Unary(Not, src, dst) (Integer)                | Cmp(\<src type>, Imm(0), src)<br>Mov(\<dst type>, Imm(0), dst)<br>SetCC(E, dst)                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| **Unary(Not, src, dst) (Double)**             | **Binary(Xor, Double, Reg(\<X>), Reg(\<X>))<br>Cmp(Double, src, Reg(\<X>))<br>Mov(\<dst type>, Imm(0), dst)<br>SetCC(E, dst)**                                                                                                                                                                                                                                                                                                                                                                     |
+| **Unary(Negate, src, dst) (Double negation)** | **Mov(Double, src, dst)<br>Binary(Xor, Double, Data(\<negative-zero>), dst)<br>And add a top-level constant:<br>StaticConstant(\<negative-zero>, 16, DoubleInit(-0.0))**                                                                                                                                                                                                                                                                                                                           |
+| Unary(unary_operator, src, dst)               | Mov(\<src type>, src, dst)<br>Unary(unary_operator, \<src type>, dst)                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| Binary(Divide, src1, src2, dst) (Signed)      | Mov(\<src1 type>, src1, Reg(AX))<br>Cdq(\<src1 type>)<br>Idiv(\<src1 type>, src2)<br>Mov(\<src1 type>, Reg(AX), dst)                                                                                                                                                                                                                                                                                                                                                                               |
+| Binary(Divide, src1, src2, dst) (Unsigned)    | Mov(\<src1 type>, src1, Reg(AX))<br>Mov(\<src1 type>, Imm(0), Reg(DX))<br>Div(\<src1 type>, src2)<br>Mov(\<src1 type>, Reg(AX), dst)                                                                                                                                                                                                                                                                                                                                                               |
+| Binary(Remainder, src1, src2, dst) (Signed)   | Mov(\<src1 type>, src1, Reg(AX))<br>Cdq(\<src1 type>)<br>Idiv(\<src1 type>, src2)<br>Mov(\<src1 type>, Reg(DX), dst)                                                                                                                                                                                                                                                                                                                                                                               |
+| Binary(Remainder, src1, src2, dst) (Unsigned) | Mov(\<src1 type>, src1, Reg(AX))<br>Mov(\<src1 type>, Imm(0), Reg(DX))<br>Div(\<src1 type>, src2)<br>Mov(\<src1 type>, Reg(DX), dst)                                                                                                                                                                                                                                                                                                                                                               |
+| Binary(arithmetic_operator, src1, src2, dst)  | Mov(\<src1 type>, src1, dst)<br>Binary(arithmetic_operator, \<src1 type>, src2, dst)                                                                                                                                                                                                                                                                                                                                                                                                               |
+| Binary(relational_operator, src1, src2, dst)  | Cmp(\<src1 type>, src1, src2)<br>Mov(\<dst type>, Imm(0), dst)<br>SetCC(relational_operator, dst)                                                                                                                                                                                                                                                                                                                                                                                                  |
+| Jump(target)                                  | Jmp(target)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| JumpIfZero(condition, target) (Integer)       | Cmp(\<condition type>, Imm(0), condition)<br>SetCC(E, target)                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| **JumpIfZero(condition, target) (Double)**    | **Binary(Xor, Double, Reg(\<X>), Reg(\<X>))<br>Cmp(Double, condition, Reg(\<X>))<br>JmpCC(E, target)**                                                                                                                                                                                                                                                                                                                                                                                             |
+| JumpIfNotZero(condition, target)              | Cmp(\<condition type>, Imm(0), condition)<br>SetCC(NE, target)                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| **JumpIfNotZero(condition, target) (Double)** | **Binary(Xor, Double, Reg(\<X>), Reg(\<X>))<br>Cmp(Double, condition, Reg(\<X>))<br>JmpCC(NE, target)**                                                                                                                                                                                                                                                                                                                                                                                            |
+| Copy(src, dst)                                | Mov(\<src type>, src, dst)                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| Label(identifier)                             | Label(identifier)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| FunCall(fun_name, args, dst)                  | \<fix stack alignment><br>**\<move arguments to general-purpose registers>**<br>**\<move arguments to XMM registers>**<br>**\<push arguments onto the stack>**<br>Call(fun_name)<br>\<deallocate arguments\/padding><br>Mov(\<dst type>, **\<dst register>**, dst)                                                                                                                                                                                                                                 |
+| SignExtend(src, dst)                          | Movsx(src, dst)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| Truncate(src, dst)                            | Mov(Longword, src, dst)                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| ZeroExtend(src, dst)                          | MovZeroExtend(src, dst)                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| **IntToDouble(src, dst)**                     | **Cvtsi2sd(<src type>, src, dst)**                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| **DoubleToInt(src, dst)**                     | **Cvttsd2si(<dst type>, src, dst)**                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| **UIntToDouble(src, dst) (unsigned int)**     | **MovZeroExtend(src, Reg(\<R>))<br>Cvtsi2s(Quadword, Reg(\<R>), dst)**                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| **UIntToDouble(src, dst) (unsigned long)**    | **Cmp(Quadword, Imm(0), src)<br>JmpCC(L, \<label1>)<br>Cvtsi2sd(Quadword, src, dst)<br>Jmp(\<label2>)<br>Label(\<label1>)<br>Mov(Quadword, src, Reg(\<R1>))<br>Mov(Quadword, Reg(\<R1>), Reg(\<R2>))<br>Unary(Shr, Quadword, Reg(\<R2>))<br>Binary(And, Quadword, Imm(1), Reg(\<R1>))<br>Binary(Or, Quadword, Reg(\<R1>), Reg(\<R2>))<br>Cvtsi2sd(Quadword, Reg(\<R2>), dst)<br>Binary(Add, Double, dst, dst)<br>Label(\<label2>)**                                                                |
+| **DoubleToUInt(src, dst) (unsigned int)**     | **Cvttsd2si(Quadword, src, Reg(\<R>))<br>Mov(Longword, Reg(\<R>), dst)**                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| **DoubleToUInt(src, dst) (unsigned long)**    | **Cmp(Double, Data(\<upper-bound>), src)<br>JmpCC(AE, \<label1>)<br>Cvttsd2si(Quadword, src, dst)<br>Jmp(\<label2>)<br>Label(\<label1>)<br>Mov(Double, src, Reg(\<X>))<br>Binary(Sub, Double, Data(\<upper-bound>),Reg(\<X>))<br>Cvttsd2si(Quadword, Reg(\<X>), dst)<br>Mov(Quadword, Imm(9223372036854775808), Reg(\<R>))<br>Binary(Add, Quadword, Reg(\<R>), dst)<br>Label(\<label2>)<br>And add a top-level constant:<br>StaticConstant(\<upper-bound>, 8, DoubleInit(9223372036854775808.0))** |
+
+#### Converting TACKY Arithmetic Operators to Assembly
+
+| TACKY operator               | Assembly operator |
+| ---------------------------- | ----------------- |
+| Complement                   | Not               |
+| Negate                       | Neg               |
+| Add                          | Add               |
+| Subtract                     | Sub               |
+| Multiply                     | Mult              |
+| **Divide (double division)** | **DivDouble**     |
+
+#### Converting TACKY Comparisons to Assembly
+
+| TACKY comparison | Assembly condition code (signed) | Assembly condition code (unsigned **or double**) |
+| ---------------- | -------------------------------- | ------------------------------------------------ |
+| Equal            | E                                | E                                                |
+| NotEqual         | NE                               | NE                                               |
+| LessThan         | L                                | B                                                |
+| LessOrEqual      | LE                               | BE                                               |
+| GreaterThan      | G                                | A                                                |
+| GreaterOrEqual   | GE                               | AE                                               |
+
+#### Converting TACKY Operands to Assembly
+
+| TACKY operand                     | Assembly operand                                                                                     |
+| --------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| Constant(ConstInt(int))           | Imm(int)                                                                                             |
+| Constant(ConstUInt(int))          | Imm(int)                                                                                             |
+| Constant(ConstLong(int))          | Imm(int)                                                                                             |
+| Constant(ConstULong(int))         | Imm(int)                                                                                             |
+| **Constant(ConstDouble(double))** | **Data(\<ident>)<br>And add top-level constant:<br>StaticConstant(\<ident>, 8, DoubleInit(Double))** |
+| Var(identifier)                   | Pseudo(identifier)                                                                                   |
+
+#### Converting Types to Assembly
+
+| Source type | Assembly type | Alignment |
+| ----------- | ------------- | --------- |
+| Int         | Longword      | 4         |
+| UInt        | Longword      | 4         |
+| Long        | Quadword      | 8         |
+| ULong       | Quadword      | 8         |
+| **Double**  | **Double**    | **8**     |
+
+### Replacing Pseudoregisters
+
+Extend the pass to support new instructions, allocate 8 bytes on the stack for each double pseudoregister and make sure they are 8-byte aligned.
+If the backend symbol table indicates that a double has static storage duration, you should replace any references to it with _Data_ operands, similar to Quadword pseudoregisters.
+
+### Fixing Up Instructions
+
+We'll dedicate XMM14 to rewrite source operands, and XMM15 for destination operands, the same as R10 and R11 of general-purpose registers.
+
+The destination of _cvttsd2si_ must be a register.
+
+```
+Cvttsd2si(Quadword, Stack(-8), Stack(-16))
+```
+
+is rewritten to
+
+```
+Cvttsd2si(Quadword, Stack(-8), Reg(R11))
+Mov(Quadword, Reg(R11), Stack(-16))
+```
+
+The instruction _cvtsi2sd_ has two constraints:
+
+- The source CAN'T be a constant
+- The destination must be a register
+
+```
+Cvtsi2sd(Longword, Imm(10), Stack(-8))
+```
+
+is fixed up into
+
+```
+Mov(Longword, Imm(10), Reg(R10))
+Cvtsi2sd(Longword, Reg(R10), Reg(XMM15))
+Mov(Double, Reg(XMM15), Stack(-8))
+```
+
+The _comisd_ instruction requires its destination to be a register.
+
+```
+Cmp(Double, Stack(-8), Stack(-16))
+```
+
+is rewritten into
+
+```
+Mov(Double, Stack(-16), Reg(XMM15))
+Cmp(Double, Stack(-8), Reg(XMM15))
+```
+
+The _addsd_, _subsd_, _mulsd_ and _divsd_ or _xorpd_ instructions also need register destinations.
+Further more, the _xorpd_ needs a register or a 16-byte-aligned memory address as the source operand. (We alreay satisfy this when emitting the instruction)
+
+The _movsd_ has the same constraints as _mov_; that is both its source and destination can't be memory address at the same time. So do _and_ and _or_ instructions; they also can't take immediate source operands outside the range of int.
+The _push_ instruction cannot push XMM registers. Right now, we only push immediate values or memory operands, so we don't have this error right now, but we will in Chapter III.
+
+## Code Emission
+
+- Use decimal floating-point constants in Assembly: 20.0, instead of `4626322717216342016` or `0x2.8p+3`
+- StaticConstant needs to have Local Label Prefix
+- Double constants are stored in Read-Only section
+- Static variables of type double are not stored in BSS section, or initialized with `.zero` directive because their representation in binary are never all zeros.
+
+#### Formatting Top-Level Assembly Constructs
+
+| Assembly top-level construct                                                                   | Output                                                                                                                                                                                                                                                                                                           |
+| ---------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Program(top_levels)                                                                            | Printout each top-level construct. <br> On Linux, add at the end of file <br> &nbsp;&nbsp;&nbsp;&nbsp;_.section .note.GNU-stack,"",@progbits_                                                                                                                                                                    |
+| Function(name, global, instructions)                                                           | &nbsp;&nbsp;&nbsp;&nbsp;\<global-directive>\<br>&nbsp;&nbsp;&nbsp;&nbsp;.text\<br>&nbsp;&nbsp;&nbsp;&nbsp;.globl \<name> <br> \<name>: <br> &nbsp;&nbsp;&nbsp;&nbsp;push&nbsp;&nbsp;&nbsp;&nbsp;%rbp<br>&nbsp;&nbsp;&nbsp;&nbsp;movq&nbsp;&nbsp;&nbsp;&nbsp;%rsp,%rbp<br>&nbsp;&nbsp;&nbsp;&nbsp;\<instructions> |
+| StaticVariable(name, global, alignment, init) (Initialized to zero)                            | &nbsp;&nbsp;&nbsp;&nbsp;\<global-directive><br>&nbsp;&nbsp;&nbsp;&nbsp;.bss<br>&nbsp;&nbsp;&nbsp;&nbsp;\<alignment-directive><br>\<name>:<br>&nbsp;&nbsp;&nbsp;&nbsp;<init>                                                                                                                                      |
+| StaticVariable(name, global, alignment, init) (Initialized to nonzero value **OR any double**) | &nbsp;&nbsp;&nbsp;&nbsp;\<global-directive><br>&nbsp;&nbsp;&nbsp;&nbsp;.data<br>&nbsp;&nbsp;&nbsp;&nbsp;\<alignment-directive><br>\<name>:<br>&nbsp;&nbsp;&nbsp;&nbsp;<init>                                                                                                                                     |
+| **StaticConstant(name, alignment, init) (Linux)**                                              | **&nbsp;&nbsp;&nbsp;&nbsp;.section .rodata<br>&nbsp;&nbsp;&nbsp;&nbsp;\<alignment-directive><br>\<name>:<br>&nbsp;&nbsp;&nbsp;&nbsp;<init>**                                                                                                                                                                     |
+| **StaticConstant(name, alignment, init) (MacOS 8-byte aligned constants)**                     | **&nbsp;&nbsp;&nbsp;&nbsp;.literal8<br>&nbsp;&nbsp;&nbsp;&nbsp;.balign 8<br>\<name>:<br>&nbsp;&nbsp;&nbsp;&nbsp;<init>**                                                                                                                                                                                         |
+| **StaticConstant(name, alignment, init) (MacOS 16-byte aligned constants)**                    | **&nbsp;&nbsp;&nbsp;&nbsp;.literal16<br>&nbsp;&nbsp;&nbsp;&nbsp;.balign 16<br>\<name>:<br>&nbsp;&nbsp;&nbsp;&nbsp;<init><br>&nbsp;&nbsp;&nbsp;&nbsp;.quad 0**                                                                                                                                                    |
+| Global directive                                                                               | if global is true:<br>.globl \<identifier><br>Otherwise, omit this directive.                                                                                                                                                                                                                                    |
+| Alignment directive                                                                            | For Linux only: .align <alignment><br>For macOS and Linux: .balign <alignment>                                                                                                                                                                                                                                   |
+
+#### Formatting Static Initializers
+
+| Static Initializer | Output                                                   |
+| ------------------ | -------------------------------------------------------- |
+| IntInit(0)         | .zero 4                                                  |
+| IntInit(i)         | .long \<i>                                               |
+| LongInit(0)        | .zero 8                                                  |
+| LongInit(i)        | .quad \<i>                                               |
+| UIntInit(0)        | .zero 4                                                  |
+| UIntInit(i)        | .long \<i>                                               |
+| ULongInit(0)       | .zero 8                                                  |
+| ULongInit(i)       | .quad \<i>                                               |
+| **DoubleInit(d)**  | **.double \<d><br>OR<br>.quad \<d-interpreted-as-long>** |
+
+#### Formatting Assembly Instructions
+
+| Assembly instruction                 | Output                                                                                 |
+| ------------------------------------ | -------------------------------------------------------------------------------------- |
+| Mov(t, src, dst)                     | mov \<t>&nbsp;&nbsp;&nbsp;&nbsp;\<src>, \<dst>                                         |
+| Movsx(src, dst)                      | movslq &nbsp;&nbsp;&nbsp;&nbsp;\<src>, \<dst>                                          |
+| **Cvtsi2sd(t, src, dst)**            | **cvtsi2sd\<t> &nbsp;&nbsp;&nbsp;&nbsp;\<src>, \<dst>**                                |
+| **Cvttsd2si(t, src, dst)**           | **cvttsd2si\<t> &nbsp;&nbsp;&nbsp;&nbsp;\<src>, \<dst>**                               |
+| Ret                                  | ret                                                                                    |
+| Unary(unary_operator, t, operand)    | \<unary_operator>\<t>&nbsp;&nbsp;&nbsp;&nbsp;\<operand>                                |
+| Binary(binary_operator, t, src, dst) | \<binary_operator>\<t>&nbsp;&nbsp;&nbsp;&nbsp;\<src>, \<dst>                           |
+| **Binary(Xor, Double, src, dst)**    | **xorpd&nbsp;&nbsp;&nbsp;&nbsp;\<src>, \<dst>**                                        |
+| **Binary(Mult, Double, src, dst)**   | **mulsd&nbsp;&nbsp;&nbsp;&nbsp;\<src>, \<dst>**                                        |
+| Idiv(t, operand)                     | idiv \<t>&nbsp;&nbsp;&nbsp;&nbsp;\<operand>                                            |
+| Div(t, operand)                      | div \<t>&nbsp;&nbsp;&nbsp;&nbsp;\<operand>                                             |
+| Cdq(Longword)                        | cdq                                                                                    |
+| Cdq(Quadword)                        | cdo                                                                                    |
+| AllocateStack(int)                   | subq&nbsp;&nbsp;&nbsp;&nbsp;$\<int>, %rsp                                              |
+| Cmp(t, operand, operand)             | cmp \<t>&nbsp;&nbsp;&nbsp;&nbsp;\<operand>, \<operand>                                 |
+| **Cmp(Double, operand, operand)**    | **comisd&nbsp;&nbsp;&nbsp;&nbsp;\<operand>, \<operand>**                               |
+| Jmp(label)                           | jmp&nbsp;&nbsp;&nbsp;&nbsp;.L\<label>                                                  |
+| JmpCC(cond_code, label)              | j\<cond_code>&nbsp;&nbsp;&nbsp;&nbsp;.L\<label>                                        |
+| SetCC(cond_code, operand)            | set\<cond_code>&nbsp;&nbsp;&nbsp;&nbsp;\<operand>                                      |
+| Label(label)                         | .L\<label>:                                                                            |
+| DeallocateStack(int)                 | addq&nbsp;&nbsp;&nbsp;&nbsp;$\<int>, %rsp                                              |
+| Push(operand)                        | pushq&nbsp;&nbsp;&nbsp;&nbsp;\<operand>                                                |
+| Call(label)                          | call&nbsp;&nbsp;&nbsp;&nbsp;\<label><br>or<br>call&nbsp;&nbsp;&nbsp;&nbsp;\<label>@PLT |
+
+#### Formatting Names for Assembly Operators
+
+| Assembly operator | Instruction name |
+| ----------------- | ---------------- |
+| Neg               | neg              |
+| Not               | not              |
+| Add               | add              |
+| Sub               | sub              |
+| Mult              | imul             |
+| **Shr**           | **shr**          |
+| **DivDouble**     | **div**          |
+| **And**           | **and**          |
+| **Or**            | **or**           |
+
+#### Instruction Suffixes for Condition Codes
+
+| Condition code | Instruction suffix |
+| -------------- | ------------------ |
+| E              | e                  |
+| NE             | ne                 |
+| L              | l                  |
+| LE             | le                 |
+| G              | g                  |
+| GE             | ge                 |
+| B              | b                  |
+| BE             | be                 |
+| A              | a                  |
+| AE             | ae                 |
+
+#### Instruction Suffixes for Assembly Types
+
+| Assembly Type | Instruction suffix |
+| ------------- | ------------------ |
+| Longword      | l                  |
+| Quadword      | q                  |
+| **Double**    | **sd**             |
+
+#### Formatting Assembly Operands
+
+| Assembly operand | Output      |
+| ---------------- | ----------- |
+| Reg(AX) 8-byte   | %rax        |
+| Reg(AX) 4-byte   | %eax        |
+| Reg(AX) 1-byte   | %al         |
+| Reg(DX) 8-byte   | %rdx        |
+| Reg(DX) 4-byte   | %edx        |
+| Reg(DX) 1-byte   | %dl         |
+| Reg(CX) 8-byte   | %rcx        |
+| Reg(CX) 4-byte   | %ecx        |
+| Reg(CX) 1-byte   | %cl         |
+| Reg(DI) 8-byte   | %rdi        |
+| Reg(DI) 4-byte   | %edi        |
+| Reg(DI) 1-byte   | %dil        |
+| Reg(SI) 8-byte   | %rsi        |
+| Reg(SI) 4-byte   | %esi        |
+| Reg(SI) 1-byte   | %sil        |
+| Reg(R8) 8-byte   | %r8         |
+| Reg(R8) 4-byte   | %r8d        |
+| Reg(R8) 1-byte   | %r8b        |
+| Reg(R9) 8-byte   | %r9         |
+| Reg(R9) 4-byte   | %r9d        |
+| Reg(R9) 1-byte   | %r9b        |
+| Reg(R10) 8-byte  | %r10        |
+| Reg(R10) 4-byte  | %r10d       |
+| Reg(R10) 1-byte  | %r10b       |
+| Reg(R11) 8-byte  | %r11        |
+| Reg(R11) 4-byte  | %r11d       |
+| Reg(R11) 1-byte  | %r11b       |
+| Reg(SP)          | %rsp        |
+| **Reg(XMM0)**    | **%xmm0**   |
+| **Reg(XMM1)**    | **%xmm1**   |
+| **Reg(XMM2)**    | **%xmm2**   |
+| **Reg(XMM3)**    | **%xmm3**   |
+| **Reg(XMM4)**    | **%xmm4**   |
+| **Reg(XMM5)**    | **%xmm5**   |
+| **Reg(XMM6)**    | **%xmm6**   |
+| **Reg(XMM7)**    | **%xmm7**   |
+| **Reg(XMM8)**    | **%xmm8**   |
+| **Reg(XMM9)**    | **%xmm9**   |
+| **Reg(XMM10)**   | **%xmm10**  |
+| **Reg(XMM11)**   | **%xmm11**  |
+| **Reg(XMM12)**   | **%xmm12**  |
+| **Reg(XMM13)**   | **%xmm13**  |
+| **Reg(XMM14)**   | **%xmm14**  |
+| **Reg(XMM15)**   | **%xmm15**  |
+| Stack(int)       | <int>(%rbp) |
+| Imm(int)         | $\<int>     |
+
+## Extra Credit: NaN
+
+As promised, quiet NaN is here for you. SSE instructions can help do the arithmetic operations without any extra effort from your side.
+Type conversions from and to NaN is undefined, so we don't need to handle this.
+We only care the comparisons with NaN. When comparing x to y, knowing that x is NaN, then all comparisons `x > y`, `x < y`, `x == y` are False.
+Even `NaN == NaN` is False.
+
+We call that an unordered result, which sets ZF, CF and PF to be 1.
+You can utilize the `jp` instruction, which jumps when Parity Flag is 1, to handle NaN in floating-point comparisons.
+
+## Summary
+
+We've supported floating-point numbers, the first non-integer type we handle.
+The floating-point numbers are meant to be imprecise, due to the limitation in hardware. But in reality, that's acceptable.
+In the next chapter, we will continue our journey to explore `pointers`.
+
+## Additional Resources
+
+**IEEE 754**
+
+- [The IEEE 754 standard](https://ieeexplore.ieee.org/document/8766229)
+- [Double-Precision Floating-Point Format](https://en.wikipedia.org/wiki/Double-precision_floating-point_format)
+- [What Every Computer Scientist Should Know About Floating-Point Arithmetic](https://docs.oracle.com/cd/E19957-01/806-3568/ncg_goldberg.html)
+- [The Floating-Point Guide](https://floating-point-gui.de/)
+
+- To learn more about support for IEEE 754 standard in GCC and Clang, see the following resources:
+  - [Semantics of Floating Point Math in GCC](https://gcc.gnu.org/wiki/FloatingPointMath)
+  - [Controlling Floating-Point Behavior](https://clang.llvm.org/docs/UsersManual.html#controlling-floating-point-behavior)
+
+**Reference for "Rounding Behavior" on page 299**
+
+- [The Spacing of Binary Floating-Point Numbers](https://www.exploringbinary.com/the-spacing-of-binary-floating-point-numbers/)
+
+**References for "Floating-Point Operations in Assembly" on page 310**
+
+- [System V x64 ABI](https://gitlab.com/x86-psABIs/x86-64-ABI)
+- [Intel 64 Software Developer’s Manual](https://www.intel.com/content/www/us/en/developer/articles/technical/intel-sdm.html)
+- [Sometimes Floating Point Math Is Perfect](https://randomascii.wordpress.com/2017/06/19/sometimes-floating-point-math-is-perfect/)
+- [Pascal Cuoq has written an excellent answer to a Stack Overflow question about the assembly-level conversion from unsigned long to double](https://stackoverflow.com/a/26799227)
+- [GCC Avoids Double Rounding Errors with Round-to-Odd](https://www.exploringbinary.com/gcc-avoids-double-rounding-errors-with-round-to-odd/)
+
+**References for "Code Emission" on page 338**
+
+- [Hexadecimal Floating-Point Constants](https://www.exploringbinary.com/hexadecimal-floating-point-constants/)
+- [Number of Digits Required for Round-Trip Conversions](https://www.exploringbinary.com/number-of-digits-required-for-round-trip-conversions/)
+
+**Floating-point visualization tools**
+
+- [The Decimal to Floating-Point Converter](https://www.exploringbinary.com/floating-point-converter/)
+- [Float Exposed](https://float.exposed/)
+
+### Reference Implementation Analysis
+
+[Chapter 13 Code Analysis](./code_analysis/chapter_13.md)

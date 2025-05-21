@@ -363,17 +363,19 @@ namespace AST
     class CompoundAssignment : public Expression
     {
     public:
-        CompoundAssignment(BinaryOp op, std::shared_ptr<Expression> left, std::shared_ptr<Expression> right, std::optional<Types::DataType> dataType = std::nullopt)
-            : Expression(NodeType::CompoundAssignment, dataType), _op{op}, _left{std::move(left)}, _right{std::move(right)} {}
+        CompoundAssignment(BinaryOp op, const std::shared_ptr<Expression> &left, const std::shared_ptr<Expression> &right, std::optional<Types::DataType> resultType = std::nullopt, std::optional<Types::DataType> dataType = std::nullopt)
+            : Expression(NodeType::CompoundAssignment, dataType), _op{op}, _left{std::move(left)}, _right{std::move(right)}, _resultType{resultType} {}
 
         auto getOp() const { return _op; }
         auto getLeftExp() const { return _left; }
         auto getRightExp() const { return _right; }
+        auto &getResultType() const { return _resultType; }
 
     private:
         BinaryOp _op;
         std::shared_ptr<Expression> _left;
         std::shared_ptr<Expression> _right;
+        std::optional<Types::DataType> _resultType;
     };
 
     class PostfixIncr : public Expression

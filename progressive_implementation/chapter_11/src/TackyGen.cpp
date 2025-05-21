@@ -552,7 +552,7 @@ TackyGen::emitTackyForExp(const std::shared_ptr<AST::Expression> &exp)
     case AST::NodeType::CompoundAssignment:
     {
         auto compoundAssignment = std::dynamic_pointer_cast<AST::CompoundAssignment>(exp);
-        return emitCompoundExpression(compoundAssignment->getOp(), compoundAssignment->getLeftExp(), compoundAssignment->getRightExp(), compoundAssignment->getDataType());
+        return emitCompoundExpression(compoundAssignment->getOp(), compoundAssignment->getLeftExp(), compoundAssignment->getRightExp(), compoundAssignment->getResultType());
     }
     case AST::NodeType::PostfixIncr:
     {

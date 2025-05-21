@@ -500,6 +500,16 @@ private:
         visit(*compoundAssignment.getLeftExp(), false);
         std::cout << getIndent() << "right=";
         visit(*compoundAssignment.getRightExp(), false);
+        std::cout << getIndent() << "resultType=";
+        if (compoundAssignment.getDataType().has_value())
+        {
+            std::cout << Types::dataTypeToString(compoundAssignment.getResultType().value());
+        }
+        else
+        {
+            std::cout << "unchecked";
+        }
+        std::cout << "\n";
         std::cout << getIndent() << "dataType=";
         if (compoundAssignment.getDataType().has_value())
         {

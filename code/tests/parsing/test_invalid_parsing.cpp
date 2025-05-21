@@ -510,29 +510,30 @@ TEST_CASE(Chapter12InvalidParse, "chapter_12", "--parse")
     }
 }
 
-// // Chapter 13
-// TEST_CASE(Chapter13InvalidParse, "chapter_13", "--parse")
-// {
-//     std::vector<std::string> srcFiles = {
+// Chapter 13
+TEST_CASE(Chapter13InvalidParse, "chapter_13", "--parse")
+{
+    std::vector<std::string> srcFiles = {
+        "tests/chapter_13/invalid_parse/invalid_type_specifier.c",
+        "tests/chapter_13/invalid_parse/invalid_type_specifier_2.c",
+    };
+    Settings settings;
 
-//     };
-//     Settings settings;
-
-//     for (const auto &srcFile : srcFiles)
-//     {
-//         Compiler compiler;
-//         try
-//         {
-//             int status = compiler.compile(Stage::Parsing, std::vector<std::string>{srcFile});
-//             ASSERT_TRUE(status != 0);
-//         }
-//         catch (const std::exception &e)
-//         {
-//             std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
-//             throw;
-//         }
-//     }
-// }
+    for (const auto &srcFile : srcFiles)
+    {
+        Compiler compiler;
+        try
+        {
+            int status = compiler.compile(Stage::Parsing, std::vector<std::string>{srcFile});
+            ASSERT_TRUE(status != 0);
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+            throw;
+        }
+    }
+}
 
 // // Chapter 14
 // TEST_CASE(Chapter14InvalidParse, "chapter_14", "--parse")

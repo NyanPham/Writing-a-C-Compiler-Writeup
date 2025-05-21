@@ -492,51 +492,66 @@ TEST_CASE(Chapter12InvalidSemanticExtraCredit, "chapter_12", "--validate")
     }
 }
 
-// // Chapter 13
-// TEST_CASE(Chapter13InvalidSemantic, "chapter_13", "--validate")
-// {
-//     std::vector<std::string> srcFiles = {
-//     };
-//     Settings settings;
+// Chapter 13
+TEST_CASE(Chapter13InvalidSemantic, "chapter_13", "--validate")
+{
+    std::vector<std::string> srcFiles = {
+        "tests/chapter_13/invalid_types/complement_double.c",
+        "tests/chapter_13/invalid_types/mod_double.c",
+        "tests/chapter_13/invalid_types/mod_double_2.c",
+    };
+    Settings settings;
 
-//     for (const auto &srcFile : srcFiles)
-//     {
-//         Compiler compiler;
-//         try
-//         {
-//             int status = compiler.compile(Stage::Validate, std::vector<std::string>{srcFile});
-//             ASSERT_TRUE(status != 0);
-//         }
-//         catch (const std::exception &e)
-//         {
-//             std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
-//             throw;
-//         }
-//     }
-// }
+    for (const auto &srcFile : srcFiles)
+    {
+        Compiler compiler;
+        try
+        {
+            int status = compiler.compile(Stage::Validate, std::vector<std::string>{srcFile});
+            ASSERT_TRUE(status != 0);
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+            throw;
+        }
+    }
+}
 
-// TEST_CASE(Chapter12InvalidSemanticExtraCredit, "chapter_12", "--validate")
-// {
-//     std::vector<std::string> srcFiles = {
-    
-//     };
-//     Settings settings;
+TEST_CASE(Chapter13InvalidSemanticExtraCredit, "chapter_13", "--validate")
+{
+    std::vector<std::string> srcFiles = {
+        "tests/chapter_13/invalid_types/extra_credit/bitwise_and.c",
+        "tests/chapter_13/invalid_types/extra_credit/bitwise_or.c",
+        "tests/chapter_13/invalid_types/extra_credit/bitwise_shift_double.c",
+        "tests/chapter_13/invalid_types/extra_credit/bitwise_shift_double_2.c",
+        "tests/chapter_13/invalid_types/extra_credit/bitwise_xor.c",
+        "tests/chapter_13/invalid_types/extra_credit/compound_bitwise_and.c",
+        "tests/chapter_13/invalid_types/extra_credit/compound_bitwise_xor.c",
+        "tests/chapter_13/invalid_types/extra_credit/compound_left_bitshift.c",
+        "tests/chapter_13/invalid_types/extra_credit/compound_mod.c",
+        "tests/chapter_13/invalid_types/extra_credit/compound_mod_2.c",
+        "tests/chapter_13/invalid_types/extra_credit/compound_right_bitshift.c",
+        "tests/chapter_13/invalid_types/extra_credit/switch_double_case.c",
+        "tests/chapter_13/invalid_types/extra_credit/switch_on_double.c",
+    };
+    Settings settings;
 
-//     for (const auto &srcFile : srcFiles)
-//     {
-//         Compiler compiler;
-//         try
-//         {
-//             int status = compiler.compile(Stage::Validate, std::vector<std::string>{srcFile});
-//             ASSERT_TRUE(status != 0);
-//         }
-//         catch (const std::exception &e)
-//         {
-//             std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
-//             throw;
-//         }
-//     }
-// }
+    for (const auto &srcFile : srcFiles)
+    {
+        Compiler compiler;
+        try
+        {
+            int status = compiler.compile(Stage::Validate, std::vector<std::string>{srcFile});
+            ASSERT_TRUE(status != 0);
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+            throw;
+        }
+    }
+}
 
 // // Chapter 14
 // TEST_CASE(Chapter14InvalidSemantic, "chapter_14", "--validate")
@@ -564,7 +579,7 @@ TEST_CASE(Chapter12InvalidSemanticExtraCredit, "chapter_12", "--validate")
 // TEST_CASE(Chapter14InvalidSemanticExtraCredit, "chapter_14", "--validate")
 // {
 //     std::vector<std::string> srcFiles = {
-    
+
 //     };
 //     Settings settings;
 
@@ -610,7 +625,7 @@ TEST_CASE(Chapter12InvalidSemanticExtraCredit, "chapter_12", "--validate")
 // TEST_CASE(Chapter15InvalidSemanticExtraCredit, "chapter_15", "--validate")
 // {
 //     std::vector<std::string> srcFiles = {
-    
+
 //     };
 //     Settings settings;
 
@@ -656,7 +671,7 @@ TEST_CASE(Chapter12InvalidSemanticExtraCredit, "chapter_12", "--validate")
 // TEST_CASE(Chapter16InvalidSemanticExtraCredit, "chapter_16", "--validate")
 // {
 //     std::vector<std::string> srcFiles = {
-    
+
 //     };
 //     Settings settings;
 
@@ -702,7 +717,7 @@ TEST_CASE(Chapter12InvalidSemanticExtraCredit, "chapter_12", "--validate")
 // TEST_CASE(Chapter17InvalidSemanticExtraCredit, "chapter_17", "--validate")
 // {
 //     std::vector<std::string> srcFiles = {
-    
+
 //     };
 //     Settings settings;
 
@@ -748,7 +763,7 @@ TEST_CASE(Chapter12InvalidSemanticExtraCredit, "chapter_12", "--validate")
 // TEST_CASE(Chapter18InvalidSemanticExtraCredit, "chapter_18", "--validate")
 // {
 //     std::vector<std::string> srcFiles = {
-    
+
 //     };
 //     Settings settings;
 
@@ -794,7 +809,7 @@ TEST_CASE(Chapter12InvalidSemanticExtraCredit, "chapter_12", "--validate")
 // TEST_CASE(Chapter19InvalidSemanticExtraCredit, "chapter_19", "--validate")
 // {
 //     std::vector<std::string> srcFiles = {
-    
+
 //     };
 //     Settings settings;
 
@@ -840,7 +855,7 @@ TEST_CASE(Chapter12InvalidSemanticExtraCredit, "chapter_12", "--validate")
 // TEST_CASE(Chapter20InvalidSemanticExtraCredit, "chapter_20", "--validate")
 // {
 //     std::vector<std::string> srcFiles = {
-    
+
 //     };
 //     Settings settings;
 

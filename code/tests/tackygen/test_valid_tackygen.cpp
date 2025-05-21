@@ -882,52 +882,98 @@ TEST_CASE(Chapter12ValidTackyGenExtraCredit, "chapter_12", "--tacky")
     }
 }
 
-// // Chapter 13
-// TEST_CASE(Chapter13ValidTackyGen, "chapter_13", "--tacky")
-// {
-//     std::vector<std::string> srcFiles = {};
-//     Settings settings;
+// Chapter 13
+TEST_CASE(Chapter13ValidTackyGen, "chapter_13", "--tacky")
+{
+    std::vector<std::string> srcFiles = {
+        "tests/chapter_13/valid/constants/constant_doubles.c",
+        "tests/chapter_13/valid/constants/round_constants.c",
+        "tests/chapter_13/valid/explicit_casts/cvttsd2si_rewrite.c",
+        "tests/chapter_13/valid/explicit_casts/double_to_signed.c",
+        "tests/chapter_13/valid/explicit_casts/double_to_unsigned.c",
+        "tests/chapter_13/valid/explicit_casts/rewrite_cvttsd2si_regression.c",
+        "tests/chapter_13/valid/explicit_casts/signed_to_double.c",
+        "tests/chapter_13/valid/explicit_casts/unsigned_to_double.c",
 
-//     for (const auto &srcFile : srcFiles)
-//     {
-//         Compiler compiler;
-//         try
-//         {
-//             int status = compiler.compile(Stage::Tacky, std::vector<std::string>{srcFile});
-//             // Check that the compilation succeeded
-//             ASSERT_TRUE(status == 0);
-//         }
-//         catch (const std::exception &e)
-//         {
-//             std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
-//             throw;
-//         }
-//     }
-// }
+        "tests/chapter_13/valid/floating_expressions/arithmetic_ops.c",
+        "tests/chapter_13/valid/floating_expressions/comparisons.c",
+        "tests/chapter_13/valid/floating_expressions/logical.c",
+        "tests/chapter_13/valid/floating_expressions/loop_controlling_expression.c",
+        "tests/chapter_13/valid/floating_expressions/simple.c",
+        "tests/chapter_13/valid/floating_expressions/static_initialized_double.c",
+        "tests/chapter_13/valid/function_calls/double_and_int_parameters.c",
+        "tests/chapter_13/valid/function_calls/double_and_int_params_recursive.c",
+        "tests/chapter_13/valid/function_calls/double_parameters.c",
+        "tests/chapter_13/valid/function_calls/push_xmm.c",
+        "tests/chapter_13/valid/function_calls/return_double.c",
+        "tests/chapter_13/valid/function_calls/standard_library_call.c",
+        "tests/chapter_13/valid/function_calls/use_arg_after_fun_call.c",
+        "tests/chapter_13/valid/implicit_casts/common_type.c",
+        "tests/chapter_13/valid/implicit_casts/complex_arithmetic_common_type.c",
+        "tests/chapter_13/valid/implicit_casts/convert_for_assignment.c",
+        "tests/chapter_13/valid/implicit_casts/static_initializers.c",
+        "tests/chapter_13/valid/libraries/double_and_int_params_recursive.c",
+        "tests/chapter_13/valid/libraries/double_and_int_params_recursive_client.c",
+        "tests/chapter_13/valid/libraries/double_parameters.c",
+        "tests/chapter_13/valid/libraries/double_parameters_client.c",
+        "tests/chapter_13/valid/libraries/double_params_and_result.c",
+        "tests/chapter_13/valid/libraries/double_params_and_result_client.c",
+        "tests/chapter_13/valid/libraries/extern_double.c",
+        "tests/chapter_13/valid/libraries/extern_double_client.c",
+        "tests/chapter_13/valid/libraries/use_arg_after_fun_call.c",
+        "tests/chapter_13/valid/libraries/use_arg_after_fun_call_client.c",
+        "tests/chapter_13/valid/special_values/infinity.c",
+        "tests/chapter_13/valid/special_values/negative_zero.c",
+        "tests/chapter_13/valid/special_values/subnormal_not_zero.c",
 
-// TEST_CASE(Chapter13ValidTackyGenExtraCredit, "chapter_13", "--tacky")
-// {
-//     std::vector<std::string> srcFiles = {
+        //"tests/chapter_13/helper_libs/nan.c",
 
-//     };
-//     Settings settings;
+    };
+    Settings settings;
 
-//     for (const auto &srcFile : srcFiles)
-//     {
-//         Compiler compiler;
-//         try
-//         {
-//             int status = compiler.compile(Stage::Tacky, std::vector<std::string>{srcFile});
-//             // Check that the compilation succeeded
-//             ASSERT_TRUE(status == 0);
-//         }
-//         catch (const std::exception &e)
-//         {
-//             std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
-//             throw;
-//         }
-//     }
-// }
+    for (const auto &srcFile : srcFiles)
+    {
+        Compiler compiler;
+        try
+        {
+            int status = compiler.compile(Stage::Tacky, std::vector<std::string>{srcFile});
+            // Check that the compilation succeeded
+            ASSERT_TRUE(status == 0);
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+            throw;
+        }
+    }
+}
+
+TEST_CASE(Chapter13ValidTackyGenExtraCredit, "chapter_13", "--tacky")
+{
+    std::vector<std::string> srcFiles = {
+        "tests/chapter_13/valid/extra_credit/compound_assign.c",
+        "tests/chapter_13/valid/extra_credit/compound_assign_implicit_cast.c",
+        "tests/chapter_13/valid/extra_credit/incr_and_decr.c",
+        "tests/chapter_13/valid/extra_credit/nan.c",
+    };
+    Settings settings;
+
+    for (const auto &srcFile : srcFiles)
+    {
+        Compiler compiler;
+        try
+        {
+            int status = compiler.compile(Stage::Tacky, std::vector<std::string>{srcFile});
+            // Check that the compilation succeeded
+            ASSERT_TRUE(status == 0);
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+            throw;
+        }
+    }
+}
 
 // // Chapter 14
 // TEST_CASE(Chapter14ValidTackyGen, "chapter_14", "--tacky")
