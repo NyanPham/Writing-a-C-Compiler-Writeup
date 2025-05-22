@@ -23,6 +23,11 @@
 - [Instruction Fixup](#instruction-fixup)
 - [Emit](#emit)
 - [Output](#output)
+- [Extra Credit: Bitwise Operators](#extra-credit-bitwise-operators)
+  - [Assembly](#assembly-1)
+  - [CodeGen](#codegen-1)
+  - [Emit](#emit-1)
+  - [Output](#output-1)
 
 ---
 
@@ -2060,6 +2065,754 @@ main:
 	popq	%rbp
 	ret
 .Lif_end.10:
+	movl	$0, %eax
+	movq	%rbp, %rsp
+	popq	%rbp
+	ret
+	movl	$0, %eax
+	movq	%rbp, %rsp
+	popq	%rbp
+	ret
+
+	.section .note.GNU-stack,"",@progbits
+```
+
+# Extra Credit: NaN
+
+Working with NaN in float comparisons, we check the parity flags.
+
+## Assembly
+
+We add two new condition code: P and NP.
+
+```
+program = Program(top_level*)
+asm_type = Longword | Quadword | Double
+top_level =
+    | Function(identifier name, bool global, instruction* instructions)
+    | StaticVariable(identifier name, bool global, int alignment, static_init init)
+    | StaticConstant(identifier name, int alignment, static_init init)
+instruction =
+    | Mov(asm_type, operand src, operand dst)
+    | Movsx(operand src, operand dst)
+    | MovZeroExtend(operand src, operand dst)
+    | Cvttsd2si(asm_type, operand src, operand dst)
+    | Cvtsi2sd(asm_type, operand src, operand dst)
+    | Unary(unary_operator, asm_type, operand dst)
+    | Binary(binary_operator, asm_type, operand, operand)
+    | Cmp(asm_type, operand, operand)
+    | Idiv(asm_type, operand)
+    | Div(asm_type, operand)
+    | Cdq(asm_type)
+    | Jmp(identifier)
+    | JmpCC(cond_code, identifier)
+    | SetCC(cond_code, operand)
+    | Label(identifier)
+    | Push(operand)
+    | Call(identifier)
+    | Ret
+unary_operator = Neg | Not | ShrOneOp
+binary_operator = Add | Sub | Mult | DivDouble | And | Or | Xor | Sal | Sar | Shr | Shl
+operand = Imm(int64) | Reg(reg) | Pseudo(identifier) | Stack(int) | Data(identifier)
+cond_code = E | NE | G | GE | L | LE | A | AE | B | BE | P | NP
+reg = AX | CX | DX | DI | SI | R8 | R9 | R10 | R11 | SP | XMM0 | XMM1 | XMM2 | XMM3 | XMM4 | XMM5 | XMM6 | XMM7 | XMM14 | XMM15
+```
+
+## CodeGen
+
+While converting instruction that is binary, specifically the relational operators, we'll use the new helper function if the source operand has Double type.
+
+```
+// Helper function for double comparisons w/ support for NaN
+convert_dbl_comparison(op, dst_t, asm_src1, asm_src2, asm_dst):
+    cond_code = convert_cond_code(false, op)
+    /*
+        If op is A or AE, can perform usual comparisons;
+            these are true if only some flags are 0, so they'll be false for unordered results.
+            If op is B or BE, just flip operands and use A or AE instead.
+        If op is E or NE, need to check for parity afterwards.
+    */
+    switch cond_code:
+        case B:
+            cond_code = A
+            asm_src1, asm_src2 = asm_src2, asm_src1
+        case BE:
+            cond_code = AE
+            asm_src1, asm_src2 = asm_src2, asm_src1
+        default:
+            // Do nothing
+
+    insts = [
+        Cmp(Double, asm_src2, asm_src1),
+        Mov(dst_t, zero(), asm_dst),
+        SetCC(cond_code, asm_dst),
+    ]
+
+    parity_insts = []
+    if cond_code == E:
+        /*
+            zero out destination if parity flag is set,
+            indicating unordered result
+        */
+        parity_insts = [
+            Mov(dst_t, zero(), Reg(R9)),
+            SetCC(NP, Reg(R9)),
+            Binary(And, dst_t, Reg(R19), asm_dst),
+        ]
+    else if cond_code == NE:
+        // set destination to 1 if parity flag is set, indicating ordered result
+        parity_insts = [
+            Mov(dst_t, zero, Reg(R9)),
+            SetCC(P, Reg(R9)),
+            Binary(Or, dst_t, Reg(R9), asm_dst),
+        ]
+
+    return [...insts, ...parity_insts]
+```
+
+In convert_instruction, we update where we have any comparisons with Double types:
+
+- Unary (not)
+- Binary (relational operator)
+- JumpIfZero
+- JumpIfNotZero
+
+```
+convert_instruction(Tacky.Instruction inst):
+	match inst type:
+		case Copy:
+            t = asm_type(inst.src)
+			asm_src = convert_val(inst.src)
+			asm_dst = convert_dst(inst.dst)
+
+			return [Mov(t, asm_src, asm_dst)]
+
+		case Return:
+            t = asm_type(inst.val)
+			asm_val = convert_val(inst.val)
+            ret_reg = t == Assembly.Double ? XMM0 : AX
+			return [
+				Assembly.Mov(t, asm_val, Reg(ret_reg)),
+				Assembly.Ret
+			]
+
+		case Unary:
+			match inst.op:
+				case Not:
+                    src_t = asm_type(inst.src)
+                    dst_t = asm_type(inst.dst)
+					asm_src = convert_val(inst.src)
+					asm_dst = convert_val(inst.dst)
+
+                    if src_t == Double:
+                        insts = [
+                            Binary(Xor,t=Double src=Reg(XMM0), dst=Reg(XMM0)),
+                            Cmp(src_t, asm_src, Reg(XMM0)),
+                            Mov(dst_t, zero(), asm_dst),
+                            SetCC(E, asm_dst),
+
+                            // cmp with NaN sets both ZF and PF, but !NaN should evaluate to 0,
+                            // so we'll calculate:
+                            // !x = ZF && !PF
+
+                            SetCC(NP, Reg(R9)),
+                            Binary(And, dst_t, Reg(R9), asm_dst),
+                        ]
+
+                        return insts
+                    else:
+                        return [
+                            Cmp(src_t, Imm(0), asm_src),
+                            Mov(dst_t, Imm(0), asm_dst),
+                            SetCC(E, asm_dst)
+                        ]
+                case Negate:
+                    if tacky_type(src) == Double:
+                        asm_src = convert_val(inst.src)
+					    asm_dst = convert_val(inst.dst)
+                        negative_zero = add_constant(-0.0, 16)
+
+                        return [
+                            Mov(Double, asm_src, asm_dst),
+                            Binary(op=Xor, t=Double, src=Data(negative_zero), dst=asm_dst)
+                        ]
+                    else:
+                        // Fall through to the default case
+				default:
+                    t = asm_t(inst.src)
+					asm_op = convert_op(inst.op)
+                    asm_src = convert_val(inst.src)
+                    asm_dst = convert_val(inst.dst)
+
+                    return [
+                        Assembly.Mov(t, asm_src, asm_dst),
+                        Assembly.Unary(asm_op, t, asm_dst)
+                    ]
+		case Binary:
+            src_t = asm_type(inst.src1)
+            dst_t = asm_type(inst.dst)
+			asm_src1 = convert_val(inst.src1)
+			asm_src2 = convert_val(inst.src2)
+			asm_dst = convert_dst(inst.dst)
+
+			match inst.op:
+				(* Relational operator *)
+				case Equal:
+				case NotEqual:
+				case GreaterThan:
+				case GreaterOrEqual:
+				case LessThan:
+				case LessOrEqual:
+                    if src_t == Double:
+                        return convert_dbl_comparison(inst.op, dst_t, asm_src1, asm_src2, asm_dst)
+                    else:
+                        signed = src_t == Double
+                            ? false
+                            : TypeUtils.is_signed(tacky_type(inst.src1))
+
+                        cond_code = convert_cond_code(inst.op, signed)
+
+                        return [
+                            Cmp(src_t, asm_src2, asm_src1),
+                            Mov(dst_t, zero(), asm_dst),
+                            SetCC(cond_code, asm_dst),
+                        ]
+
+                (* Division/modulo *)
+                case Divide:
+                case Mod:
+                    if src_t != Double:
+                        result_reg = op == Divide ? AX : DX
+
+                        if (TypeUtils.is_signed(tacky_type(inst.src1))):
+                            return [
+                                Mov(src_t, asm_src1, Reg(AX)),
+                                Cdq(src_t),
+                                Idiv(src_t, asm_src2),
+                                Mov(src_t, Reg(result_reg), asm_dst)
+                            ]
+                        else:
+                            return [
+                                Mov(src_t, asm_src1, Reg(AX)),
+                                Mov(src_t, zero(), Reg(DX)),
+                                Div(src_t, asm_src2),
+                                Mov(src_t, Reg(result_reg), asm_dst)
+                            ]
+                    else:
+                        // Jump to the default case
+                        break
+                case BiftShiftLeft:
+				case BiftShiftRight:
+                    is_signed = TypeUtils.is_signed(tacky_type(inst.src1))
+					asm_op = convert_shift_op(inst.op, is_signed)
+                    asm_t = asm_type(inst.src1)
+
+					match type of asm_src2:
+						case Imm:
+							return [
+								Mov(asm_t, asm_src1, asm_dst),
+								Binary(asm_op, t=asm_t, asm_src2, asm_dst)
+							]
+						default:
+							return [
+								Mov(asm_t, asm_src1, asm_dst),
+								Mov(Longword, asm_src2, Reg(CX)), // Note, only lower byte of CX is used. Can use Byte instead of Longword here once we add it to assembly AST
+								Binary(asm_op, asm_t, Reg(CX), asm_dst)
+							]
+                (* Addition/subtraction/mutliplication/and/or/xor *)
+                default:
+                    asm_op = convert_binop(inst.op)
+
+                    return [
+                        Mov(src_t, asm_src1, asm_dst),
+                        Binary(asm_op, src_t, asm_src2, asm_dst)
+                    ]
+		case Jump:
+			return [ Jmp(inst.target) ]
+
+		case JumpIfZero:
+            t = asm_type(inst.cond)
+			asm_cond = convert_val(inst.cond)
+
+            if t == Double:
+                compare_to_zero = [
+                    Binary(Xor, Double, Reg(XMM0), Reg(XMM0)),
+                    Cmp(t, asm_cond, Reg(XMM0)),
+                ]
+
+                lbl = UniqueIds.make_label("nan.jmp.end")
+                conditional_jmp = [
+                    // Comparison to NaN sets ZF and PF flags;
+                    // to treat NaN as nonzero, skip over je instruction if PF flag is set
+                    JmpCC(P, lbl),
+                    JmpCC(E, inst.target),
+                    Label(lbl),
+                ]
+
+                return [...compare_to_zero, ...conditional_jmp]
+            else:
+                return [
+                    Cmp(t, zero(), asm_cond),
+                    JmpCC(E, inst.target),
+                ]
+		case JumpIfNotZero:
+            t = asm_type(inst.cond)
+			asm_cond = convert_val(inst.cond)
+
+            if t == Double:
+                return [
+                    Binary(Xor, Double, Reg(XMM0), Reg(XMM0)),
+                    Cmp(t, asm_cond, Reg(XMM0)),
+                    JmpCC(NE, inst.target),
+
+                    // Also jumpt to target on Nan, which is nonzero
+                    JmpCC(P, target),
+                ]
+
+            else:
+                return [
+                    Cmp(t, zero(), asm_cond),
+                    JmpCC(NE, inst.target),
+                ]
+
+		case Label:
+			return [ Assembly.Label(inst.name) ]
+        case FunCall:
+            return convert_function_call(inst)
+        case SignExtend:
+            asm_src = convert_val(inst.src)
+            asm_dst = convert_val(inst.dst)
+
+            return [ Movsx(asm_src, asm_dst) ]
+        case Truncate:
+            asm_src = convert_val(inst.src)
+            asm_dst = convert_val(inst.dst)
+
+            return [ Mov(Longword, asm_src, asm_dst) ]
+        case ZeroExtend:
+            asm_src = convert_val(inst.src)
+            asm_dst = convert_val(inst.dst)
+
+            return [ MovZeroExtend(asm_src, asm_dst) ]
+        case IntToDouble:
+            asm_src = convert_val(inst.src)
+            asm_dst = convert_val(inst.dst)
+            t = asm_type(src)
+
+            return [
+                Cvtsi2sd(t, asm_src, asm_dst)
+            ]
+        case DoubleToInt:
+            asm_src = convert_val(inst.src)
+            asm_dst = convert_val(inst.dst)
+            t = asm_type(asm_dst)
+
+            return [
+                Cvttsd2si(t, asm_src, asm_dst)
+            ]
+        case UIntToDouble:
+            asm_src = convert_val(inst.src)
+            asm_dst = convert_val(inst.dst)
+
+            if tacky_type(src) == Types.UInt:
+                return [
+                    MovZeroExtend(asm_src, Reg(R9)),
+                    Cvtsi2sd(Quadword, Reg(R9), asm_dst)
+                ]
+            else:
+                out_of_bound = UniqueIds.make_label("ulong2dbl.oob")
+                end_lbl = UniqueIds.make_label("ulong2dbl.end")
+                r1 = Reg(R8)
+                r2 = Reg(R9)
+
+                return [
+                    Cmp(Quadword, zero(), asm_src),         // check whether asm_src is w/in range of long
+                    JmpCC(L, out_of_bound),
+                    Cvtsi2sd(Quadword, asm_src, asm_dst),   // it's in range, just use normal cvtsi2sd then jump to end
+                    Jmp(end_lbl),
+                    Label(out_of_bound),                    // it's out of bound
+                    Mov(Quadword, asm_src, r1),             // halve source and round to dd
+                    Mov(Quadword, r1, r2),
+                    Unary(ShrOneOp, Quadword, r2),
+                    Binary(And, Quadword, Imm(one), r1),
+                    Binary(Or, Quadword, r1, r2),
+                    Cvtsi2sd(Quadword, r2, asm_dst),        // convert to double, then double it
+                    Binary(Add, Double, asm_dst, asm_dst),
+                    Label(end_lbl)
+                ]
+        case DoubleToUInt:
+            asm_src = convert_val(inst.src)
+            asm_dst = convert_val(inst.dst)
+
+            if tacky_type(dst) == Types.UInt:
+                return [
+                    Cvttsd2si(Quadword, asm_src, Reg(R9)),
+                    Mov(Longword, Reg(R9), asm_dst)
+                ]
+            else:
+                out_of_bounds = UniqueIds.make_label("dbl2ulong.oob")
+                end_lbl = UniqueIds.make_label(dbl2ulong.end)
+                upper_bound = add_constant(9223372036854775808.0)
+                upper_bound_as_int = Imm(Int64.min_int)
+                r = Reg(R9)
+                x = Reg(XMM7)
+
+                return [
+                    Cmp(Double, Data(upper_bound), asm_src),
+                    JmpCC(AE, out_of_bound),
+                    Cvttsd2si(Quadword, asm_src, asm_dst),
+                    Jmp(end_lbl),
+                    Label(out_of_bounds),
+                    Mov(Double, asm_src, x),
+                    Binary(Sub, Double, Data(upper_bound), x),
+                    Cvttsd2si(Quadword, x, asm_dst),
+                    Mov(Quadword, upper_bound_as_int, r),
+                    Binary(Add, Quadword, r, asm_dst),
+                    Label(end_lbl)
+                ]
+```
+
+## Emit
+
+```
+show_cond_code(cond_code):
+	match cond_code:
+		case E: return 'e'
+		case NE: return 'ne'
+		case G: return 'g'
+		case GE: return 'ge'
+		case L: return 'l'
+		case LE: return 'le'
+        case A: return 'a'
+        case AE: return 'ae'
+        case B: return 'b'
+        case BE: return 'be'
+        case P: return 'p'
+        case NP: return 'np'
+```
+
+## Output
+
+From C:
+
+```C
+int double_isnan(double d); // should be defined and call the macro isnan in C math library.
+
+// This should return zero, because all comparisons with NaN are false
+int main(void) {
+    static double zero = 0.0;
+    double nan = 0.0 / zero;
+    if (nan < 0.0 || nan == 0.0 || nan > 0.0 || nan <= 0.0 || nan >= 0.0)
+        return 1;
+
+    if (1 > nan || 1 == nan || 1 > nan || 1 <= nan || 1 >= nan)
+        return 2;
+
+    if (nan == nan)
+        return 3;
+
+    if (!(nan != nan)) { // != should evaluate to true
+        return 4;
+    }
+
+    if (!double_isnan(nan)) {
+        return 5;
+    }
+
+    if (!double_isnan(4 * nan)) {
+        return 6;
+    }
+
+    if (!double_isnan(22e2 / nan)) {
+        return 7;
+    }
+
+    if (!double_isnan(-nan)) {
+        return 8;
+    }
+
+    return 0;
+}
+```
+
+To x64 Assembly on Linux:
+
+```asm
+	.section .rodata
+	.align 8
+.Ldbl.67:
+	.quad 2200
+
+	.section .rodata
+	.align 16
+.Ldbl.66:
+	.quad 0
+
+	.data
+	.align 8
+zero.1:
+	.quad 0
+
+	.global main
+main:
+	pushq	%rbp
+	movq	%rsp, %rbp
+	subq	$224, %rsp
+	movsd	.Ldbl.66(%rip), %xmm14
+	movsd	%xmm14, -8(%rbp)
+	movsd	-8(%rbp), %xmm15
+	divsd	zero.1(%rip), %xmm15
+	movsd	%xmm15, -8(%rbp)
+	movsd	-8(%rbp), %xmm14
+	movsd	%xmm14, -16(%rbp)
+	movsd	.Ldbl.66(%rip), %xmm15
+	comisd	-16(%rbp), %xmm15
+	movl	$0, -20(%rbp)
+	seta	-20(%rbp)
+	cmpl	$0, -20(%rbp)
+	je	.Lor_true.7
+	movsd	-16(%rbp), %xmm15
+	comisd	.Ldbl.66(%rip), %xmm15
+	movl	$0, -24(%rbp)
+	sete	-24(%rbp)
+	movl	$0, %r9d
+	setnp	%r9b
+	andl	%r9d, -24(%rbp)
+	cmpl	$0, -24(%rbp)
+	je	.Lor_true.7
+	movl	$0, -28(%rbp)
+	jmp	.Lor_end.8
+.Lor_true.7:
+	movl	$1, -28(%rbp)
+.Lor_end.8:
+	cmpl	$0, -28(%rbp)
+	je	.Lor_true.11
+	movsd	-16(%rbp), %xmm15
+	comisd	.Ldbl.66(%rip), %xmm15
+	movl	$0, -32(%rbp)
+	seta	-32(%rbp)
+	cmpl	$0, -32(%rbp)
+	je	.Lor_true.11
+	movl	$0, -36(%rbp)
+	jmp	.Lor_end.12
+.Lor_true.11:
+	movl	$1, -36(%rbp)
+.Lor_end.12:
+	cmpl	$0, -36(%rbp)
+	je	.Lor_true.15
+	movsd	.Ldbl.66(%rip), %xmm15
+	comisd	-16(%rbp), %xmm15
+	movl	$0, -40(%rbp)
+	setae	-40(%rbp)
+	cmpl	$0, -40(%rbp)
+	je	.Lor_true.15
+	movl	$0, -44(%rbp)
+	jmp	.Lor_end.16
+.Lor_true.15:
+	movl	$1, -44(%rbp)
+.Lor_end.16:
+	cmpl	$0, -44(%rbp)
+	je	.Lor_true.19
+	movsd	-16(%rbp), %xmm15
+	comisd	.Ldbl.66(%rip), %xmm15
+	movl	$0, -48(%rbp)
+	setae	-48(%rbp)
+	cmpl	$0, -48(%rbp)
+	je	.Lor_true.19
+	movl	$0, -52(%rbp)
+	jmp	.Lor_end.20
+.Lor_true.19:
+	movl	$1, -52(%rbp)
+.Lor_end.20:
+	cmpl	$0, -52(%rbp)
+	je	.Lif_end.4
+	movl	$1, %eax
+	movq	%rbp, %rsp
+	popq	%rbp
+	ret
+.Lif_end.4:
+	movl	$1, %r10d
+	cvtsi2sdl	%r10d, %xmm15
+	movsd	%xmm15, -64(%rbp)
+	movsd	-64(%rbp), %xmm15
+	comisd	-16(%rbp), %xmm15
+	movl	$0, -68(%rbp)
+	seta	-68(%rbp)
+	cmpl	$0, -68(%rbp)
+	je	.Lor_true.27
+	movl	$1, %r10d
+	cvtsi2sdl	%r10d, %xmm15
+	movsd	%xmm15, -80(%rbp)
+	movsd	-80(%rbp), %xmm15
+	comisd	-16(%rbp), %xmm15
+	movl	$0, -84(%rbp)
+	sete	-84(%rbp)
+	movl	$0, %r9d
+	setnp	%r9b
+	andl	%r9d, -84(%rbp)
+	cmpl	$0, -84(%rbp)
+	je	.Lor_true.27
+	movl	$0, -88(%rbp)
+	jmp	.Lor_end.28
+.Lor_true.27:
+	movl	$1, -88(%rbp)
+.Lor_end.28:
+	cmpl	$0, -88(%rbp)
+	je	.Lor_true.32
+	movl	$1, %r10d
+	cvtsi2sdl	%r10d, %xmm15
+	movsd	%xmm15, -96(%rbp)
+	movsd	-96(%rbp), %xmm15
+	comisd	-16(%rbp), %xmm15
+	movl	$0, -100(%rbp)
+	seta	-100(%rbp)
+	cmpl	$0, -100(%rbp)
+	je	.Lor_true.32
+	movl	$0, -104(%rbp)
+	jmp	.Lor_end.33
+.Lor_true.32:
+	movl	$1, -104(%rbp)
+.Lor_end.33:
+	cmpl	$0, -104(%rbp)
+	je	.Lor_true.37
+	movl	$1, %r10d
+	cvtsi2sdl	%r10d, %xmm15
+	movsd	%xmm15, -112(%rbp)
+	movsd	-16(%rbp), %xmm15
+	comisd	-112(%rbp), %xmm15
+	movl	$0, -116(%rbp)
+	setae	-116(%rbp)
+	cmpl	$0, -116(%rbp)
+	je	.Lor_true.37
+	movl	$0, -120(%rbp)
+	jmp	.Lor_end.38
+.Lor_true.37:
+	movl	$1, -120(%rbp)
+.Lor_end.38:
+	cmpl	$0, -120(%rbp)
+	je	.Lor_true.42
+	movl	$1, %r10d
+	cvtsi2sdl	%r10d, %xmm15
+	movsd	%xmm15, -128(%rbp)
+	movsd	-128(%rbp), %xmm15
+	comisd	-16(%rbp), %xmm15
+	movl	$0, -132(%rbp)
+	setae	-132(%rbp)
+	cmpl	$0, -132(%rbp)
+	je	.Lor_true.42
+	movl	$0, -136(%rbp)
+	jmp	.Lor_end.43
+.Lor_true.42:
+	movl	$1, -136(%rbp)
+.Lor_end.43:
+	cmpl	$0, -136(%rbp)
+	je	.Lif_end.22
+	movl	$2, %eax
+	movq	%rbp, %rsp
+	popq	%rbp
+	ret
+.Lif_end.22:
+	movsd	-16(%rbp), %xmm15
+	comisd	-16(%rbp), %xmm15
+	movl	$0, -140(%rbp)
+	sete	-140(%rbp)
+	movl	$0, %r9d
+	setnp	%r9b
+	andl	%r9d, -140(%rbp)
+	cmpl	$0, -140(%rbp)
+	je	.Lif_end.45
+	movl	$3, %eax
+	movq	%rbp, %rsp
+	popq	%rbp
+	ret
+.Lif_end.45:
+	movsd	-16(%rbp), %xmm15
+	comisd	-16(%rbp), %xmm15
+	movl	$0, -144(%rbp)
+	setne	-144(%rbp)
+	movl	$0, %r9d
+	setp	%r9b
+	orl	%r9d, -144(%rbp)
+	cmpl	$0, -144(%rbp)
+	movl	$0, -148(%rbp)
+	sete	-148(%rbp)
+	cmpl	$0, -148(%rbp)
+	je	.Lif_end.47
+	movl	$4, %eax
+	movq	%rbp, %rsp
+	popq	%rbp
+	ret
+.Lif_end.47:
+	movsd	-16(%rbp), %xmm0
+	call	double_isnan@PLT
+	movl	%eax, -152(%rbp)
+	cmpl	$0, -152(%rbp)
+	movl	$0, -156(%rbp)
+	sete	-156(%rbp)
+	cmpl	$0, -156(%rbp)
+	je	.Lif_end.50
+	movl	$5, %eax
+	movq	%rbp, %rsp
+	popq	%rbp
+	ret
+.Lif_end.50:
+	movl	$4, %r10d
+	cvtsi2sdl	%r10d, %xmm15
+	movsd	%xmm15, -168(%rbp)
+	movsd	-168(%rbp), %xmm14
+	movsd	%xmm14, -176(%rbp)
+	movsd	-176(%rbp), %xmm15
+	mulsd	-16(%rbp), %xmm15
+	movsd	%xmm15, -176(%rbp)
+	movsd	-176(%rbp), %xmm0
+	call	double_isnan@PLT
+	movl	%eax, -180(%rbp)
+	cmpl	$0, -180(%rbp)
+	movl	$0, -184(%rbp)
+	sete	-184(%rbp)
+	cmpl	$0, -184(%rbp)
+	je	.Lif_end.53
+	movl	$6, %eax
+	movq	%rbp, %rsp
+	popq	%rbp
+	ret
+.Lif_end.53:
+	movsd	.Ldbl.67(%rip), %xmm14
+	movsd	%xmm14, -192(%rbp)
+	movsd	-192(%rbp), %xmm15
+	divsd	-16(%rbp), %xmm15
+	movsd	%xmm15, -192(%rbp)
+	movsd	-192(%rbp), %xmm0
+	call	double_isnan@PLT
+	movl	%eax, -196(%rbp)
+	cmpl	$0, -196(%rbp)
+	movl	$0, -200(%rbp)
+	sete	-200(%rbp)
+	cmpl	$0, -200(%rbp)
+	je	.Lif_end.58
+	movl	$7, %eax
+	movq	%rbp, %rsp
+	popq	%rbp
+	ret
+.Lif_end.58:
+	movsd	-16(%rbp), %xmm14
+	movsd	%xmm14, -208(%rbp)
+	movsd	-208(%rbp), %xmm15
+	xorpd	.Ldbl.66(%rip), %xmm15
+	movsd	%xmm15, -208(%rbp)
+	movsd	-208(%rbp), %xmm0
+	call	double_isnan@PLT
+	movl	%eax, -212(%rbp)
+	cmpl	$0, -212(%rbp)
+	movl	$0, -216(%rbp)
+	sete	-216(%rbp)
+	cmpl	$0, -216(%rbp)
+	je	.Lif_end.62
+	movl	$8, %eax
+	movq	%rbp, %rsp
+	popq	%rbp
+	ret
+.Lif_end.62:
 	movl	$0, %eax
 	movq	%rbp, %rsp
 	popq	%rbp
