@@ -975,52 +975,85 @@ TEST_CASE(Chapter13ValidTackyGenExtraCredit, "chapter_13", "--tacky")
     }
 }
 
-// // Chapter 14
-// TEST_CASE(Chapter14ValidTackyGen, "chapter_14", "--tacky")
-// {
-//     std::vector<std::string> srcFiles = {};
-//     Settings settings;
+// Chapter 14
+TEST_CASE(Chapter14ValidTackyGen, "chapter_14", "--tacky")
+{
+    std::vector<std::string> srcFiles = {
+        "tests/chapter_14/valid/casts/cast_between_pointer_types.c",
+        "tests/chapter_14/valid/casts/null_pointer_conversion.c",
+        "tests/chapter_14/valid/casts/pointer_int_casts.c",
+        "tests/chapter_14/valid/comparisons/compare_pointers.c",
+        "tests/chapter_14/valid/comparisons/compare_to_null.c",
+        "tests/chapter_14/valid/comparisons/pointers_as_conditions.c",
+        "tests/chapter_14/valid/declarators/abstract_declarators.c",
+        "tests/chapter_14/valid/declarators/declarators.c",
+        "tests/chapter_14/valid/declarators/declare_pointer_in_for_loop.c",
+        "tests/chapter_14/valid/dereference/address_of_dereference.c",
+        "tests/chapter_14/valid/dereference/dereference_expression_result.c",
+        "tests/chapter_14/valid/dereference/multilevel_indirection.c",
+        "tests/chapter_14/valid/dereference/read_through_pointers.c",
+        "tests/chapter_14/valid/dereference/simple.c",
+        "tests/chapter_14/valid/dereference/static_var_indirection.c",
+        "tests/chapter_14/valid/dereference/update_through_pointers.c",
 
-//     for (const auto &srcFile : srcFiles)
-//     {
-//         Compiler compiler;
-//         try
-//         {
-//             int status = compiler.compile(Stage::Tacky, std::vector<std::string>{srcFile});
-//             // Check that the compilation succeeded
-//             ASSERT_TRUE(status == 0);
-//         }
-//         catch (const std::exception &e)
-//         {
-//             std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
-//             throw;
-//         }
-//     }
-// }
+        "tests/chapter_14/valid/function_calls/address_of_argument.c",
+        "tests/chapter_14/valid/function_calls/return_pointer.c",
+        "tests/chapter_14/valid/function_calls/update_value_through_pointer_parameter.c",
+        "tests/chapter_14/valid/libraries/global_pointer.c",
+        "tests/chapter_14/valid/libraries/global_pointer_client.c",
+        "tests/chapter_14/valid/libraries/static_pointer.c",
+        "tests/chapter_14/valid/libraries/static_pointer_client.c",
+    };
+    Settings settings;
 
-// TEST_CASE(Chapter14ValidTackyGenExtraCredit, "chapter_14", "--tacky")
-// {
-//     std::vector<std::string> srcFiles = {
+    for (const auto &srcFile : srcFiles)
+    {
+        Compiler compiler;
+        try
+        {
+            int status = compiler.compile(Stage::Tacky, std::vector<std::string>{srcFile});
+            // Check that the compilation succeeded
+            ASSERT_TRUE(status == 0);
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+            throw;
+        }
+    }
+}
 
-//     };
-//     Settings settings;
+TEST_CASE(Chapter14ValidTackyGenExtraCredit, "chapter_14", "--tacky")
+{
+    std::vector<std::string> srcFiles = {
+        "tests/chapter_14/valid/extra_credit/bitshift_dereferenced_ptrs.c",
+        "tests/chapter_14/valid/extra_credit/bitwise_ops_with_dereferenced_ptrs.c",
+        "tests/chapter_14/valid/extra_credit/compound_assign_conversion.c",
+        "tests/chapter_14/valid/extra_credit/compound_assign_through_pointer.c",
+        "tests/chapter_14/valid/extra_credit/compound_bitwise_dereferenced_ptrs.c",
+        "tests/chapter_14/valid/extra_credit/eval_compound_lhs_once.c",
+        "tests/chapter_14/valid/extra_credit/incr_and_decr_through_pointer.c",
+        "tests/chapter_14/valid/extra_credit/switch_dereferenced_pointer.c",
+    };
+    Settings settings;
 
-//     for (const auto &srcFile : srcFiles)
-//     {
-//         Compiler compiler;
-//         try
-//         {
-//             int status = compiler.compile(Stage::Tacky, std::vector<std::string>{srcFile});
-//             // Check that the compilation succeeded
-//             ASSERT_TRUE(status == 0);
-//         }
-//         catch (const std::exception &e)
-//         {
-//             std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
-//             throw;
-//         }
-//     }
-// }
+    for (const auto &srcFile : srcFiles)
+    {
+        Compiler compiler;
+        try
+        {
+            int status = compiler.compile(Stage::Tacky, std::vector<std::string>{srcFile});
+            // Check that the compilation succeeded
+            ASSERT_TRUE(status == 0);
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+            throw;
+        }
+    }
+}
+
 // // Chapter 15
 // TEST_CASE(Chapter15ValidTackyGen, "chapter_15", "--tacky")
 // {

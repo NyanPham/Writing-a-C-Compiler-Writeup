@@ -553,51 +553,92 @@ TEST_CASE(Chapter13InvalidSemanticExtraCredit, "chapter_13", "--validate")
     }
 }
 
-// // Chapter 14
-// TEST_CASE(Chapter14InvalidSemantic, "chapter_14", "--validate")
-// {
-//     std::vector<std::string> srcFiles = {
-//     };
-//     Settings settings;
+// Chapter 14
+TEST_CASE(Chapter14InvalidSemantic, "chapter_14", "--validate")
+{
+    std::vector<std::string> srcFiles = {
+        "tests/chapter_14/invalid_types/address_of_address.c",
+        "tests/chapter_14/invalid_types/address_of_assignment.c",
+        "tests/chapter_14/invalid_types/address_of_constant.c",
+        "tests/chapter_14/invalid_types/address_of_ternary.c",
+        "tests/chapter_14/invalid_types/assign_int_to_pointer.c",
+        "tests/chapter_14/invalid_types/assign_int_var_to_pointer.c",
+        "tests/chapter_14/invalid_types/assign_to_address.c",
+        "tests/chapter_14/invalid_types/assign_wrong_pointer_type.c",
+        "tests/chapter_14/invalid_types/bad_null_pointer_constant.c",
+        "tests/chapter_14/invalid_types/cast_double_to_pointer.c",
+        "tests/chapter_14/invalid_types/cast_pointer_to_double.c",
+        "tests/chapter_14/invalid_types/compare_mixed_pointer_types.c",
+        "tests/chapter_14/invalid_types/compare_pointer_to_ulong.c",
+        "tests/chapter_14/invalid_types/complement_pointer.c",
+        "tests/chapter_14/invalid_types/dereference_non_pointer.c",
+        "tests/chapter_14/invalid_types/divide_pointer.c",
+        "tests/chapter_14/invalid_types/invalid_pointer_initializer.c",
+        "tests/chapter_14/invalid_types/invalid_static_initializer.c",
+        "tests/chapter_14/invalid_types/multiply_pointers.c",
+        "tests/chapter_14/invalid_types/multiply_pointers_2.c",
+        "tests/chapter_14/invalid_types/negate_pointer.c",
+        "tests/chapter_14/invalid_types/pass_pointer_as_int.c",
+        "tests/chapter_14/invalid_types/return_wrong_pointer_type.c",
+        "tests/chapter_14/invalid_types/ternary_mixed_pointer_types.c",
+    };
+    Settings settings;
 
-//     for (const auto &srcFile : srcFiles)
-//     {
-//         Compiler compiler;
-//         try
-//         {
-//             int status = compiler.compile(Stage::Validate, std::vector<std::string>{srcFile});
-//             ASSERT_TRUE(status != 0);
-//         }
-//         catch (const std::exception &e)
-//         {
-//             std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
-//             throw;
-//         }
-//     }
-// }
+    for (const auto &srcFile : srcFiles)
+    {
+        Compiler compiler;
+        try
+        {
+            int status = compiler.compile(Stage::Validate, std::vector<std::string>{srcFile});
+            ASSERT_TRUE(status != 0);
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+            throw;
+        }
+    }
+}
 
-// TEST_CASE(Chapter14InvalidSemanticExtraCredit, "chapter_14", "--validate")
-// {
-//     std::vector<std::string> srcFiles = {
+TEST_CASE(Chapter14InvalidSemanticExtraCredit, "chapter_14", "--validate")
+{
+    std::vector<std::string> srcFiles = {
+        "tests/chapter_14/invalid_types/extra_credit/bitwise_and_pointer.c",
+        "tests/chapter_14/invalid_types/extra_credit/bitwise_compound_assign_to_pointer.c",
+        "tests/chapter_14/invalid_types/extra_credit/bitwise_compound_assign_with_pointer.c",
+        "tests/chapter_14/invalid_types/extra_credit/bitwise_lshift_pointer.c",
+        "tests/chapter_14/invalid_types/extra_credit/bitwise_or_pointer.c",
+        "tests/chapter_14/invalid_types/extra_credit/bitwise_rshift_pointer.c",
+        "tests/chapter_14/invalid_types/extra_credit/bitwise_xor_pointer.c",
+        "tests/chapter_14/invalid_types/extra_credit/compound_assignment_not_lval.c",
+        "tests/chapter_14/invalid_types/extra_credit/compound_assign_thru_ptr_not_lval.c",
+        "tests/chapter_14/invalid_types/extra_credit/compound_divide_pointer.c",
+        "tests/chapter_14/invalid_types/extra_credit/compound_mod_pointer.c",
+        "tests/chapter_14/invalid_types/extra_credit/compound_multiply_pointer.c",
+        "tests/chapter_14/invalid_types/extra_credit/postfix_decr_not_lvalue.c",
+        "tests/chapter_14/invalid_types/extra_credit/prefix_incr_not_lvalue.c",
+        "tests/chapter_14/invalid_types/extra_credit/switch_on_pointer.c",
 
-//     };
-//     Settings settings;
+        "tests/chapter_14/invalid_declarations/extra_credit/addr_of_label.c",
+        "tests/chapter_14/invalid_declarations/extra_credit/deref_label.c",
+    };
+    Settings settings;
 
-//     for (const auto &srcFile : srcFiles)
-//     {
-//         Compiler compiler;
-//         try
-//         {
-//             int status = compiler.compile(Stage::Validate, std::vector<std::string>{srcFile});
-//             ASSERT_TRUE(status != 0);
-//         }
-//         catch (const std::exception &e)
-//         {
-//             std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
-//             throw;
-//         }
-//     }
-// }
+    for (const auto &srcFile : srcFiles)
+    {
+        Compiler compiler;
+        try
+        {
+            int status = compiler.compile(Stage::Validate, std::vector<std::string>{srcFile});
+            ASSERT_TRUE(status != 0);
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+            throw;
+        }
+    }
+}
 
 // // Chapter 15
 // TEST_CASE(Chapter15InvalidSemantic, "chapter_15", "--validate")

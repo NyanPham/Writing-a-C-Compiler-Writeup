@@ -1182,59 +1182,134 @@ TEST_CASE(Chapter13ValidParseExtraCredit, "chapter_13", "--parse")
     }
 }
 
-// // Chapter 14
-// TEST_CASE(Chapter14ValidParse, "chapter_14", "--parse")
-// {
-//     std::vector<std::string> srcFiles = {
-//     };
-//     Settings settings;
+// Chapter 14
+TEST_CASE(Chapter14ValidParse, "chapter_14", "--parse")
+{
+    std::vector<std::string> srcFiles = {
+        "tests/chapter_14/invalid_types/address_of_address.c",
+        "tests/chapter_14/invalid_types/address_of_assignment.c",
+        "tests/chapter_14/invalid_types/address_of_constant.c",
+        "tests/chapter_14/invalid_types/address_of_ternary.c",
+        "tests/chapter_14/invalid_types/assign_int_to_pointer.c",
+        "tests/chapter_14/invalid_types/assign_int_var_to_pointer.c",
+        "tests/chapter_14/invalid_types/assign_to_address.c",
+        "tests/chapter_14/invalid_types/assign_wrong_pointer_type.c",
+        "tests/chapter_14/invalid_types/bad_null_pointer_constant.c",
+        "tests/chapter_14/invalid_types/cast_double_to_pointer.c",
+        "tests/chapter_14/invalid_types/cast_pointer_to_double.c",
+        "tests/chapter_14/invalid_types/compare_mixed_pointer_types.c",
+        "tests/chapter_14/invalid_types/compare_pointer_to_ulong.c",
+        "tests/chapter_14/invalid_types/complement_pointer.c",
+        "tests/chapter_14/invalid_types/dereference_non_pointer.c",
+        "tests/chapter_14/invalid_types/divide_pointer.c",
+        "tests/chapter_14/invalid_types/invalid_pointer_initializer.c",
+        "tests/chapter_14/invalid_types/invalid_static_initializer.c",
+        "tests/chapter_14/invalid_types/multiply_pointers.c",
+        "tests/chapter_14/invalid_types/multiply_pointers_2.c",
+        "tests/chapter_14/invalid_types/negate_pointer.c",
+        "tests/chapter_14/invalid_types/pass_pointer_as_int.c",
+        "tests/chapter_14/invalid_types/return_wrong_pointer_type.c",
+        "tests/chapter_14/invalid_types/ternary_mixed_pointer_types.c",
 
-//     for (const auto &srcFile : srcFiles)
-//     {
-//         Compiler compiler;
-//         try
-//         {
-//             int status = compiler.compile(Stage::Parsing, std::vector<std::string>{srcFile});
-//             if (status != 0)
-//             {
-//                 std::cerr << "Error compiling file " << srcFile << std::endl;
-//             }
-//             ASSERT_TRUE(status == 0);
-//         }
-//         catch (const std::exception &e)
-//         {
-//             std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
-//             throw;
-//         }
-//     }
-// }
+        "tests/chapter_14/valid/casts/cast_between_pointer_types.c",
+        "tests/chapter_14/valid/casts/null_pointer_conversion.c",
+        "tests/chapter_14/valid/casts/pointer_int_casts.c",
+        "tests/chapter_14/valid/comparisons/compare_pointers.c",
+        "tests/chapter_14/valid/comparisons/compare_to_null.c",
+        "tests/chapter_14/valid/comparisons/pointers_as_conditions.c",
+        "tests/chapter_14/valid/declarators/abstract_declarators.c",
+        "tests/chapter_14/valid/declarators/declarators.c",
+        "tests/chapter_14/valid/declarators/declare_pointer_in_for_loop.c",
+        "tests/chapter_14/valid/dereference/address_of_dereference.c",
+        "tests/chapter_14/valid/dereference/dereference_expression_result.c",
+        "tests/chapter_14/valid/dereference/multilevel_indirection.c",
+        "tests/chapter_14/valid/dereference/read_through_pointers.c",
+        "tests/chapter_14/valid/dereference/simple.c",
+        "tests/chapter_14/valid/dereference/static_var_indirection.c",
+        "tests/chapter_14/valid/dereference/update_through_pointers.c",
 
-// TEST_CASE(Chapter14ValidParseExtraCredit, "chapter_14", "--parse")
-// {
-//     std::vector<std::string> srcFiles = {
+        "tests/chapter_14/valid/function_calls/address_of_argument.c",
+        "tests/chapter_14/valid/function_calls/return_pointer.c",
+        "tests/chapter_14/valid/function_calls/update_value_through_pointer_parameter.c",
+        "tests/chapter_14/valid/libraries/global_pointer.c",
+        "tests/chapter_14/valid/libraries/global_pointer_client.c",
+        "tests/chapter_14/valid/libraries/static_pointer.c",
+        "tests/chapter_14/valid/libraries/static_pointer_client.c",
+    };
+    Settings settings;
 
-//     };
-//     Settings settings;
+    for (const auto &srcFile : srcFiles)
+    {
+        Compiler compiler;
+        try
+        {
+            int status = compiler.compile(Stage::Parsing, std::vector<std::string>{srcFile});
+            if (status != 0)
+            {
+                std::cerr << "Error compiling file " << srcFile << std::endl;
+            }
+            ASSERT_TRUE(status == 0);
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+            throw;
+        }
+    }
+}
 
-//     for (const auto &srcFile : srcFiles)
-//     {
-//         Compiler compiler;
-//         try
-//         {
-//             int status = compiler.compile(Stage::Parsing, std::vector<std::string>{srcFile});
-//             if (status != 0)
-//             {
-//                 std::cerr << "Error compiling file " << srcFile << std::endl;
-//             }
-//             ASSERT_TRUE(status == 0);
-//         }
-//         catch (const std::exception &e)
-//         {
-//             std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
-//             throw;
-//         }
-//     }
-// }
+TEST_CASE(Chapter14ValidParseExtraCredit, "chapter_14", "--parse")
+{
+    std::vector<std::string> srcFiles = {
+        "tests/chapter_14/invalid_types/extra_credit/bitwise_and_pointer.c",
+        "tests/chapter_14/invalid_types/extra_credit/bitwise_compound_assign_to_pointer.c",
+        "tests/chapter_14/invalid_types/extra_credit/bitwise_compound_assign_with_pointer.c",
+        "tests/chapter_14/invalid_types/extra_credit/bitwise_lshift_pointer.c",
+        "tests/chapter_14/invalid_types/extra_credit/bitwise_or_pointer.c",
+        "tests/chapter_14/invalid_types/extra_credit/bitwise_rshift_pointer.c",
+        "tests/chapter_14/invalid_types/extra_credit/bitwise_xor_pointer.c",
+        "tests/chapter_14/invalid_types/extra_credit/compound_assignment_not_lval.c",
+        "tests/chapter_14/invalid_types/extra_credit/compound_assign_thru_ptr_not_lval.c",
+        "tests/chapter_14/invalid_types/extra_credit/compound_divide_pointer.c",
+        "tests/chapter_14/invalid_types/extra_credit/compound_mod_pointer.c",
+        "tests/chapter_14/invalid_types/extra_credit/compound_multiply_pointer.c",
+        "tests/chapter_14/invalid_types/extra_credit/postfix_decr_not_lvalue.c",
+        "tests/chapter_14/invalid_types/extra_credit/prefix_incr_not_lvalue.c",
+        "tests/chapter_14/invalid_types/extra_credit/switch_on_pointer.c",
+
+        "tests/chapter_14/invalid_declarations/extra_credit/addr_of_label.c",
+        "tests/chapter_14/invalid_declarations/extra_credit/deref_label.c",
+
+        "tests/chapter_14/valid/extra_credit/bitshift_dereferenced_ptrs.c",
+        "tests/chapter_14/valid/extra_credit/bitwise_ops_with_dereferenced_ptrs.c",
+        "tests/chapter_14/valid/extra_credit/compound_assign_conversion.c",
+        "tests/chapter_14/valid/extra_credit/compound_assign_through_pointer.c",
+        "tests/chapter_14/valid/extra_credit/compound_bitwise_dereferenced_ptrs.c",
+        "tests/chapter_14/valid/extra_credit/eval_compound_lhs_once.c",
+        "tests/chapter_14/valid/extra_credit/incr_and_decr_through_pointer.c",
+        "tests/chapter_14/valid/extra_credit/switch_dereferenced_pointer.c",
+    };
+    Settings settings;
+
+    for (const auto &srcFile : srcFiles)
+    {
+        Compiler compiler;
+        try
+        {
+            int status = compiler.compile(Stage::Parsing, std::vector<std::string>{srcFile});
+            if (status != 0)
+            {
+                std::cerr << "Error compiling file " << srcFile << std::endl;
+            }
+            ASSERT_TRUE(status == 0);
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+            throw;
+        }
+    }
+}
 
 // // Chapter 15
 // TEST_CASE(Chapter15ValidParse, "chapter_15", "--parse")

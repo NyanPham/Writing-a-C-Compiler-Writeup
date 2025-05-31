@@ -1,3 +1,4 @@
+#pragma message("Compiling with src/Parser.h")
 #ifndef PARSER_H
 #define PARSER_H
 
@@ -11,6 +12,7 @@
 #include "Lexer.h"
 #include "AST.h"
 #include "Types.h"
+#include "Declarator.h"
 
 class Parser
 {
@@ -52,6 +54,7 @@ public:
     std::shared_ptr<AST::Expression> parseExp(int minPrec = 0);
     AST::Block parseBlock();
     std::shared_ptr<AST::Statement> parseStatement();
+    std::shared_ptr<Declarator> parseSimpleDeclarator();
     std::shared_ptr<AST::Declaration> parseDeclaration();
     std::shared_ptr<AST::BlockItem> parseBlockItem();
     std::vector<std::shared_ptr<AST::Expression>> parseOptionalArgList();
