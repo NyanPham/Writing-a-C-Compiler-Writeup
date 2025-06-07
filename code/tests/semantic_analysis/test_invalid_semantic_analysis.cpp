@@ -640,51 +640,93 @@ TEST_CASE(Chapter14InvalidSemanticExtraCredit, "chapter_14", "--validate")
     }
 }
 
-// // Chapter 15
-// TEST_CASE(Chapter15InvalidSemantic, "chapter_15", "--validate")
-// {
-//     std::vector<std::string> srcFiles = {
-//     };
-//     Settings settings;
+// Chapter 15
+TEST_CASE(Chapter15InvalidSemantic, "chapter_15", "--validate")
+{
+    std::vector<std::string> srcFiles = {
+        "tests/chapter_15/invalid_types/add_two_pointers.c",
+        "tests/chapter_15/invalid_types/assign_incompatible_pointer_types.c",
+        "tests/chapter_15/invalid_types/assign_to_array.c",
+        "tests/chapter_15/invalid_types/assign_to_array_2.c",
+        "tests/chapter_15/invalid_types/assign_to_array_3.c",
+        "tests/chapter_15/invalid_types/bad_arg_type.c",
+        "tests/chapter_15/invalid_types/cast_to_array_type.c",
+        "tests/chapter_15/invalid_types/cast_to_array_type_2.c",
+        "tests/chapter_15/invalid_types/cast_to_array_type_3.c",
+        "tests/chapter_15/invalid_types/compare_different_pointer_types.c",
+        "tests/chapter_15/invalid_types/compare_explicit_and_implict_addr.c",
+        "tests/chapter_15/invalid_types/compare_pointer_to_int.c",
+        "tests/chapter_15/invalid_types/compare_pointer_to_zero.c",
+        "tests/chapter_15/invalid_types/compound_initializer_for_scalar.c",
+        "tests/chapter_15/invalid_types/compound_initializer_for_static_scalar.c",
+        "tests/chapter_15/invalid_types/compound_initializer_too_long_static.c",
+        "tests/chapter_15/invalid_types/compound_inititializer_too_long.c",
+        "tests/chapter_15/invalid_types/conflicting_array_declarations.c",
+        "tests/chapter_15/invalid_types/conflicting_function_declarations.c",
+        "tests/chapter_15/invalid_types/double_subscript.c",
+        "tests/chapter_15/invalid_types/function_returns_array.c",
+        "tests/chapter_15/invalid_types/incompatible_elem_type_compound_init.c",
+        "tests/chapter_15/invalid_types/incompatible_elem_type_static_compound_init.c",
+        "tests/chapter_15/invalid_types/null_ptr_array_initializer.c",
+        "tests/chapter_15/invalid_types/null_ptr_static_array_initializer.c",
+        "tests/chapter_15/invalid_types/scalar_initializer_for_array.c",
+        "tests/chapter_15/invalid_types/scalar_initializer_for_static_array.c",
+        "tests/chapter_15/invalid_types/static_non_const_array.c",
+        "tests/chapter_15/invalid_types/subscript_both_pointers.c",
+        "tests/chapter_15/invalid_types/subscript_non_ptr.c",
+        "tests/chapter_15/invalid_types/sub_different_pointer_types.c",
+        "tests/chapter_15/invalid_types/sub_double_from_ptr.c",
+        "tests/chapter_15/invalid_types/sub_ptr_from_int.c",
+    };
+    Settings settings;
 
-//     for (const auto &srcFile : srcFiles)
-//     {
-//         Compiler compiler;
-//         try
-//         {
-//             int status = compiler.compile(Stage::Validate, std::vector<std::string>{srcFile});
-//             ASSERT_TRUE(status != 0);
-//         }
-//         catch (const std::exception &e)
-//         {
-//             std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
-//             throw;
-//         }
-//     }
-// }
+    for (const auto &srcFile : srcFiles)
+    {
+        Compiler compiler;
+        try
+        {
+            int status = compiler.compile(Stage::Validate, std::vector<std::string>{srcFile});
+            ASSERT_TRUE(status != 0);
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+            throw;
+        }
+    }
+}
 
-// TEST_CASE(Chapter15InvalidSemanticExtraCredit, "chapter_15", "--validate")
-// {
-//     std::vector<std::string> srcFiles = {
+TEST_CASE(Chapter15InvalidSemanticExtraCredit, "chapter_15", "--validate")
+{
+    std::vector<std::string> srcFiles = {
+        "tests/chapter_15/invalid_types/extra_credit/compound_add_double_to_pointer.c",
+        "tests/chapter_15/invalid_types/extra_credit/compound_add_two_pointers.c",
+        "tests/chapter_15/invalid_types/extra_credit/compound_assign_to_array.c",
+        "tests/chapter_15/invalid_types/extra_credit/compound_assign_to_nested_array.c",
+        "tests/chapter_15/invalid_types/extra_credit/compound_sub_pointer_from_int.c",
+        "tests/chapter_15/invalid_types/extra_credit/postfix_incr_array.c",
+        "tests/chapter_15/invalid_types/extra_credit/postfix_incr_nested_array.c",
+        "tests/chapter_15/invalid_types/extra_credit/prefix_decr_array.c",
+        "tests/chapter_15/invalid_types/extra_credit/prefix_decr_nested_array.c",
+        "tests/chapter_15/invalid_types/extra_credit/switch_on_array.c",
+    };
+    Settings settings;
 
-//     };
-//     Settings settings;
-
-//     for (const auto &srcFile : srcFiles)
-//     {
-//         Compiler compiler;
-//         try
-//         {
-//             int status = compiler.compile(Stage::Validate, std::vector<std::string>{srcFile});
-//             ASSERT_TRUE(status != 0);
-//         }
-//         catch (const std::exception &e)
-//         {
-//             std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
-//             throw;
-//         }
-//     }
-// }
+    for (const auto &srcFile : srcFiles)
+    {
+        Compiler compiler;
+        try
+        {
+            int status = compiler.compile(Stage::Validate, std::vector<std::string>{srcFile});
+            ASSERT_TRUE(status != 0);
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+            throw;
+        }
+    }
+}
 
 // // Chapter 16
 // TEST_CASE(Chapter16InvalidSemantic, "chapter_16", "--validate")

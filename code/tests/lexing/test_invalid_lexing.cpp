@@ -155,34 +155,6 @@ TEST_CASE(Chapter13InvalidLex, "chapter_13", "--lex")
     }
 }
 
-// // Chapter 15
-// TEST_CASE(Chapter15InvalidLex, "chapter_15", "--lex")
-// {
-//     std::vector<std::string> srcFiles = {
-
-//     };
-//     Settings settings;
-
-//     for (const auto &srcFile : srcFiles)
-//     {
-//         Compiler compiler;
-//         try
-//         {
-//             int status = compiler.compile(Stage::Lexing, std::vector<std::string>{srcFile});
-//             if (status == 0)
-//             {
-//                 std::cerr << "Expected error compiling file " << srcFile << std::endl;
-//             }
-//             ASSERT_TRUE(status != 0);
-//         }
-//         catch (const std::exception &e)
-//         {
-//             std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
-//             throw;
-//         }
-//     }
-// }
-
 // // Chapter 16
 // TEST_CASE(Chapter16InvalidLex, "chapter_12", "--lex")
 // {

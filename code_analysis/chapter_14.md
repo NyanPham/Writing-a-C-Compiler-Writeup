@@ -1176,7 +1176,7 @@ binary_operator = Add | Subtract | Mulitply | Divide | Remainder | Equal | Not E
 // an expression result that may or may not be lvalue converted
 type exp_result =
     | PlainOperand(Tacky.Val val)
-    | DereferencePointer(Tacky.Val val)
+    | DereferencedPointer(Tacky.Val val)
 ```
 
 We modify the emit_tacky_for_exp to return exp_result instead, and call emit_tacky_and_convert instead of emit_tacky_for_exp.
@@ -1521,7 +1521,7 @@ emit_tacky_and_convert(e):
     insts, result = emit_tacky_for_exp(e)
     if result is PlainOperand(o):
         return (insts, o)
-    else if result is DereferencePointer(ptr):
+    else if result is DereferencedPointer(ptr):
         dst = Var(create_tmp(e.t))
         return (
             [...insts, Load(src_ptr=ptr, dst)],

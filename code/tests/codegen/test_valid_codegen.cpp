@@ -1050,54 +1050,98 @@ TEST_CASE(Chapter14ValidCodeGenExtraCredit, "chapter_14", "--codegen")
     }
 }
 
-// // Chapter 15
-// TEST_CASE(Chapter15ValidCodeGen, "chapter_15", "--codegen")
-// {
-//     std::vector<std::string> srcFiles = {
+// Chapter 15
+TEST_CASE(Chapter15ValidCodeGen, "chapter_15", "--codegen")
+{
+    std::vector<std::string> srcFiles = {
+        "tests/chapter_15/valid/allocation/test_alignment.c",
+        "tests/chapter_15/valid/casts/cast_array_of_pointers.c",
+        "tests/chapter_15/valid/casts/implicit_and_explicit_conversions.c",
+        "tests/chapter_15/valid/casts/multi_dim_casts.c",
+        "tests/chapter_15/valid/declarators/array_as_argument.c",
+        "tests/chapter_15/valid/declarators/big_array.c",
+        "tests/chapter_15/valid/declarators/equivalent_declarators.c",
+        "tests/chapter_15/valid/declarators/for_loop_array.c",
+        "tests/chapter_15/valid/declarators/return_nested_array.c",
 
-//     };
-//     Settings settings;
+        "tests/chapter_15/valid/initialization/automatic.c",
+        "tests/chapter_15/valid/initialization/automatic_nested.c",
+        "tests/chapter_15/valid/initialization/static.c",
+        "tests/chapter_15/valid/initialization/static_nested.c",
+        "tests/chapter_15/valid/initialization/trailing_comma_initializer.c",
+        "tests/chapter_15/valid/libraries/global_array.c",
+        "tests/chapter_15/valid/libraries/global_array_client.c",
+        "tests/chapter_15/valid/libraries/return_pointer_to_array.c",
+        "tests/chapter_15/valid/libraries/return_pointer_to_array_client.c",
+        "tests/chapter_15/valid/libraries/set_array_val.c",
+        "tests/chapter_15/valid/libraries/set_array_val_client.c",
+        "tests/chapter_15/valid/pointer_arithmetic/add_dereference_and_assign.c",
+        "tests/chapter_15/valid/pointer_arithmetic/compare.c",
+        "tests/chapter_15/valid/pointer_arithmetic/pointer_add.c",
+        "tests/chapter_15/valid/pointer_arithmetic/pointer_diff.c",
+        "tests/chapter_15/valid/subscripting/addition_subscript_equivalence.c",
+        "tests/chapter_15/valid/subscripting/array_of_pointers_to_arrays.c",
+        "tests/chapter_15/valid/subscripting/complex_operands.c",
+        "tests/chapter_15/valid/subscripting/simple.c",
+        "tests/chapter_15/valid/subscripting/simple_subscripts.c",
+        "tests/chapter_15/valid/subscripting/subscript_nested.c",
+        "tests/chapter_15/valid/subscripting/subscript_pointer.c",
+        "tests/chapter_15/valid/subscripting/subscript_precedence.c",
+    };
+    Settings settings;
 
-//     for (const auto &srcFile : srcFiles)
-//     {
-//         Compiler compiler;
-//         try
-//         {
-//             int status = compiler.compile(Stage::CodeGen, std::vector<std::string>{srcFile});
-//             // Check that the compilation succeeded
-//             ASSERT_TRUE(status == 0);
-//         }
-//         catch (const std::exception &e)
-//         {
-//             std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
-//             throw;
-//         }
-//     }
-// }
+    for (const auto &srcFile : srcFiles)
+    {
+        Compiler compiler;
+        try
+        {
+            int status = compiler.compile(Stage::CodeGen, std::vector<std::string>{srcFile});
+            // Check that the compilation succeeded
+            ASSERT_TRUE(status == 0);
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+            throw;
+        }
+    }
+}
 
-// TEST_CASE(Chapter15ValidCodeGenExtraCredit, "chapter_15", "--codegen")
-// {
-//     std::vector<std::string> srcFiles = {
+TEST_CASE(Chapter15ValidCodeGenExtraCredit, "chapter_15", "--codegen")
+{
+    std::vector<std::string> srcFiles = {
+        "tests/chapter_15/valid/extra_credit/bitwise_subscript.c",
+        "tests/chapter_15/valid/extra_credit/compound_assign_and_increment.c",
+        "tests/chapter_15/valid/extra_credit/compound_assign_array_of_pointers.c",
+        "tests/chapter_15/valid/extra_credit/compound_assign_to_nested_subscript.c",
+        "tests/chapter_15/valid/extra_credit/compound_assign_to_subscripted_val.c",
+        "tests/chapter_15/valid/extra_credit/compound_bitwise_subscript.c",
+        "tests/chapter_15/valid/extra_credit/compound_lval_evaluated_once.c",
+        "tests/chapter_15/valid/extra_credit/compound_nested_pointer_assignment.c",
+        "tests/chapter_15/valid/extra_credit/compound_pointer_assignment.c",
+        "tests/chapter_15/valid/extra_credit/incr_and_decr_nested_pointers.c",
+        "tests/chapter_15/valid/extra_credit/incr_and_decr_pointers.c",
+        "tests/chapter_15/valid/extra_credit/incr_decr_subscripted_vals.c",
+        "tests/chapter_15/valid/extra_credit/postfix_prefix_precedence.c",
+    };
+    Settings settings;
 
-//     };
-//     Settings settings;
-
-//     for (const auto &srcFile : srcFiles)
-//     {
-//         Compiler compiler;
-//         try
-//         {
-//             int status = compiler.compile(Stage::CodeGen, std::vector<std::string>{srcFile});
-//             // Check that the compilation succeeded
-//             ASSERT_TRUE(status == 0);
-//         }
-//         catch (const std::exception &e)
-//         {
-//             std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
-//             throw;
-//         }
-//     }
-// }
+    for (const auto &srcFile : srcFiles)
+    {
+        Compiler compiler;
+        try
+        {
+            int status = compiler.compile(Stage::CodeGen, std::vector<std::string>{srcFile});
+            // Check that the compilation succeeded
+            ASSERT_TRUE(status == 0);
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+            throw;
+        }
+    }
+}
 
 // // Chapter 16
 // TEST_CASE(Chapter16ValidCodeGen, "chapter_16", "--codegen")

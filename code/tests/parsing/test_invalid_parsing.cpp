@@ -564,29 +564,46 @@ TEST_CASE(Chapter14InvalidParse, "chapter_14", "--parse")
     }
 }
 
-// // Chapter 15
-// TEST_CASE(Chapter15InvalidParse, "chapter_15", "--parse")
-// {
-//     std::vector<std::string> srcFiles = {
+// Chapter 15
+TEST_CASE(Chapter15InvalidParse, "chapter_15", "--parse")
+{
+    std::vector<std::string> srcFiles = {
+        "tests/chapter_15/invalid_parse/array_of_functions.c",
+        "tests/chapter_15/invalid_parse/array_of_functions_2.c",
+        "tests/chapter_15/invalid_parse/double_declarator.c",
+        "tests/chapter_15/invalid_parse/empty_initializer_list.c",
+        "tests/chapter_15/invalid_parse/malformed_abstract_array_declarator.c",
+        "tests/chapter_15/invalid_parse/malformed_abstract_array_declarator_2.c",
+        "tests/chapter_15/invalid_parse/malformed_array_declarator.c",
+        "tests/chapter_15/invalid_parse/malformed_array_declarator_2.c",
+        "tests/chapter_15/invalid_parse/malformed_array_declarator_3.c",
+        "tests/chapter_15/invalid_parse/malformed_type_name.c",
+        "tests/chapter_15/invalid_parse/malformed_type_name_2.c",
+        "tests/chapter_15/invalid_parse/mismatched_subscript.c",
+        "tests/chapter_15/invalid_parse/negative_array_dimension.c",
+        "tests/chapter_15/invalid_parse/parenthesized_array_of_functions.c",
+        "tests/chapter_15/invalid_parse/return_array.c",
+        "tests/chapter_15/invalid_parse/unclosed_initializer.c",
+        "tests/chapter_15/invalid_parse/unclosed_nested_initializer.c",
+        "tests/chapter_15/invalid_parse/unclosed_subscript.c",
+    };
+    Settings settings;
 
-//     };
-//     Settings settings;
-
-//     for (const auto &srcFile : srcFiles)
-//     {
-//         Compiler compiler;
-//         try
-//         {
-//             int status = compiler.compile(Stage::Parsing, std::vector<std::string>{srcFile});
-//             ASSERT_TRUE(status != 0);
-//         }
-//         catch (const std::exception &e)
-//         {
-//             std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
-//             throw;
-//         }
-//     }
-// }
+    for (const auto &srcFile : srcFiles)
+    {
+        Compiler compiler;
+        try
+        {
+            int status = compiler.compile(Stage::Parsing, std::vector<std::string>{srcFile});
+            ASSERT_TRUE(status != 0);
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+            throw;
+        }
+    }
+}
 
 // // Chapter 16
 // TEST_CASE(Chapter16InvalidParse, "chapter_16", "--parse")
