@@ -1148,52 +1148,110 @@ TEST_CASE(Chapter15ValidTackyGenExtraCredit, "chapter_15", "--tacky")
     }
 }
 
-// // Chapter 16
-// TEST_CASE(Chapter16ValidTackyGen, "chapter_16", "--tacky")
-// {
-//     std::vector<std::string> srcFiles = {};
-//     Settings settings;
+// Chapter 16
+TEST_CASE(Chapter16ValidTackyGen, "chapter_16", "--tacky")
+{
+    std::vector<std::string> srcFiles = {
+        "tests/chapter_16/valid/chars/access_through_char_pointer.c",
+        "tests/chapter_16/valid/chars/chained_casts.c",
+        "tests/chapter_16/valid/chars/char_arguments.c",
+        "tests/chapter_16/valid/chars/char_expressions.c",
+        "tests/chapter_16/valid/chars/common_type.c",
+        "tests/chapter_16/valid/chars/convert_by_assignment.c",
+        // "tests/chapter_16/valid/chars/data_on_page_boundary_linux.s",
+        // "tests/chapter_16/valid/chars/data_on_page_boundary_osx.s",
+        "tests/chapter_16/valid/chars/explicit_casts.c",
+        "tests/chapter_16/valid/chars/integer_promotion.c",
+        "tests/chapter_16/valid/chars/partial_initialization.c",
+        "tests/chapter_16/valid/chars/push_arg_on_page_boundary.c",
+        "tests/chapter_16/valid/chars/return_char.c",
+        "tests/chapter_16/valid/chars/rewrite_movz_regression.c",
+        "tests/chapter_16/valid/chars/static_initializers.c",
+        "tests/chapter_16/valid/chars/type_specifiers.c",
+        "tests/chapter_16/valid/char_constants/char_constant_operations.c",
+        "tests/chapter_16/valid/char_constants/control_characters.c",
+        "tests/chapter_16/valid/char_constants/escape_sequences.c",
+        "tests/chapter_16/valid/char_constants/return_char_constant.c",
 
-//     for (const auto &srcFile : srcFiles)
-//     {
-//         Compiler compiler;
-//         try
-//         {
-//             int status = compiler.compile(Stage::Tacky, std::vector<std::string>{srcFile});
-//             // Check that the compilation succeeded
-//             ASSERT_TRUE(status == 0);
-//         }
-//         catch (const std::exception &e)
-//         {
-//             std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
-//             throw;
-//         }
-//     }
-// }
+        "tests/chapter_16/valid/libraries/char_arguments.c",
+        "tests/chapter_16/valid/libraries/char_arguments_client.c",
+        "tests/chapter_16/valid/libraries/global_char.c",
+        "tests/chapter_16/valid/libraries/global_char_client.c",
+        "tests/chapter_16/valid/libraries/return_char.c",
+        "tests/chapter_16/valid/libraries/return_char_client.c",
+        "tests/chapter_16/valid/strings_as_initializers/adjacent_strings_in_initializer.c",
+        "tests/chapter_16/valid/strings_as_initializers/array_init_special_chars.c",
+        "tests/chapter_16/valid/strings_as_initializers/literals_and_compound_initializers.c",
+        "tests/chapter_16/valid/strings_as_initializers/partial_initialize_via_string.c",
+        "tests/chapter_16/valid/strings_as_initializers/simple.c",
+        "tests/chapter_16/valid/strings_as_initializers/terminating_null_bytes.c",
+        "tests/chapter_16/valid/strings_as_initializers/test_alignment.c",
+        "tests/chapter_16/valid/strings_as_initializers/transfer_by_eightbyte.c",
+        "tests/chapter_16/valid/strings_as_initializers/write_to_array.c",
+        "tests/chapter_16/valid/strings_as_lvalues/addr_of_string.c",
+        "tests/chapter_16/valid/strings_as_lvalues/adjacent_strings.c",
+        "tests/chapter_16/valid/strings_as_lvalues/array_of_strings.c",
+        "tests/chapter_16/valid/strings_as_lvalues/cast_string_pointer.c",
+        "tests/chapter_16/valid/strings_as_lvalues/empty_string.c",
+        "tests/chapter_16/valid/strings_as_lvalues/pointer_operations.c",
+        "tests/chapter_16/valid/strings_as_lvalues/simple.c",
+        "tests/chapter_16/valid/strings_as_lvalues/standard_library_calls.c",
+        "tests/chapter_16/valid/strings_as_lvalues/strings_in_function_calls.c",
+        "tests/chapter_16/valid/strings_as_lvalues/string_special_characters.c",
+    };
+    Settings settings;
 
-// TEST_CASE(Chapter16ValidTackyGenExtraCredit, "chapter_16", "--tacky")
-// {
-//     std::vector<std::string> srcFiles = {
+    for (const auto &srcFile : srcFiles)
+    {
+        Compiler compiler;
+        try
+        {
+            int status = compiler.compile(Stage::Tacky, std::vector<std::string>{srcFile});
+            // Check that the compilation succeeded
+            ASSERT_TRUE(status == 0);
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+            throw;
+        }
+    }
+}
 
-//     };
-//     Settings settings;
+TEST_CASE(Chapter16ValidTackyGenExtraCredit, "chapter_16", "--tacky")
+{
+    std::vector<std::string> srcFiles = {
+        "tests/chapter_16/valid/extra_credit/bitshift_chars.c",
+        "tests/chapter_16/valid/extra_credit/bitwise_ops_character_constants.c",
+        "tests/chapter_16/valid/extra_credit/bitwise_ops_chars.c",
+        "tests/chapter_16/valid/extra_credit/char_consts_as_cases.c",
+        "tests/chapter_16/valid/extra_credit/compound_assign_chars.c",
+        "tests/chapter_16/valid/extra_credit/compound_bitwise_ops_chars.c",
+        "tests/chapter_16/valid/extra_credit/incr_decr_chars.c",
+        "tests/chapter_16/valid/extra_credit/incr_decr_unsigned_chars.c",
+        "tests/chapter_16/valid/extra_credit/promote_switch_cond.c",
+        "tests/chapter_16/valid/extra_credit/promote_switch_cond_2.c",
+        "tests/chapter_16/valid/extra_credit/switch_on_char_const.c",
+    };
+    Settings settings;
 
-//     for (const auto &srcFile : srcFiles)
-//     {
-//         Compiler compiler;
-//         try
-//         {
-//             int status = compiler.compile(Stage::Tacky, std::vector<std::string>{srcFile});
-//             // Check that the compilation succeeded
-//             ASSERT_TRUE(status == 0);
-//         }
-//         catch (const std::exception &e)
-//         {
-//             std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
-//             throw;
-//         }
-//     }
-// }
+    for (const auto &srcFile : srcFiles)
+    {
+        Compiler compiler;
+        try
+        {
+            int status = compiler.compile(Stage::Tacky, std::vector<std::string>{srcFile});
+            // Check that the compilation succeeded
+            ASSERT_TRUE(status == 0);
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+            throw;
+        }
+    }
+}
+
 // // Chapter 17
 // TEST_CASE(Chapter17ValidTackyGen, "chapter_17", "--tacky")
 // {

@@ -728,51 +728,76 @@ TEST_CASE(Chapter15InvalidSemanticExtraCredit, "chapter_15", "--validate")
     }
 }
 
-// // Chapter 16
-// TEST_CASE(Chapter16InvalidSemantic, "chapter_16", "--validate")
-// {
-//     std::vector<std::string> srcFiles = {
-//     };
-//     Settings settings;
+// Chapter 16
+TEST_CASE(Chapter16InvalidSemantic, "chapter_16", "--validate")
+{
+    std::vector<std::string> srcFiles = {
+        "tests/chapter_16/invalid_types/assign_to_string_literal.c",
+        "tests/chapter_16/invalid_types/char_and_schar_conflict.c",
+        "tests/chapter_16/invalid_types/char_and_uchar_conflict.c",
+        "tests/chapter_16/invalid_types/compound_initializer_for_pointer.c",
+        "tests/chapter_16/invalid_types/implicit_conversion_between_char_pointers.c",
+        "tests/chapter_16/invalid_types/implicit_conversion_pointers_to_different_size_arrays.c",
+        "tests/chapter_16/invalid_types/negate_char_pointer.c",
+        "tests/chapter_16/invalid_types/string_initializer_for_multidim_array.c",
+        "tests/chapter_16/invalid_types/string_initializer_too_long.c",
+        "tests/chapter_16/invalid_types/string_initializer_too_long_nested.c",
+        "tests/chapter_16/invalid_types/string_initializer_too_long_nested_static.c",
+        "tests/chapter_16/invalid_types/string_initializer_too_long_static.c",
+        "tests/chapter_16/invalid_types/string_initializer_wrong_type.c",
+        "tests/chapter_16/invalid_types/string_initializer_wrong_type_nested.c",
+        "tests/chapter_16/invalid_types/string_initializer_wrong_type_nested_static.c",
+        "tests/chapter_16/invalid_types/string_literal_is_plain_char_pointer.c",
+        "tests/chapter_16/invalid_types/string_literal_is_plain_char_pointer_static.c",
+    };
+    Settings settings;
 
-//     for (const auto &srcFile : srcFiles)
-//     {
-//         Compiler compiler;
-//         try
-//         {
-//             int status = compiler.compile(Stage::Validate, std::vector<std::string>{srcFile});
-//             ASSERT_TRUE(status != 0);
-//         }
-//         catch (const std::exception &e)
-//         {
-//             std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
-//             throw;
-//         }
-//     }
-// }
+    for (const auto &srcFile : srcFiles)
+    {
+        Compiler compiler;
+        try
+        {
+            int status = compiler.compile(Stage::Validate, std::vector<std::string>{srcFile});
+            ASSERT_TRUE(status != 0);
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+            throw;
+        }
+    }
+}
 
-// TEST_CASE(Chapter16InvalidSemanticExtraCredit, "chapter_16", "--validate")
-// {
-//     std::vector<std::string> srcFiles = {
+TEST_CASE(Chapter16InvalidSemanticExtraCredit, "chapter_16", "--validate")
+{
+    std::vector<std::string> srcFiles = {
+        "tests/chapter_16/invalid_types/extra_credit/bitwise_operation_on_string.c",
+        "tests/chapter_16/invalid_types/extra_credit/bit_shift_string.c",
+        "tests/chapter_16/invalid_types/extra_credit/case_statement_string.c",
+        "tests/chapter_16/invalid_types/extra_credit/compound_assign_from_string.c",
+        "tests/chapter_16/invalid_types/extra_credit/compound_assign_to_string.c",
+        "tests/chapter_16/invalid_types/extra_credit/postfix_incr_string.c",
+        "tests/chapter_16/invalid_types/extra_credit/prefix_incr_string.c",
+        "tests/chapter_16/invalid_types/extra_credit/switch_on_string.c",
+        "tests/chapter_16/invalid_labels/extra_credit/duplicate_case_char_const.c",
+    };
+    Settings settings;
 
-//     };
-//     Settings settings;
-
-//     for (const auto &srcFile : srcFiles)
-//     {
-//         Compiler compiler;
-//         try
-//         {
-//             int status = compiler.compile(Stage::Validate, std::vector<std::string>{srcFile});
-//             ASSERT_TRUE(status != 0);
-//         }
-//         catch (const std::exception &e)
-//         {
-//             std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
-//             throw;
-//         }
-//     }
-// }
+    for (const auto &srcFile : srcFiles)
+    {
+        Compiler compiler;
+        try
+        {
+            int status = compiler.compile(Stage::Validate, std::vector<std::string>{srcFile});
+            ASSERT_TRUE(status != 0);
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+            throw;
+        }
+    }
+}
 
 // // Chapter 17
 // TEST_CASE(Chapter17InvalidSemantic, "chapter_17", "--validate")

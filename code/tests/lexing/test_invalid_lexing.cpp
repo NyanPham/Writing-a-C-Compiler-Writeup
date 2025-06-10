@@ -155,33 +155,40 @@ TEST_CASE(Chapter13InvalidLex, "chapter_13", "--lex")
     }
 }
 
-// // Chapter 16
-// TEST_CASE(Chapter16InvalidLex, "chapter_12", "--lex")
-// {
-//     std::vector<std::string> srcFiles = {
+// Chapter 16
+TEST_CASE(Chapter16InvalidLex, "chapter_12", "--lex")
+{
+    std::vector<std::string> srcFiles = {
+        "tests/chapter_16/invalid_lex/char_bad_escape_sequence.c",
+        "tests/chapter_16/invalid_lex/newline.c",
+        "tests/chapter_16/invalid_lex/string_bad_escape_sequence.c",
+        "tests/chapter_16/invalid_lex/unescaped_backslash.c",
+        "tests/chapter_16/invalid_lex/unescaped_double_quote.c",
+        "tests/chapter_16/invalid_lex/unescaped_single_quote.c",
+        "tests/chapter_16/invalid_lex/unterminated_char_constant.c",
+        "tests/chapter_16/invalid_lex/unterminated_string.c",
+    };
+    Settings settings;
 
-//     };
-//     Settings settings;
-
-//     for (const auto &srcFile : srcFiles)
-//     {
-//         Compiler compiler;
-//         try
-//         {
-//             int status = compiler.compile(Stage::Lexing, std::vector<std::string>{srcFile});
-//             if (status == 0)
-//             {
-//                 std::cerr << "Expected error compiling file " << srcFile << std::endl;
-//             }
-//             ASSERT_TRUE(status != 0);
-//         }
-//         catch (const std::exception &e)
-//         {
-//             std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
-//             throw;
-//         }
-//     }
-// }
+    for (const auto &srcFile : srcFiles)
+    {
+        Compiler compiler;
+        try
+        {
+            int status = compiler.compile(Stage::Lexing, std::vector<std::string>{srcFile});
+            if (status == 0)
+            {
+                std::cerr << "Expected error compiling file " << srcFile << std::endl;
+            }
+            ASSERT_TRUE(status != 0);
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+            throw;
+        }
+    }
+}
 
 // // Chapter 17
 // TEST_CASE(Chapter17InvalidLex, "chapter_17", "--lex")
