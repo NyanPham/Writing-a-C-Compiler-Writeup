@@ -28,6 +28,8 @@ ReplacePseudos::calculateOffset(const std::string &name, ReplacementState &state
         offsetMap : state.offsetMap,
     };
 
+    newState.offsetMap[name] = newOffset;
+
     return {
         newOffset,
         newState,

@@ -799,51 +799,106 @@ TEST_CASE(Chapter16InvalidSemanticExtraCredit, "chapter_16", "--validate")
     }
 }
 
-// // Chapter 17
-// TEST_CASE(Chapter17InvalidSemantic, "chapter_17", "--validate")
-// {
-//     std::vector<std::string> srcFiles = {
-//     };
-//     Settings settings;
+// Chapter 17
+TEST_CASE(Chapter17InvalidSemantic, "chapter_17", "--validate")
+{
+    std::vector<std::string> srcFiles = {
+        "tests/chapter_17/invalid_types/incomplete_types/add_void_pointer.c",
+        "tests/chapter_17/invalid_types/incomplete_types/sizeof_function.c",
+        "tests/chapter_17/invalid_types/incomplete_types/sizeof_void.c",
+        "tests/chapter_17/invalid_types/incomplete_types/sizeof_void_array.c",
+        "tests/chapter_17/invalid_types/incomplete_types/sizeof_void_expression.c",
+        "tests/chapter_17/invalid_types/incomplete_types/subscript_void.c",
+        "tests/chapter_17/invalid_types/incomplete_types/subscript_void_pointer_conditional.c",
+        "tests/chapter_17/invalid_types/incomplete_types/sub_void_pointer.c",
+        "tests/chapter_17/invalid_types/incomplete_types/void_array.c",
+        "tests/chapter_17/invalid_types/incomplete_types/void_array_in_cast.c",
+        "tests/chapter_17/invalid_types/incomplete_types/void_array_in_param_type.c",
+        "tests/chapter_17/invalid_types/incomplete_types/void_array_nested_in_declaration.c",
+        "tests/chapter_17/invalid_types/incomplete_types/void_array_pointer_in_declaration.c",
+        "tests/chapter_17/invalid_types/incomplete_types/void_array_pointer_in_param_type.c",
+        "tests/chapter_17/invalid_types/pointer_conversions/compare_void_ptr_to_int.c",
+        "tests/chapter_17/invalid_types/pointer_conversions/compare_void_to_other_pointer.c",
+        "tests/chapter_17/invalid_types/pointer_conversions/convert_ulong_to_void_ptr.c",
+        "tests/chapter_17/invalid_types/pointer_conversions/convert_void_ptr_to_int.c",
+        "tests/chapter_17/invalid_types/pointer_conversions/usual_arithmetic_conversions_ptr.c",
+        "tests/chapter_17/invalid_types/scalar_expressions/and_void.c",
+        "tests/chapter_17/invalid_types/scalar_expressions/cast_void.c",
+        "tests/chapter_17/invalid_types/scalar_expressions/not_void.c",
+        "tests/chapter_17/invalid_types/scalar_expressions/or_void.c",
+        "tests/chapter_17/invalid_types/scalar_expressions/void_condition_do_loop.c",
+        "tests/chapter_17/invalid_types/scalar_expressions/void_condition_for_loop.c",
+        "tests/chapter_17/invalid_types/scalar_expressions/void_condition_while_loop.c",
+        "tests/chapter_17/invalid_types/scalar_expressions/void_if_condition.c",
+        "tests/chapter_17/invalid_types/scalar_expressions/void_ternary_condition.c",
+        "tests/chapter_17/invalid_types/void/assign_to_void_lvalue.c",
+        "tests/chapter_17/invalid_types/void/assign_to_void_var.c",
+        "tests/chapter_17/invalid_types/void/assign_void_rval.c",
+        "tests/chapter_17/invalid_types/void/define_void.c",
+        "tests/chapter_17/invalid_types/void/initialized_void.c",
+        "tests/chapter_17/invalid_types/void/mismatched_conditional.c",
+        "tests/chapter_17/invalid_types/void/negate_void.c",
+        "tests/chapter_17/invalid_types/void/non_void_return.c",
+        "tests/chapter_17/invalid_types/void/no_return_value.c",
+        "tests/chapter_17/invalid_types/void/return_void_as_pointer.c",
+        "tests/chapter_17/invalid_types/void/subscript_void.c",
+        "tests/chapter_17/invalid_types/void/void_compare.c",
+        "tests/chapter_17/invalid_types/void/void_equality.c",
+        "tests/chapter_17/invalid_types/void/void_fun_params.c",
+    };
+    Settings settings;
 
-//     for (const auto &srcFile : srcFiles)
-//     {
-//         Compiler compiler;
-//         try
-//         {
-//             int status = compiler.compile(Stage::Validate, std::vector<std::string>{srcFile});
-//             ASSERT_TRUE(status != 0);
-//         }
-//         catch (const std::exception &e)
-//         {
-//             std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
-//             throw;
-//         }
-//     }
-// }
+    for (const auto &srcFile : srcFiles)
+    {
+        Compiler compiler;
+        try
+        {
+            int status = compiler.compile(Stage::Validate, std::vector<std::string>{srcFile});
+            ASSERT_TRUE(status != 0);
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+            throw;
+        }
+    }
+}
 
-// TEST_CASE(Chapter17InvalidSemanticExtraCredit, "chapter_17", "--validate")
-// {
-//     std::vector<std::string> srcFiles = {
+TEST_CASE(Chapter17InvalidSemanticExtraCredit, "chapter_17", "--validate")
+{
+    std::vector<std::string> srcFiles = {
+        "tests/chapter_17/invalid_types/extra_credit/bitshift_void.c",
+        "tests/chapter_17/invalid_types/extra_credit/bitwise_void.c",
+        "tests/chapter_17/invalid_types/extra_credit/compound_add_void_pointer.c",
+        "tests/chapter_17/invalid_types/extra_credit/compound_sub_void_pointer.c",
+        "tests/chapter_17/invalid_types/extra_credit/compound_void_rval.c",
+        "tests/chapter_17/invalid_types/extra_credit/compound_void_rval_add.c",
+        "tests/chapter_17/invalid_types/extra_credit/compound_void_rval_bitshift.c",
+        "tests/chapter_17/invalid_types/extra_credit/postfix_decr_void.c",
+        "tests/chapter_17/invalid_types/extra_credit/postfix_decr_void_pointer.c",
+        "tests/chapter_17/invalid_types/extra_credit/postfix_incr_void_pointer.c",
+        "tests/chapter_17/invalid_types/extra_credit/prefix_decr_void_pointer.c",
+        "tests/chapter_17/invalid_types/extra_credit/prefix_incr_void.c",
+        "tests/chapter_17/invalid_types/extra_credit/prefix_incr_void_pointer.c",
+        "tests/chapter_17/invalid_types/extra_credit/switch_void.c",
+    };
+    Settings settings;
 
-//     };
-//     Settings settings;
-
-//     for (const auto &srcFile : srcFiles)
-//     {
-//         Compiler compiler;
-//         try
-//         {
-//             int status = compiler.compile(Stage::Validate, std::vector<std::string>{srcFile});
-//             ASSERT_TRUE(status != 0);
-//         }
-//         catch (const std::exception &e)
-//         {
-//             std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
-//             throw;
-//         }
-//     }
-// }
+    for (const auto &srcFile : srcFiles)
+    {
+        Compiler compiler;
+        try
+        {
+            int status = compiler.compile(Stage::Validate, std::vector<std::string>{srcFile});
+            ASSERT_TRUE(status != 0);
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+            throw;
+        }
+    }
+}
 
 // // Chapter 18
 // TEST_CASE(Chapter18InvalidSemantic, "chapter_18", "--validate")

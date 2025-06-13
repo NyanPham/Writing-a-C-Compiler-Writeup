@@ -190,7 +190,7 @@ TEST_CASE(Chapter16InvalidLex, "chapter_12", "--lex")
     }
 }
 
-// // Chapter 17
+// Chapter 17 // NO TESTS FOR INVALID LEX
 // TEST_CASE(Chapter17InvalidLex, "chapter_17", "--lex")
 // {
 //     std::vector<std::string> srcFiles = {

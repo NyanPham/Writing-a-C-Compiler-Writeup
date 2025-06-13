@@ -16,7 +16,7 @@ declaration = FunDecl(function_declaration) | VarDecl(variable_declaration)
 variable_declaration = (identifier name, initializer? init, type var_type, storage_class?)
 function_declaration = (identifier name, identifier* params, block? body, type fun_type, storage_class?)
 initializer = SingleInit(exp) | CompoundInit(initializer* list)
-type = Int | Long | UInt | ULong
+type = Int | Long | UInt | ULong | Double
     | FunType(type* params, type ret)
     | Array(type elem_type, int size)
     | PointerType(type referenced)
@@ -57,7 +57,7 @@ binary_operator = Add | Subtract | Multiply | Divide | Remainder | And | Or
     | Equal | NotEqual | LessThan | LessOrEqual
     | GreaterThan | GreaterOrEqual
     | BitwiseAnd | BitwiseXor | BitwiseOr | BitShiftLeft | BitShiftRight
-const = ConstInt(int) | ConstLong(int) | ConstUInt(int) | ConstULong(int)
+const = ConstInt(int) | ConstLong(int) | ConstUInt(int) | ConstULong(int) | ConstDouble(d)
 */
 
 namespace AST

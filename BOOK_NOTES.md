@@ -18,7 +18,8 @@
   - [Chapter 14: Pointers](#chapter-14-pointers)
   - [Chapter 15: Arrays and Pointer Arithmetic](#chapter-15-arrays-and-pointer-arithmetic)
   - [Chapter 16: Characters and Strings](#chapter-16-characters-and-strings)
-  
+  - [Chapter 17: Supporting Dynamic Memory Allocation](#chapter-17-supporting-dynamic-memory-allocation)
+
 ---
 
 # Part I
@@ -8068,55 +8069,55 @@ This pass must recognize that the new Indexed operand specifies a memory address
 
 #### Formatting Assembly Operands
 
-| Assembly operand             | Output                      |
-| ---------------------------- | --------------------------- |
-| Reg(AX) 8-byte               | %rax                        |
-| Reg(AX) 4-byte               | %eax                        |
-| Reg(AX) 1-byte               | %al                         |
-| Reg(DX) 8-byte               | %rdx                        |
-| Reg(DX) 4-byte               | %edx                        |
-| Reg(DX) 1-byte               | %dl                         |
-| Reg(CX) 8-byte               | %rcx                        |
-| Reg(CX) 4-byte               | %ecx                        |
-| Reg(CX) 1-byte               | %cl                         |
-| Reg(DI) 8-byte               | %rdi                        |
-| Reg(DI) 4-byte               | %edi                        |
-| Reg(DI) 1-byte               | %dil                        |
-| Reg(SI) 8-byte               | %rsi                        |
-| Reg(SI) 4-byte               | %esi                        |
-| Reg(SI) 1-byte               | %sil                        |
-| Reg(R8) 8-byte               | %r8                         |
-| Reg(R8) 4-byte               | %r8d                        |
-| Reg(R8) 1-byte               | %r8b                        |
-| Reg(R9) 8-byte               | %r9                         |
-| Reg(R9) 4-byte               | %r9d                        |
-| Reg(R9) 1-byte               | %r9b                        |
-| Reg(R10) 8-byte              | %r10                        |
-| Reg(R10) 4-byte              | %r10d                       |
-| Reg(R10) 1-byte              | %r10b                       |
-| Reg(R11) 8-byte              | %r11                        |
-| Reg(R11) 4-byte              | %r11d                       |
-| Reg(R11) 1-byte              | %r11b                       |
-| Reg(SP)                      | %rsp                        |
-| Reg(BP)                      | %rbp                        |
-| Reg(XMM0)                    | %xmm0                       |
-| Reg(XMM1)                    | %xmm1                       |
-| Reg(XMM2)                    | %xmm2                       |
-| Reg(XMM3)                    | %xmm3                       |
-| Reg(XMM4)                    | %xmm4                       |
-| Reg(XMM5)                    | %xmm5                       |
-| Reg(XMM6)                    | %xmm6                       |
-| Reg(XMM7)                    | %xmm7                       |
-| Reg(XMM8)                    | %xmm8                       |
-| Reg(XMM9)                    | %xmm9                       |
-| Reg(XMM10)                   | %xmm10                      |
-| Reg(XMM11)                   | %xmm11                      |
-| Reg(XMM12)                   | %xmm12                      |
-| Reg(XMM13)                   | %xmm13                      |
-| Reg(XMM14)                   | %xmm14                      |
-| Reg(XMM15)                   | %xmm15                      |
-| Memory(reg, int)             | \<int>(reg)                 |
-| Imm(int)                     | $\<int>                     |
+| Assembly operand             | Output                         |
+| ---------------------------- | ------------------------------ |
+| Reg(AX) 8-byte               | %rax                           |
+| Reg(AX) 4-byte               | %eax                           |
+| Reg(AX) 1-byte               | %al                            |
+| Reg(DX) 8-byte               | %rdx                           |
+| Reg(DX) 4-byte               | %edx                           |
+| Reg(DX) 1-byte               | %dl                            |
+| Reg(CX) 8-byte               | %rcx                           |
+| Reg(CX) 4-byte               | %ecx                           |
+| Reg(CX) 1-byte               | %cl                            |
+| Reg(DI) 8-byte               | %rdi                           |
+| Reg(DI) 4-byte               | %edi                           |
+| Reg(DI) 1-byte               | %dil                           |
+| Reg(SI) 8-byte               | %rsi                           |
+| Reg(SI) 4-byte               | %esi                           |
+| Reg(SI) 1-byte               | %sil                           |
+| Reg(R8) 8-byte               | %r8                            |
+| Reg(R8) 4-byte               | %r8d                           |
+| Reg(R8) 1-byte               | %r8b                           |
+| Reg(R9) 8-byte               | %r9                            |
+| Reg(R9) 4-byte               | %r9d                           |
+| Reg(R9) 1-byte               | %r9b                           |
+| Reg(R10) 8-byte              | %r10                           |
+| Reg(R10) 4-byte              | %r10d                          |
+| Reg(R10) 1-byte              | %r10b                          |
+| Reg(R11) 8-byte              | %r11                           |
+| Reg(R11) 4-byte              | %r11d                          |
+| Reg(R11) 1-byte              | %r11b                          |
+| Reg(SP)                      | %rsp                           |
+| Reg(BP)                      | %rbp                           |
+| Reg(XMM0)                    | %xmm0                          |
+| Reg(XMM1)                    | %xmm1                          |
+| Reg(XMM2)                    | %xmm2                          |
+| Reg(XMM3)                    | %xmm3                          |
+| Reg(XMM4)                    | %xmm4                          |
+| Reg(XMM5)                    | %xmm5                          |
+| Reg(XMM6)                    | %xmm6                          |
+| Reg(XMM7)                    | %xmm7                          |
+| Reg(XMM8)                    | %xmm8                          |
+| Reg(XMM9)                    | %xmm9                          |
+| Reg(XMM10)                   | %xmm10                         |
+| Reg(XMM11)                   | %xmm11                         |
+| Reg(XMM12)                   | %xmm12                         |
+| Reg(XMM13)                   | %xmm13                         |
+| Reg(XMM14)                   | %xmm14                         |
+| Reg(XMM15)                   | %xmm15                         |
+| Memory(reg, int)             | \<int>(reg)                    |
+| Imm(int)                     | $\<int>                        |
 | **Indexed(reg1, reg2, int)** | **(\<reg1>, \<reg2>, \<int>)** |
 
 ## Summary
@@ -9061,56 +9062,56 @@ movb	$2, %al
 
 #### Formatting Assembly Operands
 
-| Assembly operand         | Output                  |
-| ------------------------ | ----------------------- |
-| Reg(AX) 8-byte           | %rax                    |
-| Reg(AX) 4-byte           | %eax                    |
-| Reg(AX) 1-byte           | %al                     |
-| Reg(DX) 8-byte           | %rdx                    |
-| Reg(DX) 4-byte           | %edx                    |
-| Reg(DX) 1-byte           | %dl                     |
-| Reg(CX) 8-byte           | %rcx                    |
-| Reg(CX) 4-byte           | %ecx                    |
-| Reg(CX) 1-byte           | %cl                     |
-| Reg(DI) 8-byte           | %rdi                    |
-| Reg(DI) 4-byte           | %edi                    |
-| Reg(DI) 1-byte           | %dil                    |
-| Reg(SI) 8-byte           | %rsi                    |
-| Reg(SI) 4-byte           | %esi                    |
-| Reg(SI) 1-byte           | %sil                    |
-| Reg(R8) 8-byte           | %r8                     |
-| Reg(R8) 4-byte           | %r8d                    |
-| Reg(R8) 1-byte           | %r8b                    |
-| Reg(R9) 8-byte           | %r9                     |
-| Reg(R9) 4-byte           | %r9d                    |
-| Reg(R9) 1-byte           | %r9b                    |
-| Reg(R10) 8-byte          | %r10                    |
-| Reg(R10) 4-byte          | %r10d                   |
-| Reg(R10) 1-byte          | %r10b                   |
-| Reg(R11) 8-byte          | %r11                    |
-| Reg(R11) 4-byte          | %r11d                   |
-| Reg(R11) 1-byte          | %r11b                   |
-| Reg(SP)                  | %rsp                    |
-| Reg(BP)                  | %rbp                    |
-| Reg(XMM0)                | %xmm0                   |
-| Reg(XMM1)                | %xmm1                   |
-| Reg(XMM2)                | %xmm2                   |
-| Reg(XMM3)                | %xmm3                   |
-| Reg(XMM4)                | %xmm4                   |
-| Reg(XMM5)                | %xmm5                   |
-| Reg(XMM6)                | %xmm6                   |
-| Reg(XMM7)                | %xmm7                   |
-| Reg(XMM8)                | %xmm8                   |
-| Reg(XMM9)                | %xmm9                   |
-| Reg(XMM10)               | %xmm10                  |
-| Reg(XMM11)               | %xmm11                  |
-| Reg(XMM12)               | %xmm12                  |
-| Reg(XMM13)               | %xmm13                  |
-| Reg(XMM14)               | %xmm14                  |
-| Reg(XMM15)               | %xmm15                  |
-| Memory(reg, int)         | \<int>(reg)             |
-| Imm(int)                 | $\<int>                 |
-| Indexed(reg1, reg2, int) | (<reg1>, <reg2>, <int>) |
+| Assembly operand         | Output                     |
+| ------------------------ | -------------------------- |
+| Reg(AX) 8-byte           | %rax                       |
+| Reg(AX) 4-byte           | %eax                       |
+| Reg(AX) 1-byte           | %al                        |
+| Reg(DX) 8-byte           | %rdx                       |
+| Reg(DX) 4-byte           | %edx                       |
+| Reg(DX) 1-byte           | %dl                        |
+| Reg(CX) 8-byte           | %rcx                       |
+| Reg(CX) 4-byte           | %ecx                       |
+| Reg(CX) 1-byte           | %cl                        |
+| Reg(DI) 8-byte           | %rdi                       |
+| Reg(DI) 4-byte           | %edi                       |
+| Reg(DI) 1-byte           | %dil                       |
+| Reg(SI) 8-byte           | %rsi                       |
+| Reg(SI) 4-byte           | %esi                       |
+| Reg(SI) 1-byte           | %sil                       |
+| Reg(R8) 8-byte           | %r8                        |
+| Reg(R8) 4-byte           | %r8d                       |
+| Reg(R8) 1-byte           | %r8b                       |
+| Reg(R9) 8-byte           | %r9                        |
+| Reg(R9) 4-byte           | %r9d                       |
+| Reg(R9) 1-byte           | %r9b                       |
+| Reg(R10) 8-byte          | %r10                       |
+| Reg(R10) 4-byte          | %r10d                      |
+| Reg(R10) 1-byte          | %r10b                      |
+| Reg(R11) 8-byte          | %r11                       |
+| Reg(R11) 4-byte          | %r11d                      |
+| Reg(R11) 1-byte          | %r11b                      |
+| Reg(SP)                  | %rsp                       |
+| Reg(BP)                  | %rbp                       |
+| Reg(XMM0)                | %xmm0                      |
+| Reg(XMM1)                | %xmm1                      |
+| Reg(XMM2)                | %xmm2                      |
+| Reg(XMM3)                | %xmm3                      |
+| Reg(XMM4)                | %xmm4                      |
+| Reg(XMM5)                | %xmm5                      |
+| Reg(XMM6)                | %xmm6                      |
+| Reg(XMM7)                | %xmm7                      |
+| Reg(XMM8)                | %xmm8                      |
+| Reg(XMM9)                | %xmm9                      |
+| Reg(XMM10)               | %xmm10                     |
+| Reg(XMM11)               | %xmm11                     |
+| Reg(XMM12)               | %xmm12                     |
+| Reg(XMM13)               | %xmm13                     |
+| Reg(XMM14)               | %xmm14                     |
+| Reg(XMM15)               | %xmm15                     |
+| Memory(reg, int)         | \<int>(reg)                |
+| Imm(int)                 | $\<int>                    |
+| Indexed(reg1, reg2, int) | (\<reg1>, \<reg2>, \<int>) |
 
 ## Hello Again, World!
 
@@ -9174,3 +9175,1038 @@ In the next chapter, you'll introduce 2 features to dynamically allocate memory:
 ### Reference Implementation Analysis
 
 [Chapter 16 Code Analysis](./code_analysis/chapter_16.md)
+
+---
+
+# Chapter 17: Supporting Dynamic Memory Allocation
+
+## Stages of a Compiler
+
+1. **Lexer**
+   - Input: Source code
+   - Output: Token list
+2. **Parser**
+   - Input: Token list
+   - Output: Abstract Syntax Tree (AST)
+3. **Semantic Analysis**
+   - Input: AST
+   - Output: Transformed AST
+   - Passes:
+   1. Variable resolution
+   2. Type Checking
+   3. Loop Labeling
+4. **TACKY Generation**
+   - Input: Transformed AST
+   - Output: TAC IR (Tacky)
+5. **Assembly Generation**
+   - Input: Tacky
+   - Output: Assembly code
+   - Passes:
+   1. Converting TACKY to Assembly
+   2. Replacing pseudoregisters
+   3. Instruction fix-up
+6. **Code Emission**
+   - Input: Assembly code
+   - Output: Final assembly file
+
+We'll implement features to call _malloc_, _calloc_ and _aligned_alloc_, which allocate memory dynamically.
+Also, we'll support _free_, which deallocates dynamically allocated memory, and _realloc_ which deallocates one block of memory and reallocates another with the same contents.
+
+So we'll need to support _void_ type.
+
+### The void Type
+
+It comprises an empty set of values; it is an incomplete object type that cannot be completed.
+
+Give a function a _void_ type if it doesn't return anything.
+
+```C
+void return_nothing(void) {
+	return;
+}
+
+void perform_side_effect(void) {
+	extern int some_variable;
+	some_variable = 100;
+}
+```
+
+A _void expression_ is an expression whose type is _void_; it has no value, but you can evaluate it for its side effects.
+
+```
+flag ? perform_side_effect() : return_nothing();
+```
+
+```C
+(void) (1 + 1)  // tells the compiler, and human readers, that the value of the
+				// expression should be discarded
+```
+
+Where to use a void expression?
+
+- As a clause in a conditonal expression
+- As a stand-alone expression
+- As the first or third clause of a for loop header
+- Cast it to a void (not very useful, but still legal)
+- Special case: void keyword to specify an empty parameter list in a function declaration, but there's no expression, object or return value of type void.
+
+### Memory Management with void \*
+
+```C
+void *malloc(size_t size);
+```
+
+The size argument specifies the number of bytes to allocate.
+Under the System V x64 ABI, size_t is an alias for unsigned long.
+
+In our compiler, we'll write:
+
+```C
+void *malloc(unsigned long size);
+```
+
+The _malloc_ doesn't know what type of object will be stored, so it doesn't return a pointer to int, or char, or any other types,
+but a pointer to void, so we can cast to any other type before reading or writing memory.
+Implicit casts work too:
+
+```C
+int *many_ints = malloc(100 * sizeof (int));
+```
+
+The _free_ function accepts a _void \*_ argument.
+
+```C
+void free(void *ptr);
+free(many_ints);		// implicily converting int* back to void* to pass to free.
+```
+
+The _calloc_ and _aligned_alloc_ are similar to _malloc_.
+Meanwhile _realloc_ accepts a size and a void \* pointer to copy the original contents to a new allocated memory, free the old one, and return the new pointer.
+
+These blocks of memory are objects that we can read and write, much like variables, but the lifetimes are different.
+
+We learned that variables are either automatic storage duration, or static storage duration.
+But a block of allocated memory has allocated storage duration, and its lifetime starts when it's allocated and ends when it's deallocated.
+
+Our compiler needs to track all variables with static or automatic storage duration, their size and lifetime in symbol table to preserve space in data section or on the stack.
+But for objects wiht allocated storage duration, programmers (and memory management library) are responsible for that.
+
+### Complete and Incomplete Types
+
+An object is _complete_ if we know its size, and _incomplete_ if we don't.
+The _void_ type cannot be completed, but incomplete structure types (which we'll implement in Chapter 18) can be.
+
+We use _void_ with pointer since we already know the size of pointer is always 8 bytes, it's an address, so it doens't matter what type of the object it points to.
+
+### The sizeof Operator
+
+The _sizeof_ operator accepts either an expression or the name of a type.
+
+```C
+sizeof (long);	// return 8 for long type, the name of type must be parenthesized
+sizeof 10.0;	// return 8 for double type, the expression doesn't need to be parentesized
+
+int array[3];
+return sizeof array;	// the array doesn't decay to a pointer, so this returns 12 (3-int array)
+						// 	rather than 8, the size of a pointer
+```
+
+The C standard requires that we **dont** evaludate the operand of a _sizeof_ expression.
+Instead, we infer the operand's type and evaluate sizeof at compile time.
+
+```C
+// This won't actually call puts, but return 4 because the puts function's return type is int
+return sizeof puts("Shouting into the void");
+
+double *null_ptr = 0;	// a null pointer
+return sizeof *null_ptr;	// Normally dereferencing null pointers will lead to undefined behavior,
+							// but this will never evaluate *null_ptr, so it returns 8 as the type of double
+```
+
+## The Lexer
+
+New tokens to recognize
+| Token | Regular expression |
+| ------- | -------------------- |
+| KeywordSizeof | sizeof |
+
+Our lexer already recognizes the _void_ keyword.
+
+## The Parser
+
+### AST
+
+<pre><code>program = Program(declaration*)
+declaration = FunDecl(function_declaration) | VarDecl(variable_declaration)
+variable_declaration = (identifier name, initializer? init, type var_type, storage_class?)
+function_declaration = (identifier name, identifier* params, block? body,type fun_type, storage_class?)
+initializer = SingleInit(exp) | CompoundInit(initializer*)
+type = Char | SChar | UChar Int | Long | UInt | ULong | Double <strong>| Void</strong>
+	| FunType(type* params, type ret)
+	| Pointer(type referenced)
+	| Array(type element, int size)
+storage_class = Static | Extern
+block_item = S(statement) | D(declaration)
+block = Block(block_item*)
+for_init = InitDecl(variable_declaration) | InitExp(exp?)
+statement = Return(<strong>exp?</strong>) 
+	| Expression(exp) 
+	| If(exp condition, statement then, statement? else)
+	| Compound(block)
+	| Break
+	| Continue
+	| While(exp condition, statement body)
+	| DoWhile(statement body, exp condition)
+	| For(for_init init, exp? condition, exp? post, statement body)
+	| Null 
+exp = Constant(const) 
+	String(string)
+	| Var(identifier) 
+	| Cast(type target_type, exp)
+	| Unary(unary_operator, exp)
+	| Binary(binary_operator, exp, exp)
+	| Assignment(exp, exp) 
+	| Conditional(exp condition, exp, exp)
+	| FunctionCall(identifier, exp* args)
+	| Dereference(exp)
+	| AddrOf(exp)
+	| Subscript(exp, exp)
+	<strong>| sizeOf(exp)
+	| SizeOfT(type)</strong>
+unary_operator = Complement | Negate | Not
+binary_operator = Add | Subtract | Multiply | Divide | Remainder | And | Or
+				| Equal | NotEqual | LessThan | LessOrEqual
+				| GreaterThan | GreaterOrEqual
+const = ConstInt(int) | ConstLong(int) | ConstUInt(int) | ConstULong(int) | ConstDouble(double)
+	| ConstChar(int) | ConstUChar(int)</pre></code>
+
+The new constant constructors are a little unusual. Character constant like 'a' have type _int_, and our parser will convert them to ConstInt nodes.
+Useless as they might seem, we'll need them later when we pad out partially initialized character arrays.
+
+String literals are constants, but they will be handled differently when we process initializers, so it's easier for us to treat String literals as expressions.
+
+### EBNF
+
+<pre><code>
+&lt;program&gt;gt; ::= { &lt;declaration&gt; }
+&lt;declaration&gt; ::= &lt;variable-declaration&gt; | &lt;function-declaration&gt;
+&lt;variable-declaration&gt; ::= { &lt;specifier&gt; }+ &lt;declarator&gt; [ "=" &lt;initializer&gt; ] ";"
+&lt;function-declaration&gt; ::= { &lt;specifier&gt; }+ &lt;declarator&gt; "(" &lt;param-list&gt; ")" (&lt;block&gt; | ";")
+&lt;declarator&gt; ::= "*" &lt;declarator&gt; | &lt;direct-declarator&gt;
+&lt;direct-declarator&gt; ::= &lt;simple-declarator&gt; [ &lt;declarator-suffix&gt; ]
+&lt;declarator-suffix&gt; ::= &lt;param-list&gt; | { "[" &lt;const&gt; "]" }+ 
+&lt;param-list&gt; ::= "(" "void" ")" | "(" &lt;param&gt; { "," &lt;param&gt; } ")"
+&lt;param&gt; ::= { &lt;type-specifier&gt; }+ &lt;declarator&gt;
+&lt;simple-declarator&gt; ::= &lt;identifier&gt; | "(" &lt;declarator&gt; ")"
+&lt;type-specifier&gt; ::= "int" | "long" | "unsigned" | "signed" | "double" | "char" <strong>| "void"</strong>
+&lt;specifier&gt; ::= &lt;type-specifier&gt; | "static" | "extern"
+&lt;block&gt; ::= "{" { &lt;block-item&gt; } "}"
+&lt;block-item&gt; ::= &lt;statement&gt; | &lt;declaration&gt;
+&lt;initializer&gt; ::= &lt;exp&gt; | "{" &lt;initializer&gt; { "," &lt;initializer&gt; } [ "," ] "}"
+&lt;for-init&gt; ::= &lt;variable-declaration&gt; | [ &lt;exp&gt; ] ";"
+&lt;statement&gt; ::= "return" <strong>[ &lt;exp&gt; ]</strong>";" 
+	| &lt;exp&gt; ";" 
+	| "if" "(" &lt;exp&gt; ")" &lt;statement&gt; ["else" &lt;statement&gt;]
+	| &lt;block&gt;
+	| "break" ";"
+	| "continue" ";"
+	| "while" "(" &lt;exp&gt; ")" &lt;statement&gt;
+	| "do" &lt;statement&gt; "while" "(" &lt;exp&gt; ")" ";"
+	| "for" "(" &lt;for-init&gt; [ &lt;exp&gt; ] ";" [ &lt;exp&gt; ] ")" &lt;statement&gt;
+	| ";"
+&lt;exp&gt; ::= <strong>&lt;cast-exp&gt;</strong> | &lt;exp&gt; &lt;binop&gt; &lt;exp&gt; | &lt;exp&gt; "?" &lt;exp&gt; ":" &lt;exp&gt;
+<strong>&lt;cast-exp&gt; ::= "(" &lt;typename&gt; ")" &lt;cast-exp&gt;
+	| &lt;unary-exp&gt;</strong>
+&lt;unary-exp&gt; ::= &lt;unop&gt; <strong>&lt;cast-exp&gt;</strong>
+	<strong>| "sizeof" &lt;unary-exp&gt;
+	| "sizeof" "(" &lt;type-name&gt; ")"</strong>
+	| &lt;postfix-exp&gt;
+<strong>&lt;type-name&gt; ::= { &lt;type-specifier&gt; }+ [ &lt;abstract-declarator&gt; ] </strong>
+&lt;postfix-exp&gt; ::= &lt;primary-exp&gt; { "[" &lt;exp&gt; "]" }
+&lt;primary-exp&gt; ::= &lt;const&gt; | &lt;identifier&gt; | "(" &lt;exp&gt; ")" | { &lt;string&gt; }+
+	| &lt;identifier&gt; "(" [ &lt;argument-list&gt; ] ")"
+&lt;argument-list&gt; ::= &lt;exp&gt; { "," &lt;exp&gt; }
+&lt;abstract-declarator&gt; ::= "*" [ &lt;abstract-declarator&gt; ]
+	| &lt;direct-abstract-declarator&gt;
+&lt;direct-abstract-declarator&gt; ::= "(" &lt;abstract-declarator&gt; ")" { "[" &lt;const&gt; "]" }
+	| { "[" &lt;const&gt; "]" }+
+&lt;unop&gt; ::= "-" | "~" | "!" | "*" | "&"
+&lt;binop&gt; :: = "+" | "-" | "\*" | "/" | "%" | "&&" | "||"
+				| "==" | "!=" | "&lt;" | "&lt;=" | "&gt;" | "&gt;=" | "="
+&lt;const&gt; ::= &lt;int&gt; | &lt;long&gt; | &lt;uint&gt; | &lt;ulong&gt; | &lt;double&gt; | &lt;char&gt;
+&lt;identifier&gt; ::= ? An identifier token ?
+&lt;string&gt; ::= ? A string token ?
+&lt;int&gt; ::= ? An int token ?
+&lt;char&gt; ::= ? A char token ?
+&lt;long&gt; ::= ? An int or long token ?
+&lt;uint&gt; ::= ? An unsigned int token ?
+&lt;ulong&gt; ::= ? An unsigned int or unsigned long token ?
+&lt;double&gt; ::= ? A floating-point constant token ?
+</pre></code>
+
+### Parser
+
+The _parse_type_ helper function should reject any declaration where the _void_ specifier appears with other type like _long_, or _unsigned_.
+The void type can be modified by pointer, array, and function declarators; pointers to void and functions returning void are both perfectly legal, while other ways of using void
+are syntactically valid but semantically illegal.
+
+We need to change the parsing logic for \<param-list> as well because the void keyword can be void \*, so you need to look ahead one more token to check if the token right after void is a ).
+
+## Semantic Analysis
+
+### Type Checker
+
+#### Conversions to and from void \*
+
+There are 3 cases where implicit conversions between void \* and other pointer types are legal.
+
+```C
+/*
+First, you can compare a value of type
+void * with another pointer type using == or !=.
+The non-void pointer is converted to void *.
+*/
+int *a;
+void *b;
+// --snip--
+return a == b;
+
+/*
+Second, in conditional expression, one clause can be void *
+and the other clause have another pointer type.
+The non-void pointer is converted to void *.
+*/
+int *a;
+void *b;
+// --snip--
+return flag ? a : b;
+
+/*
+Third, you can implicitly convert to and from void * during assignment.
+It covers all the conversions "as if by assignment".
+*/
+int *a = 0;
+void *b = a;
+
+int use_int_pointer(int *a);
+void *ptr = 0;
+use_int_pionter(ptr);
+```
+
+To support implicit conversions to and from void \*,
+we extend the two hlper functions get_common_pointer_type and convert_by_assignment.
+
+```
+get_common_pointer_type(e1, e2):
+	e1_t = get_type(e1)
+	e2_t = get_type(e2)
+	if e1_t == e2_t:
+		return e1_t
+	else if is_null_pointer_constant(e1):
+		return e2_t
+	else if is_null_pointer_constant(e2):
+		return e1_t
+	else if e1_t == Pointer(Void) and e2_t is a pointer type:
+		return Pointer(Void)
+	else if e2_t == Pointer(Void) and e1_t is a pointer type:
+		return Pointer(Void)
+	else:
+		fail("Expressions have incompatible types")
+```
+
+```
+convert_by_assignment(e, target_type):
+	if get_type(e) == target_type:
+		return e
+	if get_type(e) is arithmetic and target_type is arithmetic:
+		return convert_to(e, target_type)
+	if is_null_pointer_constant(e) and target_type is a pointer type:
+		return convert_to(e, target_type)
+	if target_type == Pointer(Void) and get_type(e) is a pointer type:
+		return convert_to(e, target_type)
+	if target_type is a pointer type and get_type(e) == Pointer(Void):
+		return convert_to(e, target_type)
+	else:
+		fail("Cannot convert type for assignment")
+```
+
+#### Functions with void Return Types
+
+A function with a void return type must not return an expression.
+A function with any other return type must include an expression
+when it returns.
+
+```C
+// legal
+int return_int(void) {
+	return 1;
+}
+
+// legal
+void return_void(void) {
+	return;
+}
+
+// illegal
+int return_int(void) {
+	return;
+}
+
+// illegal
+void return_void(void) {
+	return 1;
+}
+
+// illegal
+void return_void(void) {
+	return (void) 1;
+}
+```
+
+#### Scalar and Non-scalar Types
+
+The AST constructs like the operands of &&, ||, and ! expressions, or the first
+operand of a conditional expression, the controlling expressions in loops and if statements, are required
+to be scalar types because we need to compare them with 0.
+
+Comparing a pointer or arithmetic values to 0 makes sense, but a non-scalar values doesn't not.
+
+In ealier chapters, we didn't worry about this because array is the only non-scalar type, and we decay them to pointer.
+But now we have _void_, so let's enforce these constraints explicitly.
+
+```
+is_scalar(t):
+	match t with
+	| Void -> return False
+	| Array(elem_t, size) -> return False
+	| FunType(param_ts, ret_t) -> return False
+	| _ -> return True
+```
+
+Now we can use this to validate controlling conditions and logical operands.
+
+```
+typecheck_exp(e, symbols):
+	match e with
+	| --snip--
+	| Unary(Not, inner) ->
+		typed_inner = typecheck_and_convert(inner, symbols)
+		if not is_scalar(get_type(typed_inner)):
+		fail("Logical operators only apply to scalar expressions")
+		--snip--
+```
+
+Cast expressions are a bit different.
+We can cast a scalar expression to any scalar type, except for casts between double and pointers (we already tackle this).
+And we can cast any type to void.
+
+```
+	| Cast(t, inner) ->
+		typed_inner = typecheck_and_convert(inner, symbols)
+			--snip--
+		if t == Void:
+			return set_type(Cast(t, typed_inner), Void)
+		if not is_scalar(t):
+			fail("Can only cast to scalar type or void")
+		if not is_scalar(get_type(typed_inner)):
+			fail("Cannot cast non-scalar expression to scalar type")
+		else:
+			return set_type(Cast(t, typed_inner), t)
+```
+
+#### Restrictions on Incomplete Types
+
+There are 3 cases we require complete types:
+
+- Add, subtract or subscript pointers.
+- Use sizeof operator
+- Specify a element type for array.
+
+```
+is_complete(t):
+	return t != Void
+
+is_pointer_to_complete(t):
+	match t with
+	| Pointer(t) -> return is_complete(t)
+	| _ -> return False
+```
+
+```
+	| Binary(Add, e1, e2) ->
+		typed_e1 = typecheck_and_convert(e1, symbols)
+		typed_e2 = typecheck_and_convert(e2, symbols)
+		t1 = get_type(typed_e1)
+		t2 = get_type(typed_e2)
+		if t1 and t2 are arithmetic:
+			--snip--
+		else if is_pointer_to_complete(t1) and t2 is an integer type:
+			--snip--
+		else if is_pointer_to_complete(t2) and t1 is an integer type:
+			--snip--
+		else:
+			fail("Invalid operands for addition")
+```
+
+We define one more helper function to catch invalid type specifiers that require complete types.
+
+```
+validate_type_specifier(t):
+	match t with
+	| Array(elem_t, size) ->
+		if not is_complete(elem_t):
+			fail("Illegal array of incomplete type")
+		validate_type_specifier(elem_t)
+	| Pointer(referenced_t) -> validate_type_specifier(referenced_t)
+	| FunType(param_ts, ret_t) ->
+		for param_t in param_ts:
+			validate_type_specifier(param_t)
+		validate_type_specifier(ret_t)
+	| _ -> return
+```
+
+We’ll call validate_type_specifier to validate type specifiers everywhere they appear: in variable declarations, function declarations, sizeof expressions, and cast expressions.
+
+#### Extra Restrictions on void
+
+- We can't declare void variables or parameters
+- We can't dereference pointers to void
+
+#### Conditional Expressions with void Operands
+
+```
+typecheck_exp(e, symbols):
+	match e with
+	| --snip--
+	| Conditional(condition, e1, e2) ->
+		typed_cond = typecheck_and_convert(condition, symbols)
+		typed_e1 = typecheck_and_convert(e1, symbols)
+		typed_e2 = typecheck_and_convert(e2, symbols)
+		if not is_scalar(get_type(typed_cond)):
+			fail("Condition in conditional operator must be scalar")
+		t1 = get_type(typed_e1)
+		t2 = get_type(typed_e2)
+		if t1 == Void and t2 == Void:
+			result_type = Void
+		else if t1 and t2 are arithmetic types:
+			result_type = get_common_type(t1, t2)
+		else if t1 or t2 is a pointer type:
+			result_type = get_common_pointer_type(typed_e1, typed_e2)
+		else:
+			fail("Cannot convert branches of conditional to a common type")
+		--snip--
+```
+
+#### Existing Validation for Arithmetic Expressions and Comparisons
+
+Earlier, we could assume that every expression had either arithmetic or pointer type.
+Now we throw in the void type to the mix.
+
+Here is an example to type check equal expressions to explicitly check that they’re either pointer or
+arithmetic types; if they’re anything else, we’ll fail.
+
+```
+typecheck_exp(e, symbols):
+	match e with
+	| --snip--
+	| Binary(Equal, e1, e2) ->
+		typed_e1 = typecheck_and_convert(e1, symbols)
+		typed_e2 = typecheck_and_convert(e2, symbols)
+		t1 = get_type(typed_e1)
+		t2 = get_type(typed_e2)
+		if t1 or t2 is a pointer type:
+			common_type = get_common_pointer_type(typed_e1, typed_e2)
+		else if t1 and t2 are arithmetic types:
+			common_type = get_common_type(t1, t2)
+		else:
+			fail("Invalid operands to equality expression")
+		--snip-
+```
+
+We should type check each expression’s operands by accepting valid types instead of rejecting invalid ones.
+For example, we should validate that the operands to Multiply and Divide are arithmetic values, instead of making sure they aren’t pointers.
+
+#### sizeof Expressions
+
+A sizeof expression has type size_t, which is unsigned long in our implementation.
+
+```
+typecheck_exp(e, symbols):
+	match e with
+	| --snip--
+	| SizeOfT(t) ->
+		validate_type_specifier(t)
+		if not is_complete(t):
+			fail("Can't get the size of an incomplete type")
+		return set_type(e, ULong)
+	| SizeOf(inner) ->
+		typed_inner = typecheck_exp(inner, symbols)
+		if not is_complete(get_type(typed_inner)):
+			fail("Can't get the size of an incomplete type")
+		return set_type(SizeOf(typed_inner), ULong)
+```
+
+## TACKY Generation
+
+### TACKY
+
+<pre><code>
+program = Program(top_level*)
+top_level = Function(identifier, bool global, identifier* params, instruction* body)
+		| StaticVariable(identifier, bool global, type t, static_init* init_list)
+		| StaticConstant(identifier, type t, static_init init)
+instruction = Return(<strong>val?</strong>) 
+	| SignExtend(val src, val dst)
+	| Truncate(val src, val dst)
+	| ZeroExtend(val src, val dst)
+	| DoubleToInt(val src, val dst)
+	| DoubleToUInt(val src, val dst)
+	| IntToDouble(val src, val dst)
+	| UIntToDouble(val src, val dst)
+	| Unary(unary_operator, val src, val dst)
+	| Binary(binary_operator, val src1, val src2, val dst)
+	| Copy(val src, val dst)
+	| GetAddress(val src, val dst)
+	| Load(val src_ptr, val dst)
+	| Store(val src, val dst_ptr)
+	| Addptr(val src, val index, int scale, val dst)
+	| CopyToOffset(val src, identifier dst, int offset)
+	| Jump(identifier target)
+	| JumpIfZero(val condition, identifier target)
+	| JumpIfNotZero(val condition, identifier target)
+	| Label(identifier)
+	| FunCall(identifier fun_name, val* args, <strong>val?</strong> dst)
+val = Constant(const) | Var(identifier)
+unary_operator = Complement | Negate | Not
+binary_operator = Add | Subtract | Multiply | Divide | Remainder | Equal | Not Equal
+				| LessThan | LessOrEqual | GreaterThan | GreaterOrEqual
+</pre></code>
+
+### Generating TACKY
+
+#### Functions with void Return Types
+
+- We make the destination of the FunCall instruction optional
+- We make the value for Return optional
+
+#### Casts to void
+
+We just process the inner expression without emitting any other instructions.
+You can return whatever operand you want here; the caller won't use it.
+
+```
+emit_tacky(e, instructions, symbols):
+	match e with
+	| --snip--
+	| Cast(void, inner) ->
+		emit_tacky_and_convert(inner, instructions, symbols)
+		return PlainOperand(Var("DUMMY"))
+```
+
+#### Conditional Expressions with void Operands
+
+Let's review our current version
+
+```
+	| Conditional(condition, e1, e2) ->
+		--snip--
+		cond = emit_tacky_and_convert(condition, instructions, symbols)
+		instructions.append(JumpIfZero(cond, e2_label))
+		dst = make_tacky_variabel(get_type(e), symbols)
+		v1 = emit_tacky_and_convert(e1, instructions, symbols)
+		instructions.append_all(
+			[ Copy(v1, dst),
+			  Jump(end),
+			  Label(e2_label) ])
+		v2 = emit_tacky_and_convert(e2, instructions, symbols)
+		instructions.append_all(
+			[ Copy(v2, dst),
+			  Label(end) ])
+		return PlainOperand(dst)
+```
+
+This is problematic, as if _e1_ and _e2_ are void expressions, the _e_ has void type as well.
+And we shouldn't create _dst_ temporary vairable with type void, and copy anything to it.
+Here is the updated pseudocode:
+
+```
+	| Conditional(condition, e1, e2) ->
+		--snip--
+		cond = emit_tacky_and_convert(condition, instructions, symbols)
+		instructions.append(JumpIfZero(cond, e2_label))
+		if get_type(e) == Void:
+			emit_tacky_and_convert(e1, instructions, symbols)
+			instructions.append_all(
+				[ Jump(end),
+				  Label(e2_label) ])
+			emit_tacky_and_convert(e2, instructions, symbols)
+			instructions.append(Label(end))
+			return PlainOperand(Var("DUMMY"))
+		else:
+			--snip--
+```
+
+#### sizeof Expressions
+
+```
+	| SizeOf(inner) ->
+		t = get_type(inner)
+		result = size(t)
+		return PlainOperand(Constant(ConstULong(result)))
+	| SizeOfT(t) ->
+		result = size(t)
+		return PlainOperand(Constant(ConstULong(result)))
+```
+
+## Assembly Generation
+
+To finish off, we'll generate assembly for Return instructions with no value and FunCall instructions with no destination.
+
+### Assembly
+
+<pre><code>program = Program(top_level*)
+assembly_type = Byte | LongWord | Quadword | Double | ByteArray(int size, int alignment)
+top_level = Function(identifier name, bool global, instruction* instructions)
+	| StaticVariable(identifier name, bool global, int alignment, static_init* init_list)
+	| StaticConstant(identifier name, int alignment, static_init init)
+instruction = Mov(assembly_type, operand src, operand dst)
+		| Movsx(assembly_type src_type, assembly_type dst_type, operand src, operand dst)
+		| MovZeroExtend(assembly_type src_type, assembly_type dst_typeoperand src, operand dst)
+		| Lea(operand src, operand dst)
+		| Cvttsd2si(assembly_type dst_type, operand src, operand dst)
+		| Cvtsi2sd(assembly_type src_type, operand src, operand dst)
+		| Unary(unary_operator, assembly_type, operand)
+		| Binary(binary_operator, assembly_type, operand, operand)
+		| Cmp(assembly_type,, operand, operand)
+		| Idiv(assembly_type, operand)
+		| Div(assembly_type, operand)
+		| Cdq(assembly_type)
+		| Jmp(identifier)
+		| JmpCC(cond_code, identifier)
+		| SetCC(cond_code, operand)
+		| Label(identifier)
+		| AllocateStack(int)
+		| DeallocateStack(int)
+		| Push(operand)
+		| Call(identifier) 
+		| Ret
+unary_operator = Neg | Not | Shr
+binary_operator = Add | Sub | Mult | DivDouble | And | Or | Xor
+operand = Imm(int) | Reg(reg) | Pseudo(identifier) | Memory(reg, int) | Data(identifier) | PseudoMem(identifier, int) | Indexed(reg base, reg index, int scale)
+cond_code = E | NE | G | GE | L | LE | A | AE | B | BE
+reg = AX | CX | DX | DI | SI | R8 | R9 | R10 | R11 | SP | BP
+	| XMM0 | XMM1 | XMM2 | XMM3 | XMM4 | XMM5 | XMM6 | XMM7 | XMM14 | XMM15</pre></code>
+
+### Converting TACKY to Assembly
+
+#### Converting Top-Level TACKY Constructs to Assembly
+
+| TACKY top-level construct                    | Assembly top-level construct                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| -------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Program(top_level_defs)                      | Program(top_level_defs + \<all StaticConstant constructs for floating-point constants>)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| Function(name, global, params, instructions) | Function(name, global, [<br>&nbsp;&nbsp;&nbsp;&nbsp;Mov(\<first int param type>, Reg(DI), \<first int param>), <br>&nbsp;&nbsp;&nbsp;&nbsp;Mov(\<second int param type>, Reg(SI), \<second int param>), <br>&nbsp;&nbsp;&nbsp;&nbsp;\<copy next four integer parameters from registers>, <br>&nbsp;&nbsp;&nbsp;&nbsp;Mov(\<first double param type>, Reg(XMM0), \<first double param>), <br>&nbsp;&nbsp;&nbsp;&nbsp;Mov(\<second double param type>, Reg(XMM1), \<second double param>), <br>&nbsp;&nbsp;&nbsp;&nbsp;\<copy next six double parameters from registers><br>&nbsp;&nbsp;&nbsp;&nbsp;Mov(\<first stack param type>, Memory(BP, 16), \<first stack param>), <br>&nbsp;&nbsp;&nbsp;&nbsp;Mov(\<second stack param type>, Memory(BP, 24), \<second stack param>), <br>&nbsp;&nbsp;&nbsp;&nbsp;\<copy remaining parameters from stack>] +<br>&nbsp;&nbsp;&nbsp;&nbsp; instructions) |
+| StaticVariable(name, global, t, init_list)   | StaticVariable(name, global, \<alignment of t, init_list)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| StaticConstant(name, t, init)                | StaticConstant(name, \<alignment of t>, init)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+
+#### Converting TACKY Instructions to Assembly
+
+| TACKY instruction                                                           | Assembly instructions                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| --------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Return(val) (Integer)                                                       | Mov(\<val type>, val, Reg(AX))<br>Ret                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| Return(val) (Double)                                                        | Mov(\<Double>, val, Reg(XMM0))<br>Ret                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| Return() **(void)**                                                         | **Ret**                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| Unary(Not, src, dst) (Integer)                                              | Cmp(\<src type>, Imm(0), src)<br>Mov(\<dst type>, Imm(0), dst)<br>SetCC(E, dst)                                                                                                                                                                                                                                                                                                                                                                                                                |
+| Unary(Not, src, dst) (Double)                                               | Binary(Xor, Double, Reg(\<X>), Reg(\<X>))<br>Cmp(Double, src, Reg(\<X>))<br>Mov(\<dst type>, Imm(0), dst)<br>SetCC(E, dst)                                                                                                                                                                                                                                                                                                                                                                     |
+| Unary(Negate, src, dst) (Double negation)                                   | Mov(Double, src, dst)<br>Binary(Xor, Double, Data(\<negative-zero>), dst)<br>And add a top-level constant:<br>StaticConstant(\<negative-zero>, 16, DoubleInit(-0.0))                                                                                                                                                                                                                                                                                                                           |
+| Unary(unary_operator, src, dst)                                             | Mov(\<src type>, src, dst)<br>Unary(unary_operator, \<src type>, dst)                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| Binary(Divide, src1, src2, dst) (Signed)                                    | Mov(\<src1 type>, src1, Reg(AX))<br>Cdq(\<src1 type>)<br>Idiv(\<src1 type>, src2)<br>Mov(\<src1 type>, Reg(AX), dst)                                                                                                                                                                                                                                                                                                                                                                           |
+| Binary(Divide, src1, src2, dst) (Unsigned)                                  | Mov(\<src1 type>, src1, Reg(AX))<br>Mov(\<src1 type>, Imm(0), Reg(DX))<br>Div(\<src1 type>, src2)<br>Mov(\<src1 type>, Reg(AX), dst)                                                                                                                                                                                                                                                                                                                                                           |
+| Binary(Remainder, src1, src2, dst) (Signed)                                 | Mov(\<src1 type>, src1, Reg(AX))<br>Cdq(\<src1 type>)<br>Idiv(\<src1 type>, src2)<br>Mov(\<src1 type>, Reg(DX), dst)                                                                                                                                                                                                                                                                                                                                                                           |
+| Binary(Remainder, src1, src2, dst) (Unsigned)                               | Mov(\<src1 type>, src1, Reg(AX))<br>Mov(\<src1 type>, Imm(0), Reg(DX))<br>Div(\<src1 type>, src2)<br>Mov(\<src1 type>, Reg(DX), dst)                                                                                                                                                                                                                                                                                                                                                           |
+| Binary(arithmetic_operator, src1, src2, dst)                                | Mov(\<src1 type>, src1, dst)<br>Binary(arithmetic_operator, \<src1 type>, src2, dst)                                                                                                                                                                                                                                                                                                                                                                                                           |
+| Binary(relational_operator, src1, src2, dst)                                | Cmp(\<src1 type>, src1, src2)<br>Mov(\<dst type>, Imm(0), dst)<br>SetCC(relational_operator, dst)                                                                                                                                                                                                                                                                                                                                                                                              |
+| Jump(target)                                                                | Jmp(target)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| JumpIfZero(condition, target) (Integer)                                     | Cmp(\<condition type>, Imm(0), condition)<br>SetCC(E, target)                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| JumpIfZero(condition, target) (Double)                                      | Binary(Xor, Double, Reg(\<X>), Reg(\<X>))<br>Cmp(Double, condition, Reg(\<X>))<br>JmpCC(E, target)                                                                                                                                                                                                                                                                                                                                                                                             |
+| JumpIfNotZero(condition, target)                                            | Cmp(\<condition type>, Imm(0), condition)<br>SetCC(NE, target)                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| JumpIfNotZero(condition, target) (Double)                                   | Binary(Xor, Double, Reg(\<X>), Reg(\<X>))<br>Cmp(Double, condition, Reg(\<X>))<br>JmpCC(NE, target)                                                                                                                                                                                                                                                                                                                                                                                            |
+| Copy(src, dst)                                                              | Mov(\<src type>, src, dst)                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| Label(identifier)                                                           | Label(identifier)                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| FunCall(fun_name, args, dst) (dst is present)                               | \<fix stack alignment><br>\<move arguments to general-purpose registers><br>\<move arguments to XMM registers><br>\<push arguments onto the stack><br>Call(fun_name)<br>\<deallocate arguments\/padding><br>Mov(\<dst type>, \<dst register>, dst)                                                                                                                                                                                                                                             |
+| FunCall(fun_name, args, dst) **(dst is absent)**                            | **\<fix stack alignment><br>\<move arguments to general-purpose registers><br>\<move arguments to XMM registers><br>\<push arguments onto the stack><br>Call(fun_name)<br>\<deallocate arguments\/padding>**                                                                                                                                                                                                                                                                                   |
+| SignExtend(src, dst)                                                        | Movsx(src, dst)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| Truncate(src, dst)                                                          | Mov(Longword, src, dst)                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| ZeroExtend(src, dst)                                                        | MovZeroExtend(src, dst)                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| IntToDouble(src, dst) (char or signed char)                                 | Movsx(Byte, Longword, src, Reg(\<R>))<br>Cvtsi2sd(Longword, Reg(\<R>, dst))                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| IntToDouble(src, dst) (int or long)                                         | Cvtsi2sd(\<src type>, src, dst)                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| DoubleToInt(src, dst) (char or signed char)                                 | Cvttsd2si(\<dst type>, src, Reg(\<R>))<br>Mov(Byte, Reg(\<R>), dst)                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| DoubleToInt(src, dst) (int or long)                                         | Cvttsd2si(\<dst type>, src, dst)                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| UIntToDouble(src, dst) (unsigned char)                                      | MovZeroExtend(Byte, Longword, src, Reg(\<R>))<br>Cvtsi2sd(Longword, Reg(\<R>), dst)                                                                                                                                                                                                                                                                                                                                                                                                            |
+| UIntToDouble(src, dst) (unsigned int)                                       | MovZeroExtend(Longword, Quadword, src, Reg(\<R>))<br>Cvtsi2s(Quadword, Reg(\<R>), dst)                                                                                                                                                                                                                                                                                                                                                                                                         |
+| UIntToDouble(src, dst) (unsigned long)                                      | Cmp(Quadword, Imm(0), src)<br>JmpCC(L, \<label1>)<br>Cvtsi2sd(Quadword, src, dst)<br>Jmp(\<label2>)<br>Label(\<label1>)<br>Mov(Quadword, src, Reg(\<R1>))<br>Mov(Quadword, Reg(\<R1>), Reg(\<R2>))<br>Unary(Shr, Quadword, Reg(\<R2>))<br>Binary(And, Quadword, Imm(1), Reg(\<R1>))<br>Binary(Or, Quadword, Reg(\<R1>), Reg(\<R2>))<br>Cvtsi2sd(Quadword, Reg(\<R2>), dst)<br>Binary(Add, Double, dst, dst)<br>Label(\<label2>)                                                                |
+| DoubleToUInt(src, dst) (unsigned char)                                      | Cvttsd2si(Longword, src, Reg(\<R>))<br>Mov(Byte, Reg(\<R>), dst)                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| DoubleToUInt(src, dst) (unsigned int)                                       | Cvttsd2si(Quadword, src, Reg(\<R>))<br>Mov(Longword, Reg(\<R>), dst)                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| DoubleToUInt(src, dst) (unsigned long)                                      | Cmp(Double, Data(\<upper-bound>), src)<br>JmpCC(AE, \<label1>)<br>Cvttsd2si(Quadword, src, dst)<br>Jmp(\<label2>)<br>Label(\<label1>)<br>Mov(Double, src, Reg(\<X>))<br>Binary(Sub, Double, Data(\<upper-bound>),Reg(\<X>))<br>Cvttsd2si(Quadword, Reg(\<X>), dst)<br>Mov(Quadword, Imm(9223372036854775808), Reg(\<R>))<br>Binary(Add, Quadword, Reg(\<R>), dst)<br>Label(\<label2>)<br>And add a top-level constant:<br>StaticConstant(\<upper-bound>, 8, DoubleInit(9223372036854775808.0)) |
+| Load(ptr, dst)                                                              | Mov(Quadword, ptr, Reg(\<R>))<br>Mov(\<dst type>, Memory(\<R>, 0), dst)                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| Store(src, ptr)                                                             | Mov(Quadword, ptr, Reg(\<R>))<br>Mov(\<src type>, src, Memory(\<R>, 0))                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| GetAddress(src, dst)                                                        | Lea(src, dst)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| AddPtr(ptr, index, scale, dst) (Constant index)                             | Mov(Quadword, ptr, Reg(\<R>))<br>Lea(Memory(\<R>, index \* scale), dst)                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| AddPtr(ptr, index, scale, dst) (Variable index and scale of 1, 2, 4, or 8 ) | Mov(Quadword, ptr, Reg(\<R1>))<br>Mov(Quadword, index, Reg(\<R2>))<br>Lea(Indexed(\<R1>, \<R2>, scale), dst)                                                                                                                                                                                                                                                                                                                                                                                   |
+| AddPtr(ptr, index, scale, dst) (Variable index and other scale )            | Mov(Quadword, ptr, Reg(\<R1>))<br>Mov(Quadword, index, Reg(\<R2>))<br>Binary(Mult, Quadword, Imm(scale), Reg(\<R2>))<br>Lea(Indexed(\<R1>, \<R2>, scale), dst)                                                                                                                                                                                                                                                                                                                                 |
+| CopyToOffset(src, dst, offset)                                              | Mov(\<src type>, src, PseudoMem(dst, offset))                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+
+#### Converting TACKY Arithmetic Operators to Assembly
+
+| TACKY operator           | Assembly operator |
+| ------------------------ | ----------------- |
+| Complement               | Not               |
+| Negate                   | Neg               |
+| Add                      | Add               |
+| Subtract                 | Sub               |
+| Multiply                 | Mult              |
+| Divide (double division) | DivDouble         |
+
+#### Converting TACKY Comparisons to Assembly
+
+| TACKY comparison | Assembly condition code (signed) | Assembly condition code (unsigned or pointer or double ) |
+| ---------------- | -------------------------------- | -------------------------------------------------------- |
+| Equal            | E                                | E                                                        |
+| NotEqual         | NE                               | NE                                                       |
+| LessThan         | L                                | B                                                        |
+| LessOrEqual      | LE                               | BE                                                       |
+| GreaterThan      | G                                | A                                                        |
+| GreaterOrEqual   | GE                               | AE                                                       |
+
+#### Converting TACKY Operands to Assembly
+
+| TACKY operand                     | Assembly operand                                                                                 |
+| --------------------------------- | ------------------------------------------------------------------------------------------------ |
+| Constant(ConstInt(int))           | Imm(int)                                                                                         |
+| Constant(ConstUInt(int))          | Imm(int)                                                                                         |
+| Constant(ConstLong(int))          | Imm(int)                                                                                         |
+| Constant(ConstULong(int))         | Imm(int)                                                                                         |
+| Constant(ConstDouble(double))     | Data(\<ident>)<br>And add top-level constant:<br>StaticConstant(\<ident>, 8, DoubleInit(Double)) |
+| Constant(ConstChar(int))          | Imm(int)                                                                                         |
+| Constant(ConstUChar(int))         | Imm(int)                                                                                         |
+| Var(identifier) (Scalar value)    | Pseudo(identifier)                                                                               |
+| Var(identifier) (Aggregate value) | PseudoMem(identifier, 0)                                                                         |
+
+#### Converting Types to Assembly
+
+| Source type                                                  | Assembly type                                                   | Alignment                  |
+| ------------------------------------------------------------ | --------------------------------------------------------------- | -------------------------- |
+| Char                                                         | Byte                                                            | 1                          |
+| SChar                                                        | Byte                                                            | 1                          |
+| UChar                                                        | Byte                                                            | 1                          |
+| Int                                                          | Longword                                                        | 4                          |
+| UInt                                                         | Longword                                                        | 4                          |
+| Long                                                         | Quadword                                                        | 8                          |
+| ULong                                                        | Quadword                                                        | 8                          |
+| Double                                                       | Double                                                          | 8                          |
+| Pointer(referenced_t)                                        | Quadword                                                        | 8                          |
+| Array(element, size) (Variables that are 16 bytes or larger) | ByteArray(\<size of element> \* size, 16)                       | 16                         |
+| Array(element, size) (Everything else)                       | ByteArray(\<size of element> \* size, \<alignment of elements>) | Same alignment as elements |
+
+### Replacing Pseudo-Operands
+
+We'll allocate 1 byte on the stack for each Byte object.
+We don't need to worry about rounding these to the right alignment, because they're all 1-byte aligned.
+And we don't deal with constant strings here, as they are now static constants, recorded in the backend symbol table.
+
+### Fixing Up Instructions
+
+The _movz_ instruction must have a register as its destination, and its source must not be an immediate value.
+
+```asm
+movzbl	$10, -4(%rbp)
+```
+
+is rewritten as:
+
+```asm
+movb 	$10, %r10b
+movzbl 	%r10b, %r11b
+movl 	%r11b, -4(%rbp)
+```
+
+If the source of a _movb_ instruction is an immediate value that can't fit in a single byte, we'll reduce it modulo 256.
+
+```asm
+movb	$258, %al
+```
+
+is rewritten as:
+
+```asm
+movb	$2, %al
+```
+
+## Code Emission
+
+#### Formatting Top-Level Assembly Constructs
+
+| Assembly top-level construct                                                                                              | Output                                                                                                                                                                                                                                                                                                           |
+| ------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Program(top_levels)                                                                                                       | Printout each top-level construct. <br> On Linux, add at the end of file <br> &nbsp;&nbsp;&nbsp;&nbsp;_.section .note.GNU-stack,"",@progbits_                                                                                                                                                                    |
+| Function(name, global, instructions)                                                                                      | &nbsp;&nbsp;&nbsp;&nbsp;\<global-directive>\<br>&nbsp;&nbsp;&nbsp;&nbsp;.text\<br>&nbsp;&nbsp;&nbsp;&nbsp;.globl \<name> <br> \<name>: <br> &nbsp;&nbsp;&nbsp;&nbsp;push&nbsp;&nbsp;&nbsp;&nbsp;%rbp<br>&nbsp;&nbsp;&nbsp;&nbsp;movq&nbsp;&nbsp;&nbsp;&nbsp;%rsp,%rbp<br>&nbsp;&nbsp;&nbsp;&nbsp;\<instructions> |
+| StaticVariable(name, global, alignment, init_list) (Initialized to zero , or any variable initialized only with ZeroInit) | &nbsp;&nbsp;&nbsp;&nbsp;\<global-directive><br>&nbsp;&nbsp;&nbsp;&nbsp;.bss<br>&nbsp;&nbsp;&nbsp;&nbsp;\<alignment-directive><br>\<name>:<br>&nbsp;&nbsp;&nbsp;&nbsp;\<init_list>                                                                                                                                |
+| StaticVariable(name, global, alignment, init) (All other variables)                                                       | &nbsp;&nbsp;&nbsp;&nbsp;\<global-directive><br>&nbsp;&nbsp;&nbsp;&nbsp;.data<br>&nbsp;&nbsp;&nbsp;&nbsp;\<alignment-directive><br>\<name>:<br>&nbsp;&nbsp;&nbsp;&nbsp;\<init_list>                                                                                                                               |
+| StaticConstant(name, alignment, init) (Linux)                                                                             | &nbsp;&nbsp;&nbsp;&nbsp;.section .rodata<br>&nbsp;&nbsp;&nbsp;&nbsp;\<alignment-directive><br>\<name>:<br>&nbsp;&nbsp;&nbsp;&nbsp;\<init>                                                                                                                                                                        |
+| StaticConstant(name, alignment, init) (MacOS 8-byte aligned constants)                                                    | &nbsp;&nbsp;&nbsp;&nbsp;.literal8<br>&nbsp;&nbsp;&nbsp;&nbsp;.balign 8<br>\<name>:<br>&nbsp;&nbsp;&nbsp;&nbsp;\<init>                                                                                                                                                                                            |
+| StaticConstant(name, alignment, init) (MacOS 16-byte aligned constants)                                                   | &nbsp;&nbsp;&nbsp;&nbsp;.literal16<br>&nbsp;&nbsp;&nbsp;&nbsp;.balign 16<br>\<name>:<br>&nbsp;&nbsp;&nbsp;&nbsp;\<init><br>&nbsp;&nbsp;&nbsp;&nbsp;.quad 0                                                                                                                                                       |
+| StaticConstant(name, alignment, init) (MacOS string constants)                                                            | **&nbsp;&nbsp;&nbsp;&nbsp;.cstring<br>\<name>:<br>&nbsp;&nbsp;&nbsp;&nbsp;\<init>**                                                                                                                                                                                                                              |
+| Global directive                                                                                                          | if global is true:<br>.globl \<identifier><br>Otherwise, omit this directive.                                                                                                                                                                                                                                    |
+| Alignment directive                                                                                                       | For Linux only: .align <alignment><br>For macOS and Linux: .balign \<alignment>                                                                                                                                                                                                                                  |
+
+#### Formatting Static Initializers
+
+| Static Initializer   | Output                                               |
+| -------------------- | ---------------------------------------------------- |
+| IntInit(0)           | .zero 4                                              |
+| IntInit(i)           | .long \<i>                                           |
+| LongInit(0)          | .zero 8                                              |
+| LongInit(i)          | .quad \<i>                                           |
+| UIntInit(0)          | .zero 4                                              |
+| UIntInit(i)          | .long \<i>                                           |
+| ULongInit(0)         | .zero 8                                              |
+| ULongInit(i)         | .quad \<i>                                           |
+| DoubleInit(d)        | .double \<d><br>OR<br>.quad \<d-interpreted-as-long> |
+| ZeroInit(n)          | .zero \<n>                                           |
+| CharInit(0)          | .zero 1                                              |
+| CharInit(i)          | .byte \<i>                                           |
+| UCharInit(0)         | .zero 1                                              |
+| UCharInit(i)         | .byte \<i>                                           |
+| StringInit(s, True)  | .asciz "\<s>"                                        |
+| StringInit(s, False) | .ascii "\<s>"                                        |
+| PointerInit(label)   | .quad \<label>                                       |
+
+#### Formatting Assembly Instructions
+
+| Assembly instruction                  | Output                                                                                 |
+| ------------------------------------- | -------------------------------------------------------------------------------------- |
+| Mov(t, src, dst)                      | mov\<t>&nbsp;&nbsp;&nbsp;&nbsp;\<src>, \<dst>                                          |
+| Movsx(src_t, dst_t, src, dst)         | movs \<src_t>\<dst_t> &nbsp;&nbsp;&nbsp;&nbsp;\<src>, \<dst>                           |
+| MovZeroExtend(src_t, dst_t, src, dst) | movz\<src_t>\<dst_t>&nbsp;&nbsp;&nbsp;&nbsp;\<src>, \<dst>                             |
+| Cvtsi2sd(t, src, dst)                 | cvtsi2sd\<t> &nbsp;&nbsp;&nbsp;&nbsp;\<src>, \<dst>                                    |
+| Cvttsd2si(t, src, dst)                | cvttsd2si\<t> &nbsp;&nbsp;&nbsp;&nbsp;\<src>, \<dst>                                   |
+| Ret                                   | ret                                                                                    |
+| Unary(unary_operator, t, operand)     | \<unary_operator>\<t>&nbsp;&nbsp;&nbsp;&nbsp;\<operand>                                |
+| Binary(binary_operator, t, src, dst)  | \<binary_operator>\<t>&nbsp;&nbsp;&nbsp;&nbsp;\<src>, \<dst>                           |
+| Binary(Xor, Double, src, dst)         | xorpd&nbsp;&nbsp;&nbsp;&nbsp;\<src>, \<dst>                                            |
+| Binary(Mult, Double, src, dst)        | mulsd&nbsp;&nbsp;&nbsp;&nbsp;\<src>, \<dst>                                            |
+| Idiv(t, operand)                      | idiv \<t>&nbsp;&nbsp;&nbsp;&nbsp;\<operand>                                            |
+| Div(t, operand)                       | div \<t>&nbsp;&nbsp;&nbsp;&nbsp;\<operand>                                             |
+| Cdq(Longword)                         | cdq                                                                                    |
+| Cdq(Quadword)                         | cdo                                                                                    |
+| Cmp(t, operand, operand)              | cmp \<t>&nbsp;&nbsp;&nbsp;&nbsp;\<operand>, \<operand>                                 |
+| Cmp(Double, operand, operand)         | comisd&nbsp;&nbsp;&nbsp;&nbsp;\<operand>, \<operand>                                   |
+| Jmp(label)                            | jmp&nbsp;&nbsp;&nbsp;&nbsp;.L\<label>                                                  |
+| JmpCC(cond_code, label)               | j\<cond_code>&nbsp;&nbsp;&nbsp;&nbsp;.L\<label>                                        |
+| SetCC(cond_code, operand)             | set\<cond_code>&nbsp;&nbsp;&nbsp;&nbsp;\<operand>                                      |
+| Label(label)                          | .L\<label>:                                                                            |
+| Push(operand)                         | pushq&nbsp;&nbsp;&nbsp;&nbsp;\<operand>                                                |
+| Call(label)                           | call&nbsp;&nbsp;&nbsp;&nbsp;\<label><br>or<br>call&nbsp;&nbsp;&nbsp;&nbsp;\<label>@PLT |
+| Lea(src, dst)                         | leaq&nbsp;&nbsp;&nbsp;&nbsp;\<src>, \<dst>                                             |
+
+#### Formatting Names for Assembly Operators
+
+| Assembly operator | Instruction name |
+| ----------------- | ---------------- |
+| Neg               | neg              |
+| Not               | not              |
+| Add               | add              |
+| Sub               | sub              |
+| Mult              | imul             |
+| Shr               | shr              |
+| DivDouble         | div              |
+| And               | and              |
+| Or                | or               |
+
+#### Instruction Suffixes for Condition Codes
+
+| Condition code | Instruction suffix |
+| -------------- | ------------------ |
+| E              | e                  |
+| NE             | ne                 |
+| L              | l                  |
+| LE             | le                 |
+| G              | g                  |
+| GE             | ge                 |
+| B              | b                  |
+| BE             | be                 |
+| A              | a                  |
+| AE             | ae                 |
+
+#### Instruction Suffixes for Assembly Types
+
+| Assembly Type | Instruction suffix |
+| ------------- | ------------------ |
+| Longword      | l                  |
+| Quadword      | q                  |
+| Double        | sd                 |
+| Byte          | b                  |
+
+#### Formatting Assembly Operands
+
+| Assembly operand         | Output                     |
+| ------------------------ | -------------------------- |
+| Reg(AX) 8-byte           | %rax                       |
+| Reg(AX) 4-byte           | %eax                       |
+| Reg(AX) 1-byte           | %al                        |
+| Reg(DX) 8-byte           | %rdx                       |
+| Reg(DX) 4-byte           | %edx                       |
+| Reg(DX) 1-byte           | %dl                        |
+| Reg(CX) 8-byte           | %rcx                       |
+| Reg(CX) 4-byte           | %ecx                       |
+| Reg(CX) 1-byte           | %cl                        |
+| Reg(DI) 8-byte           | %rdi                       |
+| Reg(DI) 4-byte           | %edi                       |
+| Reg(DI) 1-byte           | %dil                       |
+| Reg(SI) 8-byte           | %rsi                       |
+| Reg(SI) 4-byte           | %esi                       |
+| Reg(SI) 1-byte           | %sil                       |
+| Reg(R8) 8-byte           | %r8                        |
+| Reg(R8) 4-byte           | %r8d                       |
+| Reg(R8) 1-byte           | %r8b                       |
+| Reg(R9) 8-byte           | %r9                        |
+| Reg(R9) 4-byte           | %r9d                       |
+| Reg(R9) 1-byte           | %r9b                       |
+| Reg(R10) 8-byte          | %r10                       |
+| Reg(R10) 4-byte          | %r10d                      |
+| Reg(R10) 1-byte          | %r10b                      |
+| Reg(R11) 8-byte          | %r11                       |
+| Reg(R11) 4-byte          | %r11d                      |
+| Reg(R11) 1-byte          | %r11b                      |
+| Reg(SP)                  | %rsp                       |
+| Reg(BP)                  | %rbp                       |
+| Reg(XMM0)                | %xmm0                      |
+| Reg(XMM1)                | %xmm1                      |
+| Reg(XMM2)                | %xmm2                      |
+| Reg(XMM3)                | %xmm3                      |
+| Reg(XMM4)                | %xmm4                      |
+| Reg(XMM5)                | %xmm5                      |
+| Reg(XMM6)                | %xmm6                      |
+| Reg(XMM7)                | %xmm7                      |
+| Reg(XMM8)                | %xmm8                      |
+| Reg(XMM9)                | %xmm9                      |
+| Reg(XMM10)               | %xmm10                     |
+| Reg(XMM11)               | %xmm11                     |
+| Reg(XMM12)               | %xmm12                     |
+| Reg(XMM13)               | %xmm13                     |
+| Reg(XMM14)               | %xmm14                     |
+| Reg(XMM15)               | %xmm15                     |
+| Memory(reg, int)         | \<int>(reg)                |
+| Imm(int)                 | $\<int>                    |
+| Indexed(reg1, reg2, int) | (\<reg1>, \<reg2>, \<int>) |
+
+## Summary
+
+In this chapter, we implemented the void type and the sizeof operator.
+We learned about the difference between complete and incomplete types and the ways that C programs can use void expressions.
+
+The next chapter, chapter 18, will marks our finish line upon Part II by adding structure types.
+Structures are the last language feature you'll implement in the book, and perhaps the most challenging.
+
+### Reference Implementation Analysis
+
+[Chapter 17 Code Analysis](./code_analysis/chapter_17.md)

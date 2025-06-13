@@ -1252,52 +1252,81 @@ TEST_CASE(Chapter16ValidTackyGenExtraCredit, "chapter_16", "--tacky")
     }
 }
 
-// // Chapter 17
-// TEST_CASE(Chapter17ValidTackyGen, "chapter_17", "--tacky")
-// {
-//     std::vector<std::string> srcFiles = {};
-//     Settings settings;
+// Chapter 17
+TEST_CASE(Chapter17ValidTackyGen, "chapter_17", "--tacky")
+{
+    std::vector<std::string> srcFiles = {
+        "tests/chapter_17/valid/libraries/pass_alloced_memory.c",
+        "tests/chapter_17/valid/libraries/pass_alloced_memory_client.c",
+        "tests/chapter_17/valid/libraries/sizeof_extern.c",
+        "tests/chapter_17/valid/libraries/sizeof_extern_client.c",
+        "tests/chapter_17/valid/libraries/test_for_memory_leaks.c",
+        "tests/chapter_17/valid/libraries/test_for_memory_leaks_client.c",
+        "tests/chapter_17/valid/sizeof/simple.c",
+        "tests/chapter_17/valid/sizeof/sizeof_array.c",
+        "tests/chapter_17/valid/sizeof/sizeof_basic_types.c",
+        "tests/chapter_17/valid/sizeof/sizeof_consts.c",
+        "tests/chapter_17/valid/sizeof/sizeof_derived_types.c",
+        "tests/chapter_17/valid/sizeof/sizeof_expressions.c",
+        "tests/chapter_17/valid/sizeof/sizeof_not_evaluated.c",
+        "tests/chapter_17/valid/sizeof/sizeof_result_is_ulong.c",
+        "tests/chapter_17/valid/void/cast_to_void.c",
+        "tests/chapter_17/valid/void/ternary.c",
+        "tests/chapter_17/valid/void/void_for_loop.c",
+        "tests/chapter_17/valid/void/void_function.c",
+        "tests/chapter_17/valid/void_pointer/array_of_pointers_to_void.c",
+        "tests/chapter_17/valid/void_pointer/common_pointer_type.c",
+        "tests/chapter_17/valid/void_pointer/conversion_by_assignment.c",
+        "tests/chapter_17/valid/void_pointer/explicit_cast.c",
+        "tests/chapter_17/valid/void_pointer/memory_management_functions.c",
+        "tests/chapter_17/valid/void_pointer/simple.c",
+    };
+    Settings settings;
 
-//     for (const auto &srcFile : srcFiles)
-//     {
-//         Compiler compiler;
-//         try
-//         {
-//             int status = compiler.compile(Stage::Tacky, std::vector<std::string>{srcFile});
-//             // Check that the compilation succeeded
-//             ASSERT_TRUE(status == 0);
-//         }
-//         catch (const std::exception &e)
-//         {
-//             std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
-//             throw;
-//         }
-//     }
-// }
+    for (const auto &srcFile : srcFiles)
+    {
+        Compiler compiler;
+        try
+        {
+            int status = compiler.compile(Stage::Tacky, std::vector<std::string>{srcFile});
+            // Check that the compilation succeeded
+            ASSERT_TRUE(status == 0);
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+            throw;
+        }
+    }
+}
 
-// TEST_CASE(Chapter17ValidTackyGenExtraCredit, "chapter_17", "--tacky")
-// {
-//     std::vector<std::string> srcFiles = {
+TEST_CASE(Chapter17ValidTackyGenExtraCredit, "chapter_17", "--tacky")
+{
+    std::vector<std::string> srcFiles = {
+        "tests/chapter_17/valid/extra_credit/sizeof_bitwise.c",
+        "tests/chapter_17/valid/extra_credit/sizeof_compound.c",
+        "tests/chapter_17/valid/extra_credit/sizeof_compound_bitwise.c",
+        "tests/chapter_17/valid/extra_credit/sizeof_incr.c",
+    };
+    Settings settings;
 
-//     };
-//     Settings settings;
+    for (const auto &srcFile : srcFiles)
+    {
+        Compiler compiler;
+        try
+        {
+            int status = compiler.compile(Stage::Tacky, std::vector<std::string>{srcFile});
+            // Check that the compilation succeeded
+            ASSERT_TRUE(status == 0);
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+            throw;
+        }
+    }
+}
 
-//     for (const auto &srcFile : srcFiles)
-//     {
-//         Compiler compiler;
-//         try
-//         {
-//             int status = compiler.compile(Stage::Tacky, std::vector<std::string>{srcFile});
-//             // Check that the compilation succeeded
-//             ASSERT_TRUE(status == 0);
-//         }
-//         catch (const std::exception &e)
-//         {
-//             std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
-//             throw;
-//         }
-//     }
-// }
 // // Chapter 18
 // TEST_CASE(Chapter18ValidTackyGen, "chapter_18", "--tacky")
 // {

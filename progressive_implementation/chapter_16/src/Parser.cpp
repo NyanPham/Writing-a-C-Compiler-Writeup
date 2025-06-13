@@ -28,7 +28,7 @@ EBNF for a subset of C:
 <param-list> ::= "(" "void" ")" | "(" <param> { "," <param> } ")"
 <param> ::= { <type-specifier> }+ <declarator>
 <simple-declarator> ::= <identifier> | "(" <declarator> ")"
-<type-specifier> ::= "int" | "long" | "signed" | "unsigned" | "double"
+<type-specifier> ::= "int" | "long" | "signed" | "unsigned" | "double" | "char"
 <specifier> ::= <type-specifier> | "static" | "extern"
 <block> ::= "{" { <block-item> } "}"
 <block-item> ::= <statement> | <declaration>
@@ -56,6 +56,7 @@ EBNF for a subset of C:
     | "(" <exp> ")"
     | <identifier> "(" [ <argument-list> ] ")"
     | "(" { <type-specifier> }+ ")" [ <abstract-declarator> ] <factor>
+    | { <string> }+
 <argument-list> ::= <exp> { "," <exp> }
 <abstract-declarator> ::= "*" [ <abstract-declarator> ]
     | <direct-abstract-declarator>
@@ -67,9 +68,11 @@ EBNF for a subset of C:
         | ">" | ">="
         | "&" | "^" | "|" | "<<" | ">>"
         | "=" | "+=" | "-=" | "*=" | "/=" | "%=" | "&=" | "|=" | "^=" | "<<=" | ">>="
-<const> ::= <int> | <long> | <uint> | <ulong> | <double>
+<const> ::= <int> | <long> | <uint> | <ulong> | <double> | <char>
 <identifier> ::= ? An identifier token ?
+<string> ::= ? A string token ?
 <int> ::= ? An integer token ?
+<char> ::= ? A char token ?
 <long> ::= ? An int or long token ?
 <uint> ::= ? An unsigned int token ?
 <ulong> ::= ? An unsigned int or unsigned long token ?
