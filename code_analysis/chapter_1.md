@@ -212,7 +212,7 @@ take_token():
 ```
 
 ```
-parse_identifier():
+parse_id():
     curr_token = take_token()    
     if curr_token.type == TokenType.Identifier:
         return curr_token.value
@@ -239,7 +239,7 @@ parse_exp():
 parse_function_definition():
     expect(TokenType.KWInt)
     
-    fun_name = parse_identifier()
+    fun_name = parse_id()
     
     expect(TokenType.OpenParen)
     expect(TokenType.KWVoid)

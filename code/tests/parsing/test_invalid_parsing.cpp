@@ -686,11 +686,80 @@ TEST_CASE(Chapter17InvalidParse, "chapter_17", "--parse")
     }
 }
 
-// // Chapter 18
-// TEST_CASE(Chapter18InvalidParse, "chapter_18", "--parse")
+// Chapter 18
+TEST_CASE(Chapter18InvalidParse, "chapter_18", "--parse")
+{
+    std::vector<std::string> srcFiles = {
+        "tests/chapter_18/invalid_parse/arrow_missing_member.c",
+        "tests/chapter_18/invalid_parse/dot_invalid_member.c",
+        "tests/chapter_18/invalid_parse/dot_no_left_expr.c",
+        "tests/chapter_18/invalid_parse/dot_operator_in_declarator.c",
+        "tests/chapter_18/invalid_parse/empty_initializer_list.c",
+        "tests/chapter_18/invalid_parse/misplaced_storage_class.c",
+        "tests/chapter_18/invalid_parse/struct_decl_double_semicolon.c",
+        "tests/chapter_18/invalid_parse/struct_decl_empty_member_list.c",
+        "tests/chapter_18/invalid_parse/struct_decl_extra_semicolon.c",
+        "tests/chapter_18/invalid_parse/struct_decl_kw_wrong_order.c",
+        "tests/chapter_18/invalid_parse/struct_decl_missing_end_semicolon.c",
+        "tests/chapter_18/invalid_parse/struct_decl_tag_kw.c",
+        "tests/chapter_18/invalid_parse/struct_decl_two_kws.c",
+        "tests/chapter_18/invalid_parse/struct_member_initializer.c",
+        "tests/chapter_18/invalid_parse/struct_member_is_function.c",
+        "tests/chapter_18/invalid_parse/struct_member_name_kw.c",
+        "tests/chapter_18/invalid_parse/struct_member_no_declarator.c",
+        "tests/chapter_18/invalid_parse/struct_member_no_semicolon.c",
+        "tests/chapter_18/invalid_parse/struct_member_no_type.c",
+        "tests/chapter_18/invalid_parse/struct_member_storage_class.c",
+        "tests/chapter_18/invalid_parse/var_decl_bad_tag_1.c",
+        "tests/chapter_18/invalid_parse/var_decl_bad_tag_2.c",
+        "tests/chapter_18/invalid_parse/var_decl_bad_type_specifier.c",
+        "tests/chapter_18/invalid_parse/var_decl_missing_struct_kw.c",
+        "tests/chapter_18/invalid_parse/var_decl_two_struct_kws.c",
+        "tests/chapter_18/invalid_parse/var_decl_two_tags.c",
+    };
+    Settings settings;
+
+    for (const auto &srcFile : srcFiles)
+    {
+        Compiler compiler;
+        try
+        {
+            int status = compiler.compile(Stage::Parsing, std::vector<std::string>{srcFile});
+            ASSERT_TRUE(status != 0);
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+            throw;
+        }
+    }
+}
+
+// TEST_CASE(Chapter18InvalidParseExtraCredit, "chapter_18", "--parse")
 // {
 //     std::vector<std::string> srcFiles = {
-
+//         "tests/chapter_18/invalid_parse/extra_credit/case_struct_decl.c",
+//         "tests/chapter_18/invalid_parse/extra_credit/default_kw_member_name.c",
+//         "tests/chapter_18/invalid_parse/extra_credit/goto_kw_struct_tag.c",
+//         "tests/chapter_18/invalid_parse/extra_credit/labeled_struct_decl.c",
+//         "tests/chapter_18/invalid_parse/extra_credit/label_inside_struct_decl.c",
+//         "tests/chapter_18/invalid_parse/extra_credit/struct_union.c",
+//         "tests/chapter_18/invalid_parse/extra_credit/two_union_kws.c",
+//         "tests/chapter_18/invalid_parse/extra_credit/union_bad_type_spec.c",
+//         "tests/chapter_18/invalid_parse/extra_credit/union_decl_bad_type_specifier.c",
+//         "tests/chapter_18/invalid_parse/extra_credit/union_decl_empty_member_list.c",
+//         "tests/chapter_18/invalid_parse/extra_credit/union_decl_extra_semicolon.c",
+//         "tests/chapter_18/invalid_parse/extra_credit/union_empty_initializer.c",
+//         "tests/chapter_18/invalid_parse/extra_credit/union_member_initializer.c",
+//         "tests/chapter_18/invalid_parse/extra_credit/union_member_is_function.c",
+//         "tests/chapter_18/invalid_parse/extra_credit/union_member_name_kw.c",
+//         "tests/chapter_18/invalid_parse/extra_credit/union_member_no_declarator.c",
+//         "tests/chapter_18/invalid_parse/extra_credit/union_member_no_type.c",
+//         "tests/chapter_18/invalid_parse/extra_credit/union_member_storage_class.c",
+//         "tests/chapter_18/invalid_parse/extra_credit/union_struct_tag.c",
+//         "tests/chapter_18/invalid_parse/extra_credit/union_two_tags.c",
+//         "tests/chapter_18/invalid_parse/extra_credit/union_var_bad_tag.c",
+//         "tests/chapter_18/invalid_parse/extra_credit/union_var_tag_paren.c",
 //     };
 //     Settings settings;
 

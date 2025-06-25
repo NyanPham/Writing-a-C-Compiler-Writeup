@@ -345,7 +345,7 @@ parse_statement(tokens):
 			return AST.If(condition, then_clause, else_clause)
 		case "goto":
 			take_token(tokens)
-			lbl = parse_identifier(tokens)
+			lbl = parse_id(tokens)
 			expect(";", tokens)
 			
 			return Goto(lbl)

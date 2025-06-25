@@ -1327,33 +1327,174 @@ TEST_CASE(Chapter17ValidTackyGenExtraCredit, "chapter_17", "--tacky")
     }
 }
 
-// // Chapter 18
-// TEST_CASE(Chapter18ValidTackyGen, "chapter_18", "--tacky")
-// {
-//     std::vector<std::string> srcFiles = {};
-//     Settings settings;
+// Chapter 18
+TEST_CASE(Chapter18ValidTackyGen, "chapter_18", "--tacky")
+{
+    std::vector<std::string> srcFiles = {
+        //"tests/chapter_18/valid/no_structure_parameters/README.md",
+        "tests/chapter_18/valid/no_structure_parameters/libraries/array_of_structs.c",
+        // "tests/chapter_18/valid/no_structure_parameters/libraries/array_of_structs.h",
+        "tests/chapter_18/valid/no_structure_parameters/libraries/array_of_structs_client.c",
+        "tests/chapter_18/valid/no_structure_parameters/libraries/global_struct.c",
+        // "tests/chapter_18/valid/no_structure_parameters/libraries/global_struct.h",
+        "tests/chapter_18/valid/no_structure_parameters/libraries/global_struct_client.c",
+        "tests/chapter_18/valid/no_structure_parameters/libraries/opaque_struct.c",
+        "tests/chapter_18/valid/no_structure_parameters/libraries/opaque_struct_client.c",
+        "tests/chapter_18/valid/no_structure_parameters/libraries/param_struct_pointer.c",
+        // "tests/chapter_18/valid/no_structure_parameters/libraries/param_struct_pointer.h",
+        "tests/chapter_18/valid/no_structure_parameters/libraries/param_struct_pointer_client.c",
+        "tests/chapter_18/valid/no_structure_parameters/libraries/return_struct_pointer.c",
+        // "tests/chapter_18/valid/no_structure_parameters/libraries/return_struct_pointer.h",
+        "tests/chapter_18/valid/no_structure_parameters/libraries/return_struct_pointer_client.c",
+        "tests/chapter_18/valid/no_structure_parameters/libraries/initializers/auto_struct_initializers.c",
+        // "tests/chapter_18/valid/no_structure_parameters/libraries/initializers/auto_struct_initializers.h",
+        "tests/chapter_18/valid/no_structure_parameters/libraries/initializers/auto_struct_initializers_client.c",
+        "tests/chapter_18/valid/no_structure_parameters/libraries/initializers/nested_auto_struct_initializers.c",
+        // "tests/chapter_18/valid/no_structure_parameters/libraries/initializers/nested_auto_struct_initializers.h",
+        "tests/chapter_18/valid/no_structure_parameters/libraries/initializers/nested_auto_struct_initializers_client.c",
+        "tests/chapter_18/valid/no_structure_parameters/libraries/initializers/nested_static_struct_initializers.c",
+        // "tests/chapter_18/valid/no_structure_parameters/libraries/initializers/nested_static_struct_initializers.h",
+        "tests/chapter_18/valid/no_structure_parameters/libraries/initializers/nested_static_struct_initializers_client.c",
+        "tests/chapter_18/valid/no_structure_parameters/libraries/initializers/static_struct_initializers.c",
+        // "tests/chapter_18/valid/no_structure_parameters/libraries/initializers/static_struct_initializers.h",
+        "tests/chapter_18/valid/no_structure_parameters/libraries/initializers/static_struct_initializers_client.c",
+        "tests/chapter_18/valid/no_structure_parameters/parse_and_lex/postfix_precedence.c",
+        "tests/chapter_18/valid/no_structure_parameters/parse_and_lex/space_around_struct_member.c",
+        "tests/chapter_18/valid/no_structure_parameters/parse_and_lex/struct_member_looks_like_const.c",
+        "tests/chapter_18/valid/no_structure_parameters/parse_and_lex/trailing_comma.c",
+        "tests/chapter_18/valid/no_structure_parameters/scalar_member_access/arrow.c",
+        "tests/chapter_18/valid/no_structure_parameters/scalar_member_access/dot.c",
+        "tests/chapter_18/valid/no_structure_parameters/scalar_member_access/linked_list.c",
+        "tests/chapter_18/valid/no_structure_parameters/scalar_member_access/nested_struct.c",
+        "tests/chapter_18/valid/no_structure_parameters/scalar_member_access/static_structs.c",
+        "tests/chapter_18/valid/no_structure_parameters/semantic_analysis/cast_struct_to_void.c",
+        "tests/chapter_18/valid/no_structure_parameters/semantic_analysis/incomplete_structs.c",
+        "tests/chapter_18/valid/no_structure_parameters/semantic_analysis/namespaces.c",
+        "tests/chapter_18/valid/no_structure_parameters/semantic_analysis/resolve_tags.c",
+        "tests/chapter_18/valid/no_structure_parameters/size_and_offset_calculations/member_comparisons.c",
+        "tests/chapter_18/valid/no_structure_parameters/size_and_offset_calculations/member_offsets.c",
+        "tests/chapter_18/valid/no_structure_parameters/size_and_offset_calculations/sizeof_exps.c",
+        "tests/chapter_18/valid/no_structure_parameters/size_and_offset_calculations/sizeof_type.c",
+        // "tests/chapter_18/valid/no_structure_parameters/size_and_offset_calculations/struct_sizes.h",
+        "tests/chapter_18/valid/no_structure_parameters/smoke_tests/simple.c",
+        "tests/chapter_18/valid/no_structure_parameters/smoke_tests/static_vs_auto.c",
+        "tests/chapter_18/valid/no_structure_parameters/struct_copy/copy_struct.c",
+        "tests/chapter_18/valid/no_structure_parameters/struct_copy/copy_struct_through_pointer.c",
+        "tests/chapter_18/valid/no_structure_parameters/struct_copy/copy_struct_with_arrow_operator.c",
+        "tests/chapter_18/valid/no_structure_parameters/struct_copy/copy_struct_with_dot_operator.c",
+        "tests/chapter_18/valid/no_structure_parameters/struct_copy/stack_clobber.c",
+        // "tests/chapter_18/valid/no_structure_parameters/struct_copy/structs.h",
+        //"tests/chapter_18/valid/parameters/data_on_page_boundary_linux.s",
+        //"tests/chapter_18/valid/parameters/data_on_page_boundary_osx.s",
+        "tests/chapter_18/valid/parameters/incomplete_param_type.c",
+        "tests/chapter_18/valid/parameters/pass_args_on_page_boundary.c",
+        "tests/chapter_18/valid/parameters/simple.c",
+        "tests/chapter_18/valid/parameters/stack_clobber.c",
+        "tests/chapter_18/valid/parameters/libraries/classify_params.c",
+        // "tests/chapter_18/valid/parameters/libraries/classify_params.h",
+        "tests/chapter_18/valid/parameters/libraries/classify_params_client.c",
+        "tests/chapter_18/valid/parameters/libraries/modify_param.c",
+        // "tests/chapter_18/valid/parameters/libraries/modify_param.h",
+        "tests/chapter_18/valid/parameters/libraries/modify_param_client.c",
+        "tests/chapter_18/valid/parameters/libraries/param_calling_conventions.c",
+        // "tests/chapter_18/valid/parameters/libraries/param_calling_conventions.h",
+        "tests/chapter_18/valid/parameters/libraries/param_calling_conventions_client.c",
+        "tests/chapter_18/valid/parameters/libraries/pass_struct.c",
+        // "tests/chapter_18/valid/parameters/libraries/pass_struct.h",
+        "tests/chapter_18/valid/parameters/libraries/pass_struct_client.c",
+        "tests/chapter_18/valid/parameters/libraries/struct_sizes.c",
+        // "tests/chapter_18/valid/parameters/libraries/struct_sizes.h",
+        "tests/chapter_18/valid/parameters/libraries/struct_sizes_client.c",
+        //"tests/chapter_18/valid/params_and_returns/big_data_on_page_boundary_linux.s",
+        //"tests/chapter_18/valid/params_and_returns/big_data_on_page_boundary_osx.s",
+        //"tests/chapter_18/valid/params_and_returns/data_on_page_boundary_linux.s",
+        //"tests/chapter_18/valid/params_and_returns/data_on_page_boundary_osx.s",
+        "tests/chapter_18/valid/params_and_returns/ignore_retval.c",
+        "tests/chapter_18/valid/params_and_returns/return_big_struct_on_page_boundary.c",
+        "tests/chapter_18/valid/params_and_returns/return_incomplete_type.c",
+        //"tests/chapter_18/valid/params_and_returns/return_space_address_overlap_linux.s",
+        //"tests/chapter_18/valid/params_and_returns/return_space_address_overlap_osx.s",
+        "tests/chapter_18/valid/params_and_returns/return_space_overlap.c",
+        "tests/chapter_18/valid/params_and_returns/return_struct_on_page_boundary.c",
+        "tests/chapter_18/valid/params_and_returns/simple.c",
+        "tests/chapter_18/valid/params_and_returns/stack_clobber.c",
+        "tests/chapter_18/valid/params_and_returns/temporary_lifetime.c",
+        "tests/chapter_18/valid/params_and_returns/libraries/access_retval_members.c",
+        // "tests/chapter_18/valid/params_and_returns/libraries/access_retval_members.h",
+        "tests/chapter_18/valid/params_and_returns/libraries/access_retval_members_client.c",
+        "tests/chapter_18/valid/params_and_returns/libraries/missing_retval.c",
+        // "tests/chapter_18/valid/params_and_returns/libraries/missing_retval.h",
+        "tests/chapter_18/valid/params_and_returns/libraries/missing_retval_client.c",
+        "tests/chapter_18/valid/params_and_returns/libraries/return_calling_conventions.c",
+        // "tests/chapter_18/valid/params_and_returns/libraries/return_calling_conventions.h",
+        "tests/chapter_18/valid/params_and_returns/libraries/return_calling_conventions_client.c",
+        "tests/chapter_18/valid/params_and_returns/libraries/retval_struct_sizes.c",
+        // "tests/chapter_18/valid/params_and_returns/libraries/retval_struct_sizes.h",
+        "tests/chapter_18/valid/params_and_returns/libraries/retval_struct_sizes_client.c",
+    };
+    Settings settings;
 
-//     for (const auto &srcFile : srcFiles)
-//     {
-//         Compiler compiler;
-//         try
-//         {
-//             int status = compiler.compile(Stage::Tacky, std::vector<std::string>{srcFile});
-//             // Check that the compilation succeeded
-//             ASSERT_TRUE(status == 0);
-//         }
-//         catch (const std::exception &e)
-//         {
-//             std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
-//             throw;
-//         }
-//     }
-// }
+    for (const auto &srcFile : srcFiles)
+    {
+        Compiler compiler;
+        try
+        {
+            std::cout << "Compiling the file " << srcFile << " ...\n";
+            int status = compiler.compile(Stage::Tacky, std::vector<std::string>{srcFile});
+            // Check that the compilation succeeded
+            ASSERT_TRUE(status == 0);
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+            throw;
+        }
+    }
+}
 
 // TEST_CASE(Chapter18ValidTackyGenExtraCredit, "chapter_18", "--tacky")
 // {
 //     std::vector<std::string> srcFiles = {
-
+//         "tests/chapter_18/valid/extra_credit/README.md",
+//         "tests/chapter_18/valid/extra_credit/union_types.h",
+//         "tests/chapter_18/valid/extra_credit/libraries/classify_unions.c",
+//         "tests/chapter_18/valid/extra_credit/libraries/classify_unions_client.c",
+//         "tests/chapter_18/valid/extra_credit/libraries/param_passing.c",
+//         "tests/chapter_18/valid/extra_credit/libraries/param_passing_client.c",
+//         "tests/chapter_18/valid/extra_credit/libraries/static_union_inits.c",
+//         "tests/chapter_18/valid/extra_credit/libraries/static_union_inits.h",
+//         "tests/chapter_18/valid/extra_credit/libraries/static_union_inits_client.c",
+//         "tests/chapter_18/valid/extra_credit/libraries/union_inits.c",
+//         "tests/chapter_18/valid/extra_credit/libraries/union_inits.h",
+//         "tests/chapter_18/valid/extra_credit/libraries/union_inits_client.c",
+//         "tests/chapter_18/valid/extra_credit/libraries/union_lib.h",
+//         "tests/chapter_18/valid/extra_credit/libraries/union_retvals.c",
+//         "tests/chapter_18/valid/extra_credit/libraries/union_retvals_client.c",
+//         "tests/chapter_18/valid/extra_credit/member_access/nested_union_access.c",
+//         "tests/chapter_18/valid/extra_credit/member_access/static_union_access.c",
+//         "tests/chapter_18/valid/extra_credit/member_access/union_init_and_member_access.c",
+//         "tests/chapter_18/valid/extra_credit/member_access/union_temp_lifetime.c",
+//         "tests/chapter_18/valid/extra_credit/other_features/bitwise_ops_struct_members.c",
+//         "tests/chapter_18/valid/extra_credit/other_features/compound_assign_struct_members.c",
+//         "tests/chapter_18/valid/extra_credit/other_features/decr_arrow_lexing.c",
+//         "tests/chapter_18/valid/extra_credit/other_features/incr_struct_members.c",
+//         "tests/chapter_18/valid/extra_credit/other_features/label_tag_member_namespace.c",
+//         "tests/chapter_18/valid/extra_credit/other_features/struct_decl_in_switch_statement.c",
+//         "tests/chapter_18/valid/extra_credit/semantic_analysis/cast_union_to_void.c",
+//         "tests/chapter_18/valid/extra_credit/semantic_analysis/decl_shadows_decl.c",
+//         "tests/chapter_18/valid/extra_credit/semantic_analysis/incomplete_union_types.c",
+//         "tests/chapter_18/valid/extra_credit/semantic_analysis/redeclare_union.c",
+//         "tests/chapter_18/valid/extra_credit/semantic_analysis/struct_shadows_union.c",
+//         "tests/chapter_18/valid/extra_credit/semantic_analysis/union_members_same_type.c",
+//         "tests/chapter_18/valid/extra_credit/semantic_analysis/union_namespace.c",
+//         "tests/chapter_18/valid/extra_credit/semantic_analysis/union_self_pointer.c",
+//         "tests/chapter_18/valid/extra_credit/semantic_analysis/union_shadows_struct.c",
+//         "tests/chapter_18/valid/extra_credit/size_and_offset/compare_union_pointers.c",
+//         "tests/chapter_18/valid/extra_credit/size_and_offset/union_sizes.c",
+//         "tests/chapter_18/valid/extra_credit/union_copy/assign_to_union.c",
+//         "tests/chapter_18/valid/extra_credit/union_copy/copy_non_scalar_members.c",
+//         "tests/chapter_18/valid/extra_credit/union_copy/copy_thru_pointer.c",
+//         "tests/chapter_18/valid/extra_credit/union_copy/unions_in_conditionals.c",
 //     };
 //     Settings settings;
 
@@ -1373,6 +1514,7 @@ TEST_CASE(Chapter17ValidTackyGenExtraCredit, "chapter_17", "--tacky")
 //         }
 //     }
 // }
+
 // // Chapter 19
 // TEST_CASE(Chapter19ValidTackyGen, "chapter_19", "--tacky")
 // {
