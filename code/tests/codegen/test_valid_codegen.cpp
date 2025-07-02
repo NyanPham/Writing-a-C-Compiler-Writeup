@@ -1430,8 +1430,10 @@ TEST_CASE(Chapter18ValidCodeGen, "chapter_18", "--codegen")
     Settings settings;
     Compiler compiler;
 
-    for (const auto &srcFile : srcFiles)
+#pragma omp parallel for schedule(dynamic)
+    for (int i = 0; i < static_cast<int>(srcFiles.size()); ++i)
     {
+        const std::string &srcFile = srcFiles[i];
         try
         {
             std::cout << "Compiling file " << srcFile << '\n';
@@ -1447,68 +1449,70 @@ TEST_CASE(Chapter18ValidCodeGen, "chapter_18", "--codegen")
     }
 }
 
-// TEST_CASE(Chapter18ValidCodeGenExtraCredit, "chapter_18", "--codegen")
-// {
-//     std::vector<std::string> srcFiles = {
-//         "tests/chapter_18/valid/extra_credit/README.md",
-//         "tests/chapter_18/valid/extra_credit/union_types.h",
-//         "tests/chapter_18/valid/extra_credit/libraries/classify_unions.c",
-//         "tests/chapter_18/valid/extra_credit/libraries/classify_unions_client.c",
-//         "tests/chapter_18/valid/extra_credit/libraries/param_passing.c",
-//         "tests/chapter_18/valid/extra_credit/libraries/param_passing_client.c",
-//         "tests/chapter_18/valid/extra_credit/libraries/static_union_inits.c",
-//         "tests/chapter_18/valid/extra_credit/libraries/static_union_inits.h",
-//         "tests/chapter_18/valid/extra_credit/libraries/static_union_inits_client.c",
-//         "tests/chapter_18/valid/extra_credit/libraries/union_inits.c",
-//         "tests/chapter_18/valid/extra_credit/libraries/union_inits.h",
-//         "tests/chapter_18/valid/extra_credit/libraries/union_inits_client.c",
-//         "tests/chapter_18/valid/extra_credit/libraries/union_lib.h",
-//         "tests/chapter_18/valid/extra_credit/libraries/union_retvals.c",
-//         "tests/chapter_18/valid/extra_credit/libraries/union_retvals_client.c",
-//         "tests/chapter_18/valid/extra_credit/member_access/nested_union_access.c",
-//         "tests/chapter_18/valid/extra_credit/member_access/static_union_access.c",
-//         "tests/chapter_18/valid/extra_credit/member_access/union_init_and_member_access.c",
-//         "tests/chapter_18/valid/extra_credit/member_access/union_temp_lifetime.c",
-//         "tests/chapter_18/valid/extra_credit/other_features/bitwise_ops_struct_members.c",
-//         "tests/chapter_18/valid/extra_credit/other_features/compound_assign_struct_members.c",
-//         "tests/chapter_18/valid/extra_credit/other_features/decr_arrow_lexing.c",
-//         "tests/chapter_18/valid/extra_credit/other_features/incr_struct_members.c",
-//         "tests/chapter_18/valid/extra_credit/other_features/label_tag_member_namespace.c",
-//         "tests/chapter_18/valid/extra_credit/other_features/struct_decl_in_switch_statement.c",
-//         "tests/chapter_18/valid/extra_credit/semantic_analysis/cast_union_to_void.c",
-//         "tests/chapter_18/valid/extra_credit/semantic_analysis/decl_shadows_decl.c",
-//         "tests/chapter_18/valid/extra_credit/semantic_analysis/incomplete_union_types.c",
-//         "tests/chapter_18/valid/extra_credit/semantic_analysis/redeclare_union.c",
-//         "tests/chapter_18/valid/extra_credit/semantic_analysis/struct_shadows_union.c",
-//         "tests/chapter_18/valid/extra_credit/semantic_analysis/union_members_same_type.c",
-//         "tests/chapter_18/valid/extra_credit/semantic_analysis/union_namespace.c",
-//         "tests/chapter_18/valid/extra_credit/semantic_analysis/union_self_pointer.c",
-//         "tests/chapter_18/valid/extra_credit/semantic_analysis/union_shadows_struct.c",
-//         "tests/chapter_18/valid/extra_credit/size_and_offset/compare_union_pointers.c",
-//         "tests/chapter_18/valid/extra_credit/size_and_offset/union_sizes.c",
-//         "tests/chapter_18/valid/extra_credit/union_copy/assign_to_union.c",
-//         "tests/chapter_18/valid/extra_credit/union_copy/copy_non_scalar_members.c",
-//         "tests/chapter_18/valid/extra_credit/union_copy/copy_thru_pointer.c",
-//         "tests/chapter_18/valid/extra_credit/union_copy/unions_in_conditionals.c",
-//     };
-//     Settings settings;
+TEST_CASE(Chapter18ValidCodeGenExtraCredit, "chapter_18", "--codegen")
+{
+    std::vector<std::string> srcFiles = {
+        // "tests/chapter_18/valid/extra_credit/README.md",
+        // "tests/chapter_18/valid/extra_credit/union_types.h",
+        "tests/chapter_18/valid/extra_credit/libraries/classify_unions.c",
+        "tests/chapter_18/valid/extra_credit/libraries/classify_unions_client.c",
+        "tests/chapter_18/valid/extra_credit/libraries/param_passing.c",
+        "tests/chapter_18/valid/extra_credit/libraries/param_passing_client.c",
+        "tests/chapter_18/valid/extra_credit/libraries/static_union_inits.c",
+        // "tests/chapter_18/valid/extra_credit/libraries/static_union_inits.h",
+        "tests/chapter_18/valid/extra_credit/libraries/static_union_inits_client.c",
+        "tests/chapter_18/valid/extra_credit/libraries/union_inits.c",
+        // "tests/chapter_18/valid/extra_credit/libraries/union_inits.h",
+        "tests/chapter_18/valid/extra_credit/libraries/union_inits_client.c",
+        // "tests/chapter_18/valid/extra_credit/libraries/union_lib.h",
+        "tests/chapter_18/valid/extra_credit/libraries/union_retvals.c",
+        "tests/chapter_18/valid/extra_credit/libraries/union_retvals_client.c",
+        "tests/chapter_18/valid/extra_credit/member_access/nested_union_access.c",
+        "tests/chapter_18/valid/extra_credit/member_access/static_union_access.c",
+        "tests/chapter_18/valid/extra_credit/member_access/union_init_and_member_access.c",
+        "tests/chapter_18/valid/extra_credit/member_access/union_temp_lifetime.c",
+        "tests/chapter_18/valid/extra_credit/other_features/bitwise_ops_struct_members.c",
+        "tests/chapter_18/valid/extra_credit/other_features/compound_assign_struct_members.c",
+        "tests/chapter_18/valid/extra_credit/other_features/decr_arrow_lexing.c",
+        "tests/chapter_18/valid/extra_credit/other_features/incr_struct_members.c",
+        "tests/chapter_18/valid/extra_credit/other_features/label_tag_member_namespace.c",
+        "tests/chapter_18/valid/extra_credit/other_features/struct_decl_in_switch_statement.c",
+        "tests/chapter_18/valid/extra_credit/semantic_analysis/cast_union_to_void.c",
+        "tests/chapter_18/valid/extra_credit/semantic_analysis/decl_shadows_decl.c",
+        "tests/chapter_18/valid/extra_credit/semantic_analysis/incomplete_union_types.c",
+        "tests/chapter_18/valid/extra_credit/semantic_analysis/redeclare_union.c",
+        "tests/chapter_18/valid/extra_credit/semantic_analysis/struct_shadows_union.c",
+        "tests/chapter_18/valid/extra_credit/semantic_analysis/union_members_same_type.c",
+        "tests/chapter_18/valid/extra_credit/semantic_analysis/union_namespace.c",
+        "tests/chapter_18/valid/extra_credit/semantic_analysis/union_self_pointer.c",
+        "tests/chapter_18/valid/extra_credit/semantic_analysis/union_shadows_struct.c",
+        "tests/chapter_18/valid/extra_credit/size_and_offset/compare_union_pointers.c",
+        "tests/chapter_18/valid/extra_credit/size_and_offset/union_sizes.c",
+        "tests/chapter_18/valid/extra_credit/union_copy/assign_to_union.c",
+        "tests/chapter_18/valid/extra_credit/union_copy/copy_non_scalar_members.c",
+        "tests/chapter_18/valid/extra_credit/union_copy/copy_thru_pointer.c",
+        "tests/chapter_18/valid/extra_credit/union_copy/unions_in_conditionals.c",
+    };
+    Settings settings;
+    Compiler compiler;
 
-//     for (const auto &srcFile : srcFiles)
-//     {
-//         Compiler compiler;
-//         try
-//         {
-//             int status = compiler.compile(Stage::CodeGen, std::vector<std::string>{srcFile});
-//             // Check that the compilation succeeded
-//             ASSERT_TRUE(status == 0);
-//         }
-//         catch (const std::exception &e)
-//         {
-//             std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
-//             throw;
-//         }
-//     }
-// }
+#pragma omp parallel for schedule(dynamic)
+    for (int i = 0; i < static_cast<int>(srcFiles.size()); ++i)
+    {
+        const std::string &srcFile = srcFiles[i];
+        try
+        {
+            int status = compiler.compile(Stage::CodeGen, std::vector<std::string>{srcFile});
+            // Check that the compilation succeeded
+            ASSERT_TRUE(status == 0);
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+            throw;
+        }
+    }
+}
 
 // // Chapter 19
 // TEST_CASE(Chapter19ValidCodeGen, "chapter_19", "--codegen")

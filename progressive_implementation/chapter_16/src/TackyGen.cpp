@@ -569,9 +569,9 @@ TackyGen::emitOrExp(const std::shared_ptr<AST::Binary> &binary)
     auto dst = std::make_shared<TACKY::Var>(dstName);
 
     innerEval.insert(innerEval.end(), innerEval1.begin(), innerEval1.end());
-    innerEval.push_back(std::make_shared<TACKY::JumpIfZero>(v1, trueLabel));
+    innerEval.push_back(std::make_shared<TACKY::JumpIfNotZero>(v1, trueLabel));
     innerEval.insert(innerEval.end(), innerEval2.begin(), innerEval2.end());
-    innerEval.push_back(std::make_shared<TACKY::JumpIfZero>(v2, trueLabel));
+    innerEval.push_back(std::make_shared<TACKY::JumpIfNotZero>(v2, trueLabel));
     innerEval.push_back(std::make_shared<TACKY::Copy>(std::make_shared<TACKY::Constant>(std::make_shared<Constants::Const>(Constants::makeConstInt(0))), dst));
     innerEval.push_back(std::make_shared<TACKY::Jump>(endLabel));
     innerEval.push_back(std::make_shared<TACKY::Label>(trueLabel));

@@ -998,10 +998,12 @@ TEST_CASE(Chapter18InvalidSemantic, "chapter_18", "--validate")
         "tests/chapter_18/invalid_types/tag_resolution/shadow_struct.c",
     };
     Settings settings;
+    Compiler compiler;
 
-    for (const auto &srcFile : srcFiles)
+#pragma omp parallel for schedule(dynamic)
+    for (int i = 0; i < static_cast<int>(srcFiles.size()); ++i)
     {
-        Compiler compiler;
+        const std::string &srcFile = srcFiles[i];
         try
         {
             int status = compiler.compile(Stage::Validate, std::vector<std::string>{srcFile});
@@ -1015,88 +1017,90 @@ TEST_CASE(Chapter18InvalidSemantic, "chapter_18", "--validate")
     }
 }
 
-// TEST_CASE(Chapter18InvalidSemanticExtraCredit, "chapter_18", "--validate")
-// {
-//     std::vector<std::string> srcFiles = {
-//         "tests/chapter_18/invalid_struct_tags/extra_credit/sizeof_undeclared_union.c",
-//         "tests/chapter_18/invalid_struct_tags/extra_credit/var_undeclared_union_type.c",
+TEST_CASE(Chapter18InvalidSemanticExtraCredit, "chapter_18", "--validate")
+{
+    std::vector<std::string> srcFiles = {
+        "tests/chapter_18/invalid_struct_tags/extra_credit/sizeof_undeclared_union.c",
+        "tests/chapter_18/invalid_struct_tags/extra_credit/var_undeclared_union_type.c",
 
-//         "tests/chapter_18/invalid_types/extra_credit/README.md",
-//         "tests/chapter_18/invalid_types/extra_credit/bad_union_member_access/nested_non_member.c",
-//         "tests/chapter_18/invalid_types/extra_credit/bad_union_member_access/union_bad_member.c",
-//         "tests/chapter_18/invalid_types/extra_credit/bad_union_member_access/union_bad_pointer_member.c",
-//         "tests/chapter_18/invalid_types/extra_credit/incompatible_union_types/assign_different_union_type.c",
-//         "tests/chapter_18/invalid_types/extra_credit/incompatible_union_types/assign_scalar_to_union.c",
-//         "tests/chapter_18/invalid_types/extra_credit/incompatible_union_types/return_type_mismatch.c",
-//         "tests/chapter_18/invalid_types/extra_credit/incompatible_union_types/union_branch_mismatch.c",
-//         "tests/chapter_18/invalid_types/extra_credit/incompatible_union_types/union_pointer_branch_mismatch.c",
-//         "tests/chapter_18/invalid_types/extra_credit/incomplete_unions/define_incomplete_union.c",
-//         "tests/chapter_18/invalid_types/extra_credit/incomplete_unions/sizeof_incomplete_union_type.c",
-//         "tests/chapter_18/invalid_types/extra_credit/invalid_union_lvalues/address_of_non_lvalue_union_member.c",
-//         "tests/chapter_18/invalid_types/extra_credit/invalid_union_lvalues/assign_non_lvalue_union_member.c",
-//         "tests/chapter_18/invalid_types/extra_credit/other_features/bitwise_op_structure.c",
-//         "tests/chapter_18/invalid_types/extra_credit/other_features/compound_assign_struct_rval.c",
-//         "tests/chapter_18/invalid_types/extra_credit/other_features/compound_assign_to_nested_struct.c",
-//         "tests/chapter_18/invalid_types/extra_credit/other_features/compound_assign_to_struct.c",
-//         "tests/chapter_18/invalid_types/extra_credit/other_features/duplicate_struct_types_after_label.c",
-//         "tests/chapter_18/invalid_types/extra_credit/other_features/postfix_decr_struct_arrow.c",
-//         "tests/chapter_18/invalid_types/extra_credit/other_features/postfix_incr_struct.c",
-//         "tests/chapter_18/invalid_types/extra_credit/other_features/prefix_decr_struct.c",
-//         "tests/chapter_18/invalid_types/extra_credit/other_features/prefix_incr_nested_struct.c",
-//         "tests/chapter_18/invalid_types/extra_credit/other_features/switch_on_struct.c",
-//         "tests/chapter_18/invalid_types/extra_credit/scalar_required/cast_between_unions.c",
-//         "tests/chapter_18/invalid_types/extra_credit/scalar_required/cast_union_to_int.c",
-//         "tests/chapter_18/invalid_types/extra_credit/scalar_required/compare_unions.c",
-//         "tests/chapter_18/invalid_types/extra_credit/scalar_required/switch_on_union.c",
-//         "tests/chapter_18/invalid_types/extra_credit/scalar_required/union_as_controlling_expression.c",
-//         "tests/chapter_18/invalid_types/extra_credit/union_initializers/initializer_too_long.c",
-//         "tests/chapter_18/invalid_types/extra_credit/union_initializers/nested_init_wrong_type.c",
-//         "tests/chapter_18/invalid_types/extra_credit/union_initializers/nested_union_init_too_long.c",
-//         "tests/chapter_18/invalid_types/extra_credit/union_initializers/scalar_union_initializer.c",
-//         "tests/chapter_18/invalid_types/extra_credit/union_initializers/static_aggregate_init_wrong_type.c",
-//         "tests/chapter_18/invalid_types/extra_credit/union_initializers/static_nested_init_not_const.c",
-//         "tests/chapter_18/invalid_types/extra_credit/union_initializers/static_nested_init_too_long.c",
-//         "tests/chapter_18/invalid_types/extra_credit/union_initializers/static_scalar_union_initializer.c",
-//         "tests/chapter_18/invalid_types/extra_credit/union_initializers/static_too_long.c",
-//         "tests/chapter_18/invalid_types/extra_credit/union_initializers/static_union_init_not_constant.c",
-//         "tests/chapter_18/invalid_types/extra_credit/union_initializers/static_union_init_wrong_type.c",
-//         "tests/chapter_18/invalid_types/extra_credit/union_initializers/union_init_wrong_type.c",
-//         "tests/chapter_18/invalid_types/extra_credit/union_struct_conflicts/conflicting_tag_declarations.c",
-//         "tests/chapter_18/invalid_types/extra_credit/union_struct_conflicts/conflicting_tag_decl_and_use.c",
-//         "tests/chapter_18/invalid_types/extra_credit/union_struct_conflicts/conflicting_tag_decl_and_use_self_reference.c",
-//         "tests/chapter_18/invalid_types/extra_credit/union_struct_conflicts/struct_shadowed_by_union.c",
-//         "tests/chapter_18/invalid_types/extra_credit/union_struct_conflicts/tag_decl_conflicts_with_def.c",
-//         "tests/chapter_18/invalid_types/extra_credit/union_struct_conflicts/tag_def_conflicts_with_decl.c",
-//         "tests/chapter_18/invalid_types/extra_credit/union_struct_conflicts/union_shadowed_by_incomplete_struct.c",
-//         "tests/chapter_18/invalid_types/extra_credit/union_tag_resolution/address_of_wrong_union_type.c",
-//         "tests/chapter_18/invalid_types/extra_credit/union_tag_resolution/compare_struct_and_union_ptrs.c",
-//         "tests/chapter_18/invalid_types/extra_credit/union_tag_resolution/conflicting_param_union_types.c",
-//         "tests/chapter_18/invalid_types/extra_credit/union_tag_resolution/distinct_union_types.c",
-//         "tests/chapter_18/invalid_types/extra_credit/union_tag_resolution/union_type_shadows_struct.c",
-//         "tests/chapter_18/invalid_types/extra_credit/union_tag_resolution/union_wrong_member.c",
-//         "tests/chapter_18/invalid_types/extra_credit/union_type_declarations/array_of_incomplete_union_type.c",
-//         "tests/chapter_18/invalid_types/extra_credit/union_type_declarations/duplicate_union_def.c",
-//         "tests/chapter_18/invalid_types/extra_credit/union_type_declarations/incomplete_union_member.c",
-//         "tests/chapter_18/invalid_types/extra_credit/union_type_declarations/member_name_conflicts.c",
-//         "tests/chapter_18/invalid_types/extra_credit/union_type_declarations/union_self_reference.c",
-//     };
-//     Settings settings;
+        //"tests/chapter_18/invalid_types/extra_credit/README.md",
+        "tests/chapter_18/invalid_types/extra_credit/bad_union_member_access/nested_non_member.c",
+        "tests/chapter_18/invalid_types/extra_credit/bad_union_member_access/union_bad_member.c",
+        "tests/chapter_18/invalid_types/extra_credit/bad_union_member_access/union_bad_pointer_member.c",
+        "tests/chapter_18/invalid_types/extra_credit/incompatible_union_types/assign_different_union_type.c",
+        "tests/chapter_18/invalid_types/extra_credit/incompatible_union_types/assign_scalar_to_union.c",
+        "tests/chapter_18/invalid_types/extra_credit/incompatible_union_types/return_type_mismatch.c",
+        "tests/chapter_18/invalid_types/extra_credit/incompatible_union_types/union_branch_mismatch.c",
+        "tests/chapter_18/invalid_types/extra_credit/incompatible_union_types/union_pointer_branch_mismatch.c",
+        "tests/chapter_18/invalid_types/extra_credit/incomplete_unions/define_incomplete_union.c",
+        "tests/chapter_18/invalid_types/extra_credit/incomplete_unions/sizeof_incomplete_union_type.c",
+        "tests/chapter_18/invalid_types/extra_credit/invalid_union_lvalues/address_of_non_lvalue_union_member.c",
+        "tests/chapter_18/invalid_types/extra_credit/invalid_union_lvalues/assign_non_lvalue_union_member.c",
+        "tests/chapter_18/invalid_types/extra_credit/other_features/bitwise_op_structure.c",
+        "tests/chapter_18/invalid_types/extra_credit/other_features/compound_assign_struct_rval.c",
+        "tests/chapter_18/invalid_types/extra_credit/other_features/compound_assign_to_nested_struct.c",
+        "tests/chapter_18/invalid_types/extra_credit/other_features/compound_assign_to_struct.c",
+        "tests/chapter_18/invalid_types/extra_credit/other_features/duplicate_struct_types_after_label.c",
+        "tests/chapter_18/invalid_types/extra_credit/other_features/postfix_decr_struct_arrow.c",
+        "tests/chapter_18/invalid_types/extra_credit/other_features/postfix_incr_struct.c",
+        "tests/chapter_18/invalid_types/extra_credit/other_features/prefix_decr_struct.c",
+        "tests/chapter_18/invalid_types/extra_credit/other_features/prefix_incr_nested_struct.c",
+        "tests/chapter_18/invalid_types/extra_credit/other_features/switch_on_struct.c",
+        "tests/chapter_18/invalid_types/extra_credit/scalar_required/cast_between_unions.c",
+        "tests/chapter_18/invalid_types/extra_credit/scalar_required/cast_union_to_int.c",
+        "tests/chapter_18/invalid_types/extra_credit/scalar_required/compare_unions.c",
+        "tests/chapter_18/invalid_types/extra_credit/scalar_required/switch_on_union.c",
+        "tests/chapter_18/invalid_types/extra_credit/scalar_required/union_as_controlling_expression.c",
+        "tests/chapter_18/invalid_types/extra_credit/union_initializers/initializer_too_long.c",
+        "tests/chapter_18/invalid_types/extra_credit/union_initializers/nested_init_wrong_type.c",
+        "tests/chapter_18/invalid_types/extra_credit/union_initializers/nested_union_init_too_long.c",
+        "tests/chapter_18/invalid_types/extra_credit/union_initializers/scalar_union_initializer.c",
+        "tests/chapter_18/invalid_types/extra_credit/union_initializers/static_aggregate_init_wrong_type.c",
+        "tests/chapter_18/invalid_types/extra_credit/union_initializers/static_nested_init_not_const.c",
+        "tests/chapter_18/invalid_types/extra_credit/union_initializers/static_nested_init_too_long.c",
+        "tests/chapter_18/invalid_types/extra_credit/union_initializers/static_scalar_union_initializer.c",
+        "tests/chapter_18/invalid_types/extra_credit/union_initializers/static_too_long.c",
+        "tests/chapter_18/invalid_types/extra_credit/union_initializers/static_union_init_not_constant.c",
+        "tests/chapter_18/invalid_types/extra_credit/union_initializers/static_union_init_wrong_type.c",
+        "tests/chapter_18/invalid_types/extra_credit/union_initializers/union_init_wrong_type.c",
+        "tests/chapter_18/invalid_types/extra_credit/union_struct_conflicts/conflicting_tag_declarations.c",
+        "tests/chapter_18/invalid_types/extra_credit/union_struct_conflicts/conflicting_tag_decl_and_use.c",
+        "tests/chapter_18/invalid_types/extra_credit/union_struct_conflicts/conflicting_tag_decl_and_use_self_reference.c",
+        "tests/chapter_18/invalid_types/extra_credit/union_struct_conflicts/struct_shadowed_by_union.c",
+        "tests/chapter_18/invalid_types/extra_credit/union_struct_conflicts/tag_decl_conflicts_with_def.c",
+        "tests/chapter_18/invalid_types/extra_credit/union_struct_conflicts/tag_def_conflicts_with_decl.c",
+        "tests/chapter_18/invalid_types/extra_credit/union_struct_conflicts/union_shadowed_by_incomplete_struct.c",
+        "tests/chapter_18/invalid_types/extra_credit/union_tag_resolution/address_of_wrong_union_type.c",
+        "tests/chapter_18/invalid_types/extra_credit/union_tag_resolution/compare_struct_and_union_ptrs.c",
+        "tests/chapter_18/invalid_types/extra_credit/union_tag_resolution/conflicting_param_union_types.c",
+        "tests/chapter_18/invalid_types/extra_credit/union_tag_resolution/distinct_union_types.c",
+        "tests/chapter_18/invalid_types/extra_credit/union_tag_resolution/union_type_shadows_struct.c",
+        "tests/chapter_18/invalid_types/extra_credit/union_tag_resolution/union_wrong_member.c",
+        "tests/chapter_18/invalid_types/extra_credit/union_type_declarations/array_of_incomplete_union_type.c",
+        "tests/chapter_18/invalid_types/extra_credit/union_type_declarations/duplicate_union_def.c",
+        "tests/chapter_18/invalid_types/extra_credit/union_type_declarations/incomplete_union_member.c",
+        "tests/chapter_18/invalid_types/extra_credit/union_type_declarations/member_name_conflicts.c",
+        "tests/chapter_18/invalid_types/extra_credit/union_type_declarations/union_self_reference.c",
+    };
+    Settings settings;
+    Compiler compiler;
 
-//     for (const auto &srcFile : srcFiles)
-//     {
-//         Compiler compiler;
-//         try
-//         {
-//             int status = compiler.compile(Stage::Validate, std::vector<std::string>{srcFile});
-//             ASSERT_TRUE(status != 0);
-//         }
-//         catch (const std::exception &e)
-//         {
-//             std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
-//             throw;
-//         }
-//     }
-// }
+#pragma omp parallel for schedule(dynamic)
+    for (int i = 0; i < static_cast<int>(srcFiles.size()); ++i)
+    {
+        const std::string &srcFile = srcFiles[i];
+        try
+        {
+            int status = compiler.compile(Stage::Validate, std::vector<std::string>{srcFile});
+            ASSERT_TRUE(status != 0);
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+            throw;
+        }
+    }
+}
 
 // // Chapter 19
 // TEST_CASE(Chapter19InvalidSemantic, "chapter_19", "--validate")

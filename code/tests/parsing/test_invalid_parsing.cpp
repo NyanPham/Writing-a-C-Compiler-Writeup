@@ -718,10 +718,12 @@ TEST_CASE(Chapter18InvalidParse, "chapter_18", "--parse")
         "tests/chapter_18/invalid_parse/var_decl_two_tags.c",
     };
     Settings settings;
+    Compiler compiler;
 
-    for (const auto &srcFile : srcFiles)
+#pragma omp parallel for schedule(dynamic)
+    for (int i = 0; i < static_cast<int>(srcFiles.size()); ++i)
     {
-        Compiler compiler;
+        const std::string &srcFile = srcFiles[i];
         try
         {
             int status = compiler.compile(Stage::Parsing, std::vector<std::string>{srcFile});
@@ -735,49 +737,51 @@ TEST_CASE(Chapter18InvalidParse, "chapter_18", "--parse")
     }
 }
 
-// TEST_CASE(Chapter18InvalidParseExtraCredit, "chapter_18", "--parse")
-// {
-//     std::vector<std::string> srcFiles = {
-//         "tests/chapter_18/invalid_parse/extra_credit/case_struct_decl.c",
-//         "tests/chapter_18/invalid_parse/extra_credit/default_kw_member_name.c",
-//         "tests/chapter_18/invalid_parse/extra_credit/goto_kw_struct_tag.c",
-//         "tests/chapter_18/invalid_parse/extra_credit/labeled_struct_decl.c",
-//         "tests/chapter_18/invalid_parse/extra_credit/label_inside_struct_decl.c",
-//         "tests/chapter_18/invalid_parse/extra_credit/struct_union.c",
-//         "tests/chapter_18/invalid_parse/extra_credit/two_union_kws.c",
-//         "tests/chapter_18/invalid_parse/extra_credit/union_bad_type_spec.c",
-//         "tests/chapter_18/invalid_parse/extra_credit/union_decl_bad_type_specifier.c",
-//         "tests/chapter_18/invalid_parse/extra_credit/union_decl_empty_member_list.c",
-//         "tests/chapter_18/invalid_parse/extra_credit/union_decl_extra_semicolon.c",
-//         "tests/chapter_18/invalid_parse/extra_credit/union_empty_initializer.c",
-//         "tests/chapter_18/invalid_parse/extra_credit/union_member_initializer.c",
-//         "tests/chapter_18/invalid_parse/extra_credit/union_member_is_function.c",
-//         "tests/chapter_18/invalid_parse/extra_credit/union_member_name_kw.c",
-//         "tests/chapter_18/invalid_parse/extra_credit/union_member_no_declarator.c",
-//         "tests/chapter_18/invalid_parse/extra_credit/union_member_no_type.c",
-//         "tests/chapter_18/invalid_parse/extra_credit/union_member_storage_class.c",
-//         "tests/chapter_18/invalid_parse/extra_credit/union_struct_tag.c",
-//         "tests/chapter_18/invalid_parse/extra_credit/union_two_tags.c",
-//         "tests/chapter_18/invalid_parse/extra_credit/union_var_bad_tag.c",
-//         "tests/chapter_18/invalid_parse/extra_credit/union_var_tag_paren.c",
-//     };
-//     Settings settings;
+TEST_CASE(Chapter18InvalidParseExtraCredit, "chapter_18", "--parse")
+{
+    std::vector<std::string> srcFiles = {
+        "tests/chapter_18/invalid_parse/extra_credit/case_struct_decl.c",
+        "tests/chapter_18/invalid_parse/extra_credit/default_kw_member_name.c",
+        "tests/chapter_18/invalid_parse/extra_credit/goto_kw_struct_tag.c",
+        "tests/chapter_18/invalid_parse/extra_credit/labeled_struct_decl.c",
+        "tests/chapter_18/invalid_parse/extra_credit/label_inside_struct_decl.c",
+        "tests/chapter_18/invalid_parse/extra_credit/struct_union.c",
+        "tests/chapter_18/invalid_parse/extra_credit/two_union_kws.c",
+        "tests/chapter_18/invalid_parse/extra_credit/union_bad_type_spec.c",
+        "tests/chapter_18/invalid_parse/extra_credit/union_decl_bad_type_specifier.c",
+        "tests/chapter_18/invalid_parse/extra_credit/union_decl_empty_member_list.c",
+        "tests/chapter_18/invalid_parse/extra_credit/union_decl_extra_semicolon.c",
+        "tests/chapter_18/invalid_parse/extra_credit/union_empty_initializer.c",
+        "tests/chapter_18/invalid_parse/extra_credit/union_member_initializer.c",
+        "tests/chapter_18/invalid_parse/extra_credit/union_member_is_function.c",
+        "tests/chapter_18/invalid_parse/extra_credit/union_member_name_kw.c",
+        "tests/chapter_18/invalid_parse/extra_credit/union_member_no_declarator.c",
+        "tests/chapter_18/invalid_parse/extra_credit/union_member_no_type.c",
+        "tests/chapter_18/invalid_parse/extra_credit/union_member_storage_class.c",
+        "tests/chapter_18/invalid_parse/extra_credit/union_struct_tag.c",
+        "tests/chapter_18/invalid_parse/extra_credit/union_two_tags.c",
+        "tests/chapter_18/invalid_parse/extra_credit/union_var_bad_tag.c",
+        "tests/chapter_18/invalid_parse/extra_credit/union_var_tag_paren.c",
+    };
+    Settings settings;
+    Compiler compiler;
 
-//     for (const auto &srcFile : srcFiles)
-//     {
-//         Compiler compiler;
-//         try
-//         {
-//             int status = compiler.compile(Stage::Parsing, std::vector<std::string>{srcFile});
-//             ASSERT_TRUE(status != 0);
-//         }
-//         catch (const std::exception &e)
-//         {
-//             std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
-//             throw;
-//         }
-//     }
-// }
+#pragma omp parallel for schedule(dynamic)
+    for (int i = 0; i < static_cast<int>(srcFiles.size()); ++i)
+    {
+        const std::string &srcFile = srcFiles[i];
+        try
+        {
+            int status = compiler.compile(Stage::Parsing, std::vector<std::string>{srcFile});
+            ASSERT_TRUE(status != 0);
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
+            throw;
+        }
+    }
+}
 
 // // Chapter 19
 // TEST_CASE(Chapter19InvalidParse, "chapter_19", "--parse")
