@@ -20,7 +20,9 @@
   - [Chapter 16: Characters and Strings](#chapter-16-characters-and-strings)
   - [Chapter 17: Supporting Dynamic Memory Allocation](#chapter-17-supporting-dynamic-memory-allocation)
   - [Chapter 18: Structures](#chapter-18-structures)
-
+- [Part III](#part-iii)
+  - [Chapter 19: Optimizing Tacky Programs](#chapter-19-optimizing-tacky-programs)
+  
 ---
 
 # Part I
@@ -12335,3 +12337,1361 @@ To learn more about complete System V x64 calling convention, you have a couple 
 ### Reference Implementation Analysis
 
 [Chapter 18 Code Analysis](./code_analysis/chapter_18.md)
+
+---
+
+# Part III
+
+--- 
+
+# Chapter 19: Optimizing Tacky Programs
+
+## Stages of a Compiler
+
+1. **Lexer**
+   - Input: Source code
+   - Output: Token list
+2. **Parser**
+   - Input: Token list
+   - Output: Abstract Syntax Tree (AST)
+3. **Semantic Analysis**
+   - Input: AST
+   - Output: Transformed AST
+   - Passes:
+   1. Variable resolution
+   2. Type Checking
+   3. Loop Labeling
+4. **TACKY Generation**
+   - Input: Transformed AST
+   - Output: TAC IR (Tacky)
+5. **Optimization**
+   - Input: TAC IR (Tacky)
+   - Output: Optimized TAC IR (Tacky)
+   - Passes:
+   1. Constant Folding
+   2. Unreachable code elimination
+   3. Copy propagation
+   4. Dead store elimination
+6. **Assembly Generation**
+   - Input: Tacky
+   - Output: Assembly code
+   - Passes:
+   1. Converting TACKY to Assembly
+   2. Replacing pseudoregisters
+   3. Instruction fix-up
+7. **Code Emission**
+   - Input: Assembly code
+   - Output: Final assembly file
+
+In this chapter, we'll focus on Machine-independent optimization, that is optimization at an intermediate stage before codegen, so we don't take account for the target architecture.
+
+## Safety and Observable Behavior
+
+Example:
+
+```C
+int main(void) {
+	int x = 1;
+	int y = 2;
+	int z = 3;
+	return x + y + z;
+}
+```
+
+We run a command `gcc -S -fno-asynchronous-unwind-tables -fcf-protection=none listing_19_1.c` to compile without optimization and get this result
+
+```asm
+	.text
+	.globl main
+main:
+	pushq %rbp
+	movq %rsp, %rbp
+	movl $1, -4(%rbp)
+	movl $2, -8(%rbp)
+	movl $3, -12(%rbp)
+	movl -4(%rbp), %edx
+	movl -8(%rbp), %eax
+	addl %eax, %edx
+	movl -12(%rbp), %eax
+	addl %edx, %eax
+	popq %rbp
+	ret
+```
+
+And now, let's compile with optimization using the command `gcc -S -O -fno-asynchronous-unwind-tables -fcf-protection=none listing_19_1.c`:
+
+```asm
+	.text
+	.globl main
+main:
+	movl $6, %eax
+	ret
+```
+
+## Four TACKY Optimizations
+
+### Constant Folding
+
+This pass evaluates expressions at compile time. For example:
+
+```
+a = 6 / 2
+```
+
+is compiled like
+
+```
+a = 3
+```
+
+It can also turn conditional jumps into unconditional jumps:
+
+```
+JumpIfZero(0, Target)
+```
+
+is turned into
+
+```
+Jump(Target)
+```
+
+### Unreachable Code Eliminiation
+
+This pass removes instructions that never run. For example:
+
+```
+x = 5
+Jump(Target)
+x = my_function()
+Target:
+Return(x)
+```
+
+becomes
+
+```
+x = 5
+Jump(Target)
+Target:
+Return(x)
+```
+
+and then
+
+```
+x = 5
+Target:
+Return(x)
+```
+
+and finally
+
+```
+x = 5
+Return(x)
+```
+
+### Copy Propagation
+
+When a program contains the _Copy_ instruction dst = src, the pass tries to replace dst with src. For example:
+
+```
+x = 3
+Return(x)
+```
+
+becomes
+
+```
+x = 3
+Return(3)
+```
+
+This case is special and called _constant propagation_.
+In other cases, we replace a variable with another variable.
+
+```
+x = y
+Return(x)
+```
+
+becomes
+
+```
+x = y
+Return(y)
+```
+
+The following example is tricky to do copy propagation.
+
+```
+x = 4
+JumpIfZero(flag, Target)
+x = 3
+Target:
+Return(x)
+```
+
+To handle this, we'll use a technique called _data-flow analysis_. The technique is also helpful for other optimizations including dead store elimination.
+
+This pass seems not useful at first, but when we propagate constants, we create opportunities for constant folding, and sometimes make Copy instructions useless, which leads to _Dead Store Elimination_
+
+### Dead Store Elimination
+
+When we update a variable's value, but we never use that new value, that is called a _dead store_.
+
+```
+x = 10
+Return(y)
+```
+
+If x has automatic storage duration, and is not used anywhere in its lifetime, it's a dead store.
+
+Another example is:
+
+```
+x = a + b
+x = 2
+Return(x)
+```
+
+We never use the value of the expression `x = a + b`, so it's a dead store.
+
+How to identify such usesless instructions and remove them? We'll use data-flow analysis.
+
+### With Our Powers Combined . . .
+
+Now let's all 4 passes work together. Here is an example:
+
+```
+my_function(flag):
+   x = 4
+   y = 4 - x
+   JumpIfZero(y, Target)
+   x = 3
+   Target:
+   JumpIfNotZero(flag, End)
+   z = 10
+   End:
+   z = x + 5
+   Return(z)
+```
+
+```
+my_function(flag):
+   x = 4
+   y = 4 - 4                     // copy propagation pass: substituting 4 for x in y = 4 - x
+   JumpIfZero(y, Target)
+   x = 3
+   Target:
+   JumpIfNotZero(flag, End)
+   z = 10
+   End:
+   z = x + 5
+   Return(z)
+```
+
+```
+my_function(flag):
+   x = 4
+   y = 0                         // constant folding to evaluate y = 4 - 4
+   JumpIfZero(y, Target)
+   x = 3
+   Target:
+   JumpIfNotZero(flag, End)
+   z = 10
+   End:
+   z = x + 5
+   Return(z)
+```
+
+```
+my_function(flag):
+   x = 4
+   y = 0
+   JumpIfZero(0, Target)            // replace y with its value, 0, in the JumpIfZero instruction
+   x = 3
+   Target:
+   JumpIfNotZero(flag, End)
+   z = 10
+   End:
+   z = x + 5
+   Return(z)
+```
+
+```
+my_function(flag):
+   x = 4
+   y = 0
+   Jump(Target)                  // constant folding again to turn it into an unconditional Jump
+   x = 3
+   Target:
+   JumpIfNotZero(flag, End)
+   z = 10
+   End:
+   z = x + 5
+   Return(z)
+```
+
+Now, x = 3 unreachable, so we’ll run unreachable code
+elimination to delete it. This pass will also remove the Jump instruction and
+Target label, which have no effect once we’ve removed x = 3
+
+```
+my_function(flag):
+   x = 4
+   y = 0
+   JumpIfNotZero(flag, End)
+   z = 10
+   End:
+   z = x + 5
+   Return(z)
+```
+
+We couldn’t rewrite z = x + 5 earlier, because x had two different values
+on the different paths to that instruction. We just solved that problem
+by eliminating the path through x = 3. Now we can run copy propagation
+again.
+
+```
+my_function(flag):
+   x = 4
+   y = 0
+   JumpIfNotZero(flag, End)
+   z = 10
+   End:
+   z = 4 + 5                     // Copy propagation
+   Return(z)
+```
+
+```
+my_function(flag):
+   x = 4
+   y = 0
+   JumpIfNotZero(flag, End)
+   z = 10
+   End:
+   z = 9                         // another round of constant folding
+   Return(z)
+```
+
+```
+my_function(flag):
+   x = 4
+   y = 0
+   JumpIfNotZero(flag, End)
+   z = 10
+   End:
+   z = 9
+   Return(9)                     // run copy propagation one last time
+```
+
+We eliminate every use of x, y, and z in the process. Now we’ll run dead
+store elimination to clean them up
+
+```
+my_function(flag):
+   JumpIfNotZero(flag, End)
+   End:
+   Return(9)
+```
+
+Finally, we’ll run unreachable code elimination to remove the JumpIfNotZero instruction and the End label. Now we have only a single return instruction.
+
+```
+my_function(flag):
+   Return(9)
+```
+
+Here is the summary of how they work together:
+
+- Copy propagation replaces variables with constants, giving opportunities for constant folding.
+- Constant folding turns conditional jumps into unconditional jumps, making some instruction unreachable and this again triggers copy propagation.
+- Copy propagation may make Copy instructions redundant, causing variables not be used.
+- Dead store elimination remove unused variables, and potentially remove very instructions between a jump and the label it jumps to, and that gives candidates for unreachable code elimination.
+
+### Wiring Up the Optimization Stage
+
+After we craft TACKY from AST, we'll run this pass and optimize each TACKY function at a time. This is called _intraprocedural optimizations_.
+
+Each individual optimization takes the body of a TACKY function as input and return a semantically equivalent function body as output.
+
+In contant folding, we represent the body as list of instructions as we do.
+In the other three passes, we represent each function as a _control-flow graph_.
+
+We run the process on each function again and again until it reaches _fixed point_, that is no more changes are made.
+
+```
+optimize(function_body, enabled_optimizations):
+   if function_body is empty:
+      return function_body
+
+   while True:
+      if enabled_optimizations contains "CONSTANT_FOLDING":
+         post_constant_folding = constant_folding(function_body)
+      else:
+         post_constant_folding = function_body
+
+      cfg = make_control_flow_graph(post_constant_folding)
+
+      if enabled_optimizations contains "UNREACHABLE_CODE_ELIM":
+         cfg = unreachable_code_elimination(cfg)
+
+      if enabled_optimizations contains "COPY_PROP":
+         cfg = copy_propagation(cfg)
+
+      if enabled_optimizations contains "DEAD_STORE_ELIM":
+         cfg = dead_store_elimination(cfg)
+
+      optimized_function_body = cfg_to_instructions(cfg)
+
+      if (optimized_function_body == function_body
+         or optimized_function_body is empty):
+         return optimized_function_body
+
+      function_body = optimized_function_body
+```
+
+## Constant Folding
+
+### Constant Folding for Part I TACKY Programs
+
+We'll evaluate four instructions: Unary, Binary, JumpIfZero and JumpIfNotZero.
+
+For Unary and Binary, if all the operands are constant operands, we use the Copy instructions.
+
+```
+Binary(binary_operator=Add, src1=Constant(1), src2=Constant(2), dst=Var("b"))
+```
+
+is converted into
+
+```
+Copy(src=Constant(3), dst=Var("b"))
+```
+
+Errors that we might run into:
+
+- division by zero
+- integer overflow in operations
+
+Both are undefined behavior, so it doesn't matter how you evaluate them.
+
+For JumpIfZero and JumpIfNotZero with constant conditions, if the condition is met, replace them with unconditional jumps, otherwise remove them.
+
+### Supporting Part II TACKY Programs
+
+We need to support: Truncate, SignExtend, ZeroExtend, DoubleToInt, DoubleToUInt, IntToDouble, UIntToDouble.
+The pass should evaluate them if there SOURCE operands are constants.
+
+The Copy instruction can perform type conversions too; like converting between signed and unsigned integers of the same size.
+
+```
+Copy(src=Constant(ConstUChar(255)), dst=Var("a"))
+```
+
+is replaced with
+
+```
+Copy(src=Constant(ConstChar(-1)), dst=Var("a"))
+```
+
+**Note:**
+
+- Be careful with other type conversions, especially between integer and double.
+- Ensure that unsigned arithemetic wraps around. You can use libaries, or implement your own wraparound unsigned arithmetic.
+- Evaluating floating-point operations using round-to-nearest, ties-to-even rounding and handling negative zero and infinity correctly.
+
+## Control-Flow Graphs
+
+A node in the graph represents sequences of straight-line code called _basic blocks_.
+
+```
+processing_loop():
+   LoopStart:
+   input = get_input()
+   JumpIfNotZero(input, ProcessIt)
+   Return(-1)
+   ProcessIt:
+   done = process_input(input)
+   JumpIfNotZero(done, LoopStart)
+   Return(0)
+```
+
+### Defining the Control-Flow Graph
+
+First, we'll define the graph data structure.
+
+```
+node_id = ENTRY | EXIT | BlockId(int num)
+node = BasicBlock(node_id id, instruction* instructions,
+                  node_id* predecessors, node_id*successors)
+   | EntryNode(node_id* successors)
+   | ExitNode(node_id* predecessors)
+graph = Graph(node* nodes)
+```
+
+The pseudocode throughout this chapter will use _annotate_instruction_ and _get_instruction_annotation_ to save and look up information about individual instructions.
+It will use _annotate_block_ and _get_block_annotation_ to save and look up information about basic blocks by block ID.
+
+#### Creating Basic Blocks
+
+_Label_ can appear only as the first instruction in a block, and a _Return_ or jump instruction can appear only as the last instruction.
+So now let's partition the body of a function into basic blocks.
+
+```
+partition_into_basic_blocks(instructions):
+   finished_blocks = []
+   current_block = []
+   for instruction in instructions:
+      if instruction is Label:
+         if current_block is not empty:
+            finished_blocks.append(current_block)
+         current_block = [instruction]
+
+      else if instruction is Jump, JumpIfZero, JumpIfNotZero, or Return:
+         current_block.append(instruction)
+         finished_blocks.append(current_block)
+         current_block = []
+      else:
+         current_block.append(instruction)
+
+   if current_block is not empty:
+      finished_blocks.append(current_block)
+
+   return finished_blocks
+```
+
+After we have a list of lists of instructions, we convert these lists of instructions into BasicBlock nodes with increasing block IDs.
+This next step is simple, so I won't provide pseudocode.
+
+#### Adding Edges to the Control-Flow Graph
+
+```
+add_all_edges(graph): // graph is our unfinished control-flow graph, which has nodes but no edges
+
+   add_edge(ENTRY, BlockId(0))   // We begin by adding an edge from ENTRY to the first basic block
+
+   for node in graph.nodes:
+      if node is EntryNode or ExitNode:
+         continue
+
+      if node.id == max_block_id(graph.nodes):
+         next_id = EXIT
+      else:
+         next_id = BlockId(node.id.num + 1) // if we process the very last block, the next block is EXIT. Otherwise it will be just whatever basic block comes next in the original TACKY function.
+
+      instr = get _last(node .instructions)
+      match instr with
+      | Return(maybe_val) -> add_edge(node.id, EXIT)
+      | Jump(target) ->
+         target_id = get_block_by_label(target)
+         add_edge(node.id, target_id)
+      | JumpIfZero(condition, target) ->
+         target_id = get_block_by_label(target)
+         add_edge(node.id, target_id)           // The first edge will go to the block that starts with the corresponding Label
+         add_edge(node.id, next_id)             // The other edge will go to the default next node, identified by next_id.
+      | JumpIfNotZero(condition, target) ->
+         // same as JumpIfZero
+         --snip--
+      | _ -> add_edge(node.id, next_id)
+```
+
+The helper add_edge(node1, node2) should update both successors of node1 and the predecessors of node2.
+The helper get_block_by_label looks up which block begins with a particular label. You can build a map from labels to block IDs ahead of time.
+
+#### Making Your Control-Flow Graph Code Reusable
+
+In the next chapter, we will build control-flow graphs of assembly programs with the same algorithm to construct these graphs.
+Once you have working code to construct control-flow graphs, you might want ot refactor it to reuse for assembly programs.
+This is completely optional.
+
+First, you'll need to generalize the graph data type so that a block can contain either TACKY or assembly instructions.
+Next, you'll need to generalize the logic to analyze specific instructions.
+
+```
+generic_instruction = Return
+                     | Jump
+                     | ConditionalJump(identifier label)
+                     | Label(identifier)
+                     | Other
+```
+
+## Unreachable Code Elimination
+
+We have 3 steps:
+
+- Remove basic blocks that never execute
+- Remove useless jumps
+- Remove useless labels
+
+The last 2 steps might leave us with empty blocks, and we optionally, can clean up after this optimization by removing these empty blocks from the control-flow graph.
+
+### Eliminating Unreachable Blocks
+
+We'll traverse the graph from ENTRY, to all of the node's succesors, and so on, until we run out of nodes to explore.
+If there is a node that is never reached, we can safely remove it.
+
+For example
+
+```
+x = 5
+Jump(Target)
+x = my_function()
+Target:
+Return(x)
+```
+
+has the graph built as
+
+```mermaid
+flowchart TD
+    A[ENTRY] --> B0["x = 5<br>Jump(Target)"]
+    B0 --> B1["x = my_function()"]
+    B1 --> B2["Target: Return(x)"]
+    B2 --> C[EXIT]
+```
+
+Note that there's no graph from ENTRY to B1. Once we have a list of visited nodes so far, we see that we never reached B1, so we'll remove it.
+I won't provide pseudocode for it as it's just an ordinary breadth- or depth-first graph traversal.
+Remember to remove outgoing edges when you remove a node as well. For example, you remove B1 from the graph, you should remove B1 from the predecessors list of B2.
+
+### Removing Useless Jumps
+
+We'll look at each block that ends with a conditional or unconditional jump
+and figure out which block would follow it by default if the jump weren't taken.
+If this default block is its only successor, the jump instruction is redundant.
+
+```
+remove_redundant_jumps(graph):
+   sorted_blocks = sort_basic_blocks(graph)  // First, we sort the blocks by their position; this is why we numbered the blocks initially.
+   i = 0
+   while i < length(sorted_blocks) - 1:      // We'll iterate over this sorted list of basic blocks (except the last one, since a jump at the very end of the function is never redundant)
+      block = sorted_blocks[i]
+      if block.instructions ends with Jump, JumpIfZero, or JumpIfNotZero:
+         keep_jump = False
+         default_succ = sorted_blocks[i + 1]
+         for succ_id in block.successors:
+            if succ_id != default_succ.id:
+               keep_jump = True
+               break
+         if not keep_jump:
+            remove_last(block.instructions) // if we don't find any successor other tahn the next block in the list, we'll remove it.
+      i += 1
+```
+
+Note that the next block might not have the next consecutive numberical ID as we may have deleted it earlier.
+That's why we can't just increment the block's ID fo find its default successor.
+
+### Removing Useless Labels
+
+This is similar ot removing useless jumps.
+After sorting basic blocks by numeric ID, we can delete the Label instruction at the start of a block if we'll enter it only by falling through from the previous block,
+rather than jumping to it explicitly.
+
+To put it simply, we can delete the Label at the stat of sorted_blocks[i] if its only predecessor is sorted_blocks[i - 1].
+We can also delete the Label at the start of sorted_blocks[0] if its only predecessor is ENTRY.
+
+### Removing Empty Blocks
+
+Eliminating unreachable jumps and labels might result in blocks with no instructions.
+
+This is an optional step; this will shrink the graph and might speed up later optimization passes a bit.
+Make sure you update the edges in the control-flow graph accordingly when removing a block.
+
+## A Little Bit About Data-Flow Analysis
+
+Data-flow analysis answers questions about how values are defined and used throughout a function.
+
+In the copy propagation pass, we'll implement _reaching copies analysis_.
+
+All data-flow analysis can be divided into two broad categories: forward and backward analyses.
+
+In a forward analysis, information travels forward through the control-flow graph. Reaching copies analyis is a forward analysis. When we see a Copy instruction x = y, that tells us that x and y might have the same value later in the same basic block or in one of that blocks' successors.
+
+In a backward analysis, the reverse is true. In the dead store elimination pass, we'll implement a backward analysis called liveness analysis. This tells us whether a variable's current value will ever be used. If we see an instruction that uses x, that tells us that x may be live earlier in the same basic block or in one of that block's predecessors.
+
+Each analysis has its own transfer function and meet operator.
+The _transfer function_ calculates the analysis result within a single block. It analyzes how individual instructions impact the results, but it doesn't need to deal with multiple execution paths.
+
+The _meet operator_ combines information from multiple paths to calculate how each basic block is impacted by its neighbors.
+
+To connect both, we use an _iterative algorithm_ to call the transfer function and meet operator on each basic block and keeps track of which blocks still need to be analyzed. Some blocks may need to be visited multiple times as we propagate information along different execution paths, until we reach a fixed point.
+
+## Copy Propagation
+
+Assume `i` is an instruction `x = y`, consider the following control-flow graph
+
+```mermaid
+flowchart TD
+    ENTRY --> B0
+    B0["x = foo()<br>JumpIfNotZero(arg, End)"] --> B1["x = 2"]
+    B1 --> B2["End: Return(x)"]
+    B0 --> B2
+    B2 --> EXIT
+```
+
+In this control-flow graph, there are two paths from the start of the funtion to Return(x).
+Only one of these path passes through x = 2, so it isn't safe to substitute 2 for x in this Return instruction.
+
+```mermaid
+flowchart TD
+    ENTRY --> B0
+    B0["x = 2<br>JumpIfNotZero(arg, End)"] --> B1["do_something()"]
+    B1 --> B2["End: Return(x)"]
+    B0 --> B2
+    B2 --> EXIT
+```
+
+In the second graph, we always execute x = 2 before we reach the Return instruction, so we can safely rewrite that instruction as Return(2).
+
+The following is a trickier example:
+
+```mermaid
+flowchart TD
+   ENTRY --> B0
+   B0["JumpIfNotZero(arg, A)"] --> B1["y = 20<br>x = y<br>Jump(End)"]
+   B0 --> B2["A:<br>y = 100<br>x = y"]
+   B1 --> B3["End:<br>Return(x)"]
+   B2 --> B3
+   B3 --> EXIT
+```
+
+Once again, there are two different paths to Return(x). Both paths pass through x = y.
+In B1, y's value is 20, and in B2, it's 100. But in either case, x and y will have the same value when we reach the Return instruction.
+So it's safe to rewrite Return(x) as Return(y).
+
+Before we rewrite instruction i, there's a second condition that each path to i must satisfy: between the instruction x = y and i, neither x nor y can be updated again.
+
+```
+x = 10
+x = foo()
+Return(x)
+```
+
+We can't replace x with 10 in Return(x), as x's value is no longer 10 at that point.
+
+```
+x = y
+y = 0
+Return(x)
+```
+
+Before y = 0, x and y have the same value, but after that, their values are different.
+So we can't rewrite Return(x).
+
+When a Copy instruction's source or destination is updated, we say the copy is _killed_.
+Once a copy is killed, we can't propagate it later points in the program.
+
+Another example:
+
+```
+x = 2
+x = foo()
+x = 2
+Return(x)
+```
+
+This example shows it's safe to rewrite Return(x) as Return(2).
+
+If there are multiple paths to `i`, the Copy instruction we're interested in must not be killed onh any of them.
+In the following graph, x = y is killed on one path but not another.
+
+```mermaid
+flowchart TD
+    ENTRY --> B0
+    B0["y = foo()<br>x = y<br>JumpIfNotZero(arg, End)"] -->|arg == 0| B1["y = 10"]
+    B1 --> B2["End:<br> Return(x)"]
+    B0 -->|arg != 0| B2
+    B2 --> EXIT
+```
+
+If we go straight from B0 to B2, x and y have the same value.
+But if we take the path from B0 through B1 to B2, the value of y is updated, so x and y no longer share the same value.
+So we cannot rewrite Return(x) as Return(y).
+
+Let's consider one final edge case. Suppose x = y is followed by y = x with no intervening kills.
+
+```
+x = y
+--snip--
+y = x
+z = x + y
+```
+
+There are 3 ways to handle this:
+
+- We say y = x kills x = y, so only y = x reaches z = x + y. So we rewrite it as z = x + x. We might remove y = x later during dead store elimination.
+- We simply ignore the y = x during our analysis. So we eliminate y = x and rewrite as z = y + y.
+- We propagate both copies in the final instructions that is substituting x for y and y for x. This is safe, but not helpful as we do not get rid of Copy instruction.
+
+If a Copy instruction appears on every path to instruction `i`, and it isn't killed on any of those paths, we say that it _reaches_ instruction i.
+We'll perform reaching copies analysis to determine which copies reach each instruction in the TACKY function.
+Then we use the results of this analysis to identify instruction to rewrite safely.
+
+### Reaching Copies Analysis
+
+#### The Transfer Function
+
+It takes all the Copy instructions that reach the beginning of a basic block and calculates which copies reach each individual instruction within tht block, which reach the end of the block.
+
+Rules:
+
+- If `i` is a Copy instruciton, it reaches the instruction right after it.
+- If some Copy instructions reach `i`, it also reaches the instruction right after `i`, unless it kills `i`.
+
+For example:
+
+```
+x = a
+y = 10
+x = y * 3
+Return(x)
+```
+
+Assume that there is a Copy instruction, a = y, right before this block. This Copy reaches the first instruction, x = a. We add both instructions to the current set of reaching copies. So both a = y and x = a reach the next instruction y = 10. This y = 10 kills a = y, so we remove a = y, and add y = 10. Finally, x = y _ 3 kills x = a. We don't add x = y _ 3 as it's not a Copy instruction, but an update.
+
+| Instruction  | Reaching copies   |
+| ------------ | ----------------- |
+| x = a        | { a = y }         |
+| y = 10       | { a = y, x = a }  |
+| x = y \* 3   | { x = a, y = 10 } |
+| Return(x)    | { y = 10 }        |
+| End of block | { y = 10 }        |
+
+Static storage duration variables make things a little trickier.
+
+```C
+int static_var = 0;
+
+int update_var(void) {
+   static_var = 4;
+   return 0;
+}
+
+int main(void) {
+   static_var = 5;
+   update_var(); // Our reaching copies analysis should recognize that the call to update _var in main kills static_var = 5
+   return static_var;
+}
+
+// It impacts static local variables too
+int indirect_update(void);
+
+int f(int new_total) {
+   static int total = 0;
+   total = new_total;
+   if (total > 100)
+      return 0;
+   total = 10;
+   indirect_update();
+   return total;
+}
+
+int indirect_update(void) {
+   f(101);
+   return 0;
+}
+
+/*
+   We have some options:
+   - Do interprocedural analysis -> get complicated quickly
+   - Assume that every function call updates every static variable. -> we'll adopt this
+*/
+```
+
+Here's is transfer function
+
+```
+transfer(block, initial_reaching_copies):
+   current_reaching_copies = initial_reaching_copies
+
+   for instruction in block .instructions:
+      annotate_instruction(instruction, current_reaching_copies) // record the set of copies that reach the point just before that instruction executes
+      match instruction with
+      | Copy(src, dst) ->
+         if Copy(dst, src) is in current_reaching_copies: // In the special case where x = y reaches y = x, we won’t add or remove any reaching copies
+            continue
+
+         for copy in current_reaching_copies: // Otherwise, we’ll handle the Copy instruction x = y by killing any copies to or from x
+            if copy.src == dst or copy.dst == dst:
+               current_reaching_copies.remove(copy)
+
+         current_reaching_copies.add(instruction) // then adding x = y to the set of reaching copies
+      | FunCall(fun_name, args, dst) ->
+         for copy in current_reaching_copies:
+            if (copy.src is static              // we’ll kill any copies to or from variables with static storage duration along with any copies to or from dst, the variable that will hold the result of the function call
+               or copy.dst is static
+               or copy.src == dst
+               or copy.dst == dst):
+               current_reaching_copies.remove(copy)
+      | Unary(operator, src, dst) ->
+         for copy in current_reaching_copies:   // To handle Unary and Binary, we’ll kill any copies to or from its destination
+            if copy.src == dst or copy.dst == dst:
+               current_reaching_copies.remove(copy)
+      | Binary(operator, src1, src2, dst) ->
+         // same as Unary
+         --snip--
+      | _ -> continue
+
+   annotate_block(block.id, current_reaching_copies) // we’ll record which copies reach the very end of the block
+```
+
+#### The Meet Operator
+
+The meet operator will propagate information about reaching copies from one block to another.
+
+```
+meet(block, all_copies): // all_copies, is the set of all Copy instructions that appear in the function
+
+   incoming_copies = all_copies // the identity element for set intersection
+   for pred_id in block.predecessors:
+      match pred_id with
+      | ENTRY -> return {} // No copies reach the very start of a function, so return an empty set
+      | BlockId(id) ->
+         pred_out_copies = get_block_annotation(pred_id) // Otherwise, we look up the set of copies that reach the end of each predecessor, from the transfer
+         incoming_copies = intersection(incoming_copies, pred_out_copies)
+      | EXIT -> fail("Malformed control-flow graph")
+
+   return incoming_copies
+```
+
+#### The Iterative Algorithm
+
+Let's tie everything together and analyze the entire function.
+
+There's one problem, control-flow graphs can have loops.
+To analyze a block, we need to analyze all of its predecessors. But in loop block is the predecesor of itself. We get stuck.
+
+To get unstuck, we need to analyze a block even if we don't have complete results from all of its predecessors.
+We can maintain a provisional result for every block; if we need to analyze a block before some of its predecessors, we can use those provisional results.
+
+At first, the provisional result includes every Copy instructions in the function.
+Then, with each new path to a block, we eliminate any copies that don't appear or are killed along that path.
+That's the idea. And how to put it into practice?
+
+First, we'll annotate each basic block with the set of all Copy instructions in the function.
+As each basic block with the set of all Copy instructions in the function.
+
+```
+find_reaching_copies(graph):
+
+   all_copies = find_all_copy_instructions(graph)
+   worklist = []
+
+   for node in graph.nodes:
+      if node is EntryNode or ExitNode:
+         continue
+
+      worklist.append(node)
+      annotate_block(node.id, all_copies)
+
+   while worklist is not empty:
+      block = take_first(worklist)
+      old_annotation = get_block_annotation(block.id)
+      incoming_copies = meet(block, all_copies)
+      transfer(block, incoming_copies)
+      if old_annotation != get_block_annotation(block.id):
+         for successor_id in block.successors:
+            match successor_id with
+            | EXIT -> continue
+            | ENTRY -> fail("Malformed control-flow graph")
+            | BlockId(id) ->
+               successor = get_block_by_id(successor_id)
+               if successor is not in worklist:
+                  worklist.append(successor)
+```
+
+### Rewriting TACKY Instructions
+
+To rewrite an instruction, we'll check whether the copies that reach it define any of its operands.
+If they do, we'll replace those operands with their values. If we encounter a Copy instruction of the form x = y and it its reaching copies include x = y or y = x, we'll remove it instead of to rewrite it.
+
+```
+replace_operand(op, reaching_copies):
+   if op is a constant:
+      return op
+
+   for copy in reaching_copies:
+      if copy.dst == op:
+         return copy.src
+   return op
+
+rewrite_instruction(instr):
+   reaching_copies = get_instruction_annotation(instr) // looking up the set of copies that reach the current instruction
+   match instr with
+   | Copy(src, dst) ->
+      for copy in reaching_copies:
+         if (copy == instr) or (copy.src == dst and copy.dst == src): // we’ll search this set for a copy from its source to its destination or vice versa
+            return null
+      new_src = replace_operand(src, reaching_copies) // otherwise, we try to replace the instruction’s source operand using replace_operand
+      return Copy(new_src, dst)
+   | Unary(operator, src, dst) ->
+      new_src = replace_operand(src, reaching_copies)
+      return Unary(operator, new_src, dst)
+   | Binary(operator, src1, src2, dst) ->
+      new_src1 = replace_operand(src1, reaching_copies)
+      new_src2 = replace_operand(src2, reaching_copies)
+      return Binary(operator, new_src1, new_src2, dst)
+   | --snip--
+```
+
+### Supporting Part II TACKY Programs
+
+For Part II, we need to solve a couple of problems:
+
+First, we sometimes use Copy instructions to perform type conversions.
+Signed and unsigned values have different assembly code for operations, such as condition code for comparisons.
+We will treat these Copy instructions as type conversion isntead of a normal copy operation, and we don't add it to the reaching copy list in the transfer function, in the set of initial reaching copies
+at the start of the iterative algorithm.
+
+Second, variables can be updated through pointers.
+In the instruction Store(v, ptr), we don't know which object ptr points to, so we don't know which copies to kill.
+To solve this, we'll find all the variables that could be accessed through pointers (aliased variables).
+And we assume that every Store instruction updates every one of these variables.
+And we assume that function calls update these variables too since we can declare a variable in one function and update it
+through pointer in a different function.
+
+For example:
+
+```
+function_with_pointers():
+   x = 1
+   y = 2
+   z = 3
+   ptr1 = GetAddress(x)
+   Store(10, ptr1)
+   ptr2 = GetAddress(y)
+   z = x + y
+   Return(z)
+```
+
+First, we'll identify the aliased variables in the function_with_pointers.
+Both x and y are alisased because they're both used in GetAddress instructions.
+Then, we run the reaching copies analysis.
+This whole function is just a basic block, so we can just apply the transfer function.
+
+We add x = 1, y = 2 and z = 3 to the set of reaching copies.
+Then, when we reach the Store instruction, we'll kill the copies to our two aliased variables, x and y.
+
+| Instruction          | Reaching copies         |
+| -------------------- | ----------------------- |
+| x = 1                | {}                      |
+| y = 2                | { x = 1 }               |
+| z = 3                | { x = 1, y = 2 }        |
+| ptr1 = GetAddress(x) | { x = 1, y = 2, z = 3 } |
+| Store(10, ptr1)      | { x = 1, y = 2, z = 3 } |
+| ptr2 = GetAddress(y) | { z = 3 }               |
+| z = x + y            | { z = 3 }               |
+| Return(z)            | {}                      |
+| End of block         | {}                      |
+
+We'll miss some safe optimizations, but we'll never apply any unsafe ones.
+
+#### Implementing Address-Taken Analysis
+
+The approach above is called _address-taken analysis_.
+To perform it, we'll inspect each instruction in a TACKY function, identify every variable
+that are either has static storage duration or has its address taken by a GetAddress instruction.
+
+```
+optimize(function_body, enabled_optimizations):
+   --snip--
+   while True:
+      aliased_vars = address_taken_analysis(function_body) // Return this on every iteration because the results can change if we optimize away any GetAddress instructions.
+      --snip--
+      if enabled_optimizations contains "COPY_PROP":
+      cfg = copy_propagation(cfg, aliased_vars)
+      if enabled_optimizations contains "DEAD_STORE_ELIM":
+      cfg = dead_store_elimination(cfg, aliased_vars)
+      --snip--
+```
+
+#### Updating the Transfer Function
+
+Let's extend our transfer function to support new types and instructions we added in Part II.
+
+```
+transfer(block, initial_reaching_copies, aliased_vars):
+   current_reaching_copies = initial_reaching_copies
+
+   for instruction in block .instructions:
+      annotate_instruction(instruction, current_reaching_copies)
+      match instruction with
+      | Copy(src, dst) ->
+         --snip--
+         if (get_type(src) == get_type(dst)) or (signedness(src) == signedness(dst)):
+            current_reaching_copies.add(instruction)
+      | FunCall(fun_name, args, dst) ->
+         for copy in current_reaching_copies:
+            if (copy.src is in aliased_vars
+               or copy.dst is in aliased_vars
+               or (dst is not null and (copy.src == dst or copy.dst == dst))):
+               current_reaching_copies.remove(copy)
+      | Store(src, dst_ptr) ->
+         for copy in current_reaching_copies:
+            if (copy.src is in aliased_vars) or (copy.dst is in aliased_vars):
+               current_reaching_copies.remove(copy)
+      | Unary(operator, src, dst) or any other instruction with dst field ->
+         --snip--
+      | _ -> continue
+
+   annotate_block(block.id, current_reaching_copies)
+```
+
+The `signedness` helper function should count _char_ as a signed type, and all pointer types as unsigned types.
+The concept of signedness doesn't apply to double or non-scalar types. That's fine
+because we don't use Copy instructions to convert to or from these types.
+If a Copy uses a double or a non-scalar operand, both operands will have the same type, so we don't check their signedness.
+
+#### Updating rewrite_instruction
+
+We'll rewrite most of the new TACKY instructions from Part II the same as from Part I.
+The one exception is GetAddress, which we'll never rewrite, because it uses its source operand's address rather than its value.
+
+## Dead Store Elimination
+
+A variable is _live_ at a particular point if its value at that point might be read later in the program.
+Otherwise, it's _dead_.
+
+A variable x is live at a point _p_ if the two conditions are met:
+
+- At least one path from _p_ to some later instruction that uses x. We say x is _generated_.
+- x must not be updated on the path from _p_ to that later instruction. We say x is _killed_.
+
+```mermaid
+flowchart TD
+    ENTRY(["ENTRY"])
+    B0["B₀: x = 10<br>JumpIfNotZero(arg, A)"]
+    B1["B₁: Return(0)"]
+    B2["B₂: A:<br> Return(x)"]
+    EXIT(["EXIT"])
+
+    ENTRY --> B0
+    B0 -- if arg ≠ 0 --> B2
+    B0 -- if arg = 0 --> B1
+    B1 --> EXIT
+    B2 --> EXIT
+```
+
+In this control-flow graph, there are 2 paths from x = 10 to EXIT.
+
+- Through B1: x is dead at any point
+- Through B2: x is live at the point after x = 10, at the beginning of B2, and just before the Return(x) instruction in B2.
+
+Let's look at another example:
+
+```mermaid
+flowchart TD
+    ENTRY(["ENTRY"])
+    B0["B₀: x = 10<br>JumpIfNotZero(arg, A)"]
+    B1["B₁: x = f()<br>Return(x)"]
+    B2["B₂: A: x = g()<br>Return(x)"]
+    EXIT(["EXIT"])
+
+    ENTRY --> B0
+    B0 -- if arg ≠ 0 --> B2
+    B0 -- if arg = 0 --> B1
+    B1 --> EXIT
+    B2 --> EXIT
+```
+
+Again we have 2 paths from x = 10 to EXIT.
+This time, x is killed on both paths. This means x is dead right after x = 10.
+It's live at the only 2 points in this graph:
+
+- Right after x = f() in B1.
+- Right after x = g() in B2.
+
+An instruction is a dead store if it assigns to a dead variable and has no other side effects. Therefore, in the second graph, x = 10 is a dead store.
+
+Note that we care whether the variable is dead just _after_ the instruction, not before it.
+
+### Liveness Analysis
+
+This analysis also requires a transfer function, a meet operator, and an iterative algorithm.
+Because this is a backward-flow problem, we start the transfer function at the end of a basic block and work its way up, which is reverse of reaching copies analysis.
+
+And the meet operator will gather information from a block's successors, not its predecessors.
+
+#### The Transfer Function
+
+The function takes the set of variables that are live at the end of a basic block
+and figures out which variables are live just before an instruction.
+
+For example, to calculate the live variables before the instruction x = y \* z, we would take the set of variables that are live
+right after the instruction, add y and z, and remove x.
+
+If an instruction reads and writes the same variable, it generates the variable instead of killing it. Like in x = x + 1.
+
+Here is an example to apply the transfer function:
+
+```
+x = 4
+x = x + 1
+y = 3 * x
+Return(y)
+```
+
+Assume there are no live variables at the end of this block after the Return instruction.
+When we process the Return, we add y to the set of live variables.
+Then, y = 3 \* x will kill y and generate x.
+Next, x = x + 1 generates x. This has no effect because x is already live.
+Finally, x = 4 will kill x, leaving no live variables at the start of the basic block.
+
+| Instruction        | Live Variables |
+| ------------------ | -------------- |
+| Beginning of block | `{}`           |
+| x = 4              | `{x}`          |
+| x = x + 1          | `{x}`          |
+| y = 3 \* x         | `{y}`          |
+| Return(y)          | `{}`           |
+
+Static variables, again, complicate things.
+We don't know how other functions will interact with any static variables that we encounter;
+they could reead, update them, or both.
+We'll assume every function reads every static variable.
+
+```
+transfer(block, end_live_variables, all_static_variables):
+   current_live_variables = end_live_variables     //  start with the set of variables that are live at the end of the block
+
+   for instruction in reverse(block .instructions):   // then process the list of instructions in reverse
+      annotate_instruction(instruction, current_live_variables)   // annotate each instruction with the set of variables that are live just after it executes
+
+      match instruction with
+      | Binary(operator, src1, src2, dst) ->
+         current_live_variables.remove(dst)
+         if src1 is a variable:
+            current_live_variables.add(src1)
+         if src2 is a variable:
+            current_live_variables.add(src2)
+      | JumpIfZero(condition, target) ->
+         if condition is a variable:
+            current_live_variables.add(condition)
+      | --snip--
+      | FunCall(fun_name, args, dst) ->
+         current_live_variables.remove(dst)
+         for arg in args:
+         if arg is a variable:
+            current_live_variables.add(arg)
+         current_live_variables.add_all(all_static_variables)  // kill its destination and add its arguments, as usual, but we’ll add every static variable too
+
+   annotate_block(block.id, current_live_variables) // Finally, annotate the whole block with the variables that are live before the first instruction
+```
+
+There are some ways to calculate all_static_variables:
+
+- Scan this TACKY function and look for static variables before starting the dead store elimination.
+- Scan the whole symbol table for static variables, without worrying about which variables show up in which functions.
+
+#### The Meet Operator
+
+This calculates which variables are live at the end of a basic block.
+If a variable is live at the start of at lease one succesor, it must also be live at the end of block B, because there's at least one path from the end of B to that successor.
+We'll take the set union of all the live variables at the start of al the block's succesors.
+
+Static variables are assumed to be live at the EXIT node.
+
+```
+meet(block, all_static_variables):
+   live_vars = {}
+   for succ_id in block.successors:
+      match succ_id with
+      | EXIT -> live_vars.add_all(all_static_variables)
+      | ENTRY -> fail("Malformed control-flow graph")
+      | BlockId(id) ->
+         succ_live_vars = get_block_annotation(succ_id)
+         live_vars.add_all(succ_live_vars)
+
+    return live_vars
+```
+
+#### The Iterative Algorithm
+
+The iterative algorithm here differs from the one for reaching copies analysis:
+
+- We add blocks' predecessors, rather than its successors, to the worklist.
+- Our initial annotation is the empty set rather than all elements.
+
+I won't provide pseudocode. Here is some tips:
+
+- Initialize the worklist in postorder. So you'll visit each block only after you've visited all of its successors.
+- Make your backward iterative algorithm reuseable. We'll use it again for assembly programs.
+
+### Removing Dead Stores
+
+An instruction is a dead store if its destination is dead as soon as we execute it.
+
+```
+is_dead_store(instr):
+   if instr is FunCall:
+      return False
+
+   if instr has a dst field:
+      live_variables = get_instruction_annotation(instr)
+      if instr.dst is not in live_variables:
+         return True
+
+   return False
+```
+
+### Supporting Part II TACKY Programs
+
+Truncate and SignExtend instructions generate their source operands, and kill their destinations.
+AddPtr generates both source operands and kills its destination.
+
+The operations on pointers and aggregate types are trickier.
+When we read or write through a pointer, we can't tell which underlying
+object is being accessed. We'll assume that reading through a pointer should generate every aliased variables,
+but writing through a pointer shouldn't kill any of them. We take the same approach to aggregate variables.
+
+We covered the key points, so you can update the transfer function your own.
+
+Finally, we'll never eliminate a Store instruction, since we don't know whether its destination is dead.
+It could update an object defined in a different function, like in this example:
+
+```
+update_through_pointer(param):
+   Store(10, param)
+   Return(0)
+```
+
+## Summary
+
+Wow, you implemented four important compiler optimizations:
+
+- Constant Folding
+- Unreachable Code Elimination
+- Copy Propagation
+- Dead Store Elimination
+
+In the next chapter, you'll write a register allocator with a new graph coloring algorithm to map pseudoregisters to hardware registers.
+You'll also use register coalescing to clean up many of unnecessary _mov_ instructions.
+
+## Additional Resources
+
+### Security implications of compiler optimizations
+
+- [Dead Store Elimination (Still) Considered Harmful](https://www.usenix.org/system/files/conference/usenixsecurity17/sec17-yang.pdf)
+- [The Correctness-Security Gap in Compiler Optimization](https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=7163211)
+
+### Data-flow analysis
+
+- Chapter 9 of Compilers: Principles, Techniques, and Tools, 2nd edition, by Alfred V. Aho et al.
+- [Paul Hilfinger’s lecture slides from CS164 at UC Berkeley give an example-heavy overview of the same material](https://inst.eecs.berkeley.edu/~cs164/sp11/lectures/lecture37-2x2.pdf)
+- [Eli Bendersky’s blog post “Directed Graph Traversal, Orderings and Applications to Data-Flow Analysis”](https://eli.thegreenplace.net/2015/directed-graph-traversal-orderings-and-applications-to-data-flow-analysis)
+
+### Copy propagation
+
+- [The version in this chapter draws on Jeffrey Ullman’s lecture notes on Compilers: Principles, Techniques, and Tools](http://infolab.stanford.edu/~ullman/dragon/slides4.pdf)
+- [I’ve borrowed the idea of deleting redundant copies from LLVM’s low-level copy propagation pass](https://llvm.org/doxygen/MachineCopyPropagation_8cpp_source.html)
+
+### Alias analysis
+
+- [You can find a quick overview of alias analysis algorithms in Phillip Gibbons’s lecture slides from his Carnegie Mellon course on compiler optimization](https://www.cs.cmu.edu/afs/cs/academic/class/15745-s16/www/lectures/L16-Pointer-Analysis.pdf)
+
+## Reference Implementation Analysis
+
+[Chapter 19 Code Analysis](./code_analysis/chapter_19.md)
