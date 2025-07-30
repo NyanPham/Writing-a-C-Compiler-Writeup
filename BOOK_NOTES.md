@@ -22,7 +22,7 @@
   - [Chapter 18: Structures](#chapter-18-structures)
 - [Part III](#part-iii)
   - [Chapter 19: Optimizing Tacky Programs](#chapter-19-optimizing-tacky-programs)
-  
+  - [Chapter 20: Register Allocation](#chapter-20-register-allocation)
 ---
 
 # Part I
@@ -13695,3 +13695,1386 @@ You'll also use register coalescing to clean up many of unnecessary _mov_ instru
 ## Reference Implementation Analysis
 
 [Chapter 19 Code Analysis](./code_analysis/chapter_19.md)
+
+---
+
+# PART III
+
+--- 
+
+# Chapter 20: Register Allocation
+
+## Stages of a Compiler
+
+1. **Lexer**
+   - Input: Source code
+   - Output: Token list
+2. **Parser**
+   - Input: Token list
+   - Output: Abstract Syntax Tree (AST)
+3. **Semantic Analysis**
+   - Input: AST
+   - Output: Transformed AST
+   - Passes:
+   1. Variable resolution
+   2. Type Checking
+   3. Loop Labeling
+4. **TACKY Generation**
+   - Input: Transformed AST
+   - Output: TAC IR (Tacky)
+5. **Optimization**
+   - Input: TAC IR (Tacky)
+   - Output: Optimized TAC IR (Tacky)
+   - Passes:
+   1. Constant Folding
+   2. Unreachable code elimination
+   3. Copy propagation
+   4. Dead store elimination
+6. **Assembly Generation**
+   - Input: Tacky
+   - Output: Assembly code
+   - Passes:
+   1. Converting TACKY to Assembly
+   2. **Register allocation**
+   3. Replacing pseudoregisters
+   4. Instruction fix-up
+7. **Code Emission**
+   - Input: Assembly code
+   - Output: Final assembly file
+
+We have a new pass in Assembly Generation: Register allocation.
+
+We can reduce the frequency of accessing memory by assigning pseudoregisters to hard registers instead of location in memory.
+
+We'll learn graph coloring, a very classic register allocation.
+
+After that, we use _register coalescing_ to remove unncessary _mov_ instructions.
+
+## Register Allocation in Action
+
+Consider this simple C program
+
+```C
+int f(int x, int y) {
+   return 10 - (3 * y + x);
+}
+```
+
+Our compile will produce the following TACKY:
+
+```TACKY
+f(x, y):
+   tmp0 = 3 * y
+   tmp1 = tmp0 + x
+   tmp2 = 10 - tmp1
+   Return(tmp2)
+```
+
+Then, in Assembly:
+
+```asm
+f:
+   movl %edi, %x
+   movl %esi, %y
+   movl $3, %tmp0
+   imull %y, %tmp0
+   movl %tmp0, %tmp1
+   addl %x, %tmp1
+   movl $10, %tmp2
+   subl %tmp1, %tmp2
+   movl %tmp2, %eax
+   ret
+```
+
+We set up parameters (in register now), and calculate tmp0, tmp1 and tmp2.
+The operands %x, %y, %tmp0, %tmp1, %tmp2 are pseudoregisters.
+There are 3 approaches to replacing those pseudoregisters:
+
+- [x] Replace them with Stack operands (already done)
+- [ ] Replace them with hard registers without performing register coalescing (we'll implement first)
+- [ ] Replace them with har registers AFTER permorning register coalescing (we'll implement second)
+
+I'll use the word _register_ to refer to pseudoregisters and hard registers collectively.
+
+### Take One: Put Everything on the Stack
+
+**Replacing Pseudoregisters with Stack Addresses**
+
+| Pseudoregister | Real location |
+| -------------- | ------------- |
+| x              | -4(%rbp)      |
+| y              | -8(%rbp)      |
+| tmp0           | -12(%rbp)     |
+| tmp1           | -16(%rbp)     |
+| tmp2           | -20(%rbp)     |
+
+This will give us assembly code as:
+
+```
+f:
+   movl %edi, -4(%rbp)
+   movl %esi, -8(%rbp)
+   movl $3, -12(%rbp)
+   imull -8(%rbp), -12(%rbp)     // 1
+   movl -12(%rbp), -16(%rbp)     // 2
+   addl -4(%rbp), -16(%rbp)      // 3
+   movl $10, -20(%rbp)
+   subl -16(%rbp), -20(%rbp)     // 4
+   movl -20(%rbp), %eax
+   ret
+```
+
+The instructions 1, 2, 3, and 4 are invalid. That's what we fix in fix-up pass.
+We insert an extra instruction before 1 to load its destination to a hard register, and add another to store the result back to -12(%rbp).
+We do the same for 2, 3, and 4.
+We say that "a pseudoregister is `spilled` to memory" if we store its contents on the stack instead of a hard register.
+And the extra instructions to move spilled values between registers and memory are callwed `spill code`.
+
+We will have the final assembly:
+
+```
+f:
+   --snip--
+   movl %edi, -4(%rbp)
+   movl %esi, -8(%rbp)
+   movl $3, -12(%rbp)
+   movl -12(%rbp), %r11d   // spill code
+   imull -8(%rbp), %r11d
+   movl %r11d, -12(%rbp)   // spill code
+   movl -12(%rbp), %r10d   // spill code
+   movl %r10d, -16(%rbp)
+   movl -4(%rbp), %r10d    // spill code
+   addl %r10d, -16(%rbp)
+   movl $10, -20(%rbp)
+   movl -16(%rbp), %r10d   // spill code
+   subl %r10d, -20(%rbp)
+   movl -20(%rbp), %eax
+   --snip--
+   ret
+```
+
+This is incredibly inefficient because the program constantly access memory.
+
+### Take Two: Register Allocation
+
+Let's try another strategy.
+
+**Replacing Pseudoregisters with Hard Registers**
+
+| Pseudoregister | Real location |
+| -------------- | ------------- |
+| x              | %edx          |
+| y              | %ecx          |
+| tmp0           | %r8d          |
+| tmp1           | %r9d          |
+| tmp2           | %edi          |
+
+```
+f:
+   --snip--
+   movl %edi, %edx
+   movl %esi, %ecx
+   movl $3, %r8d
+   imull %ecx, %r8d
+   movl %r8d, %r9d
+   addl %edx, %r9d
+   movl $10, %edi
+   subl %r9d, %edi
+   movl %edi, %eax
+   --snip--
+   ret
+```
+
+This is faster, and less memory accessing, but we still have unnecessary instructions.
+For example, we move from EDI and ESI to new locations instead of leaving where they are.
+That's where register coalescing steps in.
+
+### Take Three: Register Allocation with Coalescing
+
+We'll do 2 steps:
+
+- Coalesce registers: we look at each mov instruction in the function and decide whether its operands can be merged together.
+- Replace any remaining pseudoregisters with hard registers.
+
+```
+f:
+   movl %edi, %x        // 1
+   movl %esi, %y        // 2
+   movl $3, %tmp0
+   imull %y, %tmp0
+   movl %tmp0, %tmp1    // 3
+   addl %x, %tmp1
+   movl $10, %tmp2
+   subl %tmp1, %tmp2
+   movl %tmp2, %eax     // 4
+   ret
+```
+
+The marks 1, 2, 3, and 4 are _mov_ instructions whose source and destination are both registers.
+We might need to copy values from one register to another.
+For example, we need to copy x out of EDI if we were going to pass another function argument in EDI later.
+But in this case, it's safe to merge x into EDI.
+We apply the same logic to other 3 _mov_ instructions: x -> EDI, y -> ESI, tmp1 -> tmp0, tmp2 -> EAX.
+
+**Coalescing Registers**
+| Coalesced Pair | Remaining Register |
+|------------------|---------------------|
+| %edi, %x | %edi |
+| %esi, %y | %esi |
+| %tmp0, %tmp1 | %tmp0 |
+| %tmp2, %eax | %eax |
+
+Deleting the redundant 4 _mov_ instructions, we have an updated operands assembly code.
+
+```
+f:
+   movl $3, %tmp0
+   imull %esi, %tmp0
+   addl %edi, %tmp0
+   movl $10, %eax
+   subl %tmp0, %eax
+   ret
+```
+
+The last part is to replace %tmp0 with a hard register. Any register will do, but I'll go for ECX.
+
+```
+f:
+   --snip--
+   movl $3, %ecx
+   imull %esi, %ecx
+   addl %edi, %ecx
+   movl $10, %eax
+   subl %ecx, %eax
+   --snip--
+   ret
+```
+
+## Updating the Compiler Pipeline
+
+We'll add every remaining hard registers to the assembly AST.
+Conversion from TACKY to Assembly will have a small change as well: we'll store extra information in the backend symbol table about which hard registers each function uses to pass parameters and return values.
+
+Next, we'll implement the register allocation. This pass will process each assembly function independently.
+If a function needs a lot of hard registers, and we don't have enough of them, we spill some pseudoregisters to memory.
+Our register allocator won't replace spilled pseudoresgisters.
+
+Pseudoregisters might represent variables with static storage duration, which is not touched by the register allocator either.
+
+Finally, we'll extend the code emission stage to support the new hard registers we introduce in this chapter.
+
+## Extending the Assembly AST
+
+<pre><code>program = Program(top_level*)
+assembly_type = Byte | LongWord | Quadword | Double | ByteArray(int size, int alignment)
+top_level = Function(identifier name, bool global, instruction* instructions)
+   | StaticVariable(identifier name, bool global, int alignment, static_init* init_list)
+   | StaticConstant(identifier name, int alignment, static_init init)
+instruction = Mov(assembly_type, operand src, operand dst)
+      | Movsx(assembly_type src_type, assembly_type dst_type, operand src, operand dst)
+      | MovZeroExtend(assembly_type src_type, assembly_type dst_typeoperand src, operand dst)
+      | Lea(operand src, operand dst)
+      | Cvttsd2si(assembly_type dst_type, operand src, operand dst)
+      | Cvtsi2sd(assembly_type src_type, operand src, operand dst)
+      | Unary(unary_operator, assembly_type, operand)
+      | Binary(binary_operator, assembly_type, operand, operand)
+      | Cmp(assembly_type,, operand, operand)
+      | Idiv(assembly_type, operand)
+      | Div(assembly_type, operand)
+      | Cdq(assembly_type)
+      | Jmp(identifier)
+      | JmpCC(cond_code, identifier)
+      | SetCC(cond_code, operand)
+      | Label(identifier)
+      | AllocateStack(int)
+      | DeallocateStack(int)
+      | Push(operand)
+      <strong>| Pop(reg)</strong>
+      | Call(identifier) 
+      | Ret
+unary_operator = Neg | Not | Shr
+binary_operator = Add | Sub | Mult | DivDouble | And | Or | Xor | Shl | ShrTwoOp
+operand = Imm(int) | Reg(reg) | Pseudo(identifier) | Memory(reg, int) | Data(identifier, int) 
+   | PseudoMem(identifier, int) | Indexed(reg base, reg index, int scale)
+cond_code = E | NE | G | GE | L | LE | A | AE | B | BE
+reg = AX <strong>| BX</strong> | CX | DX | DI | SI | R8 | R9 | R10 | R11 <strong>| R12 | R13 | R14 | R15</strong> | SP | BP
+   | XMM0 | XMM1 | XMM2 | XMM3 | XMM4 | XMM5 | XMM6 | XMM7 
+   <strong>| XMM8 | XMM9 | XMM10 | XMM11 | XMM12 | XMM13</strong> | XMM14 | XMM15</pre></code>
+
+## Converting TACKY to Assembly
+
+We are not changing what assembly we generate, but recording extra information in the backend symbol table.
+To be specific, we'll record which registers are used to pass each function's parameters.
+
+To figure out which registers a function uses to pass parameters and return values, we'll use the same logic as we implemented
+in the classify_parameters and classify_return_value helper functions in Chapter 18.
+
+## Register Allocation by Graph Coloring
+
+We have a limited number of hard registers to work with, and some regiters will interfere with each other, meaning
+they can't occupy the same physical location.
+If two pseudoregisters intefere, we need to assign them 2 different hard registers.
+A pseudoregister might also interfere with a hard register, which means we can't assign it to that hard register.
+
+```asm
+divide_and_subtract:
+   movl %edi, %a        # 1
+   movl %esi, %b        # 2
+   movl %a, %eax
+   cdq                  # 3
+   idivl %b
+   movl %eax, %tmp      # 4
+   subl %b, %tmp
+   movl %tmp, %eax
+   ret
+```
+
+To start off, it's easy to see that `a` and `b` interfere.
+If we map them to the same hard register, we'll clobber `a` when we define `b` (#2).
+
+When a register is live, we need to preserve its value, so we can't store a differnt value in the same location.
+When it's dead, we're free to overwrite its value with something else.
+This gives us an easy rule for detecting inteference: two registers interfere if we update one while the other is live.
+
+So `b` interferes with `tmp`, since `b` is live when we define `tmp` (#4).
+But `a` and `tmp` don't interfere, `a` is already dead by the time we define `tmp`, so it's fine to map them to the same hard register.
+
+Hard registers also interfere with pseudoregisters. `ESI` interferes with `a` because `ESI` is live when we define `a` (#1).
+If we mapped `a` to `ESI`, we'd clobber the function's record parameter before we had a chance to copy it the `b`.
+`EAX` interferes with `b` because `b` is live when we copy `a` to `EAX` to prepare for a division.
+
+The last source of interference is less obvious. Remember that the `cdq` instruction sign extends the value from `EAX` into `EDX` (#3).
+Cdq implicitly updates `EDX` while `b` is live, it makes `EDX` interferes with `b`.
+
+// TODO Draw this map Figure 20-2: The register interference graph for divide_and_subtract
+
+```mermaid
+graph TD;
+   EDX --> EAX
+   EDX --> ESI
+   EDX --> EDI
+   EDX --> b
+```
+
+This graph encodes all the interferences we just identified:
+
+- `a` interferes with `ESI` and `b`
+- `b` interferes with `tmp`, `EAX`, `EDX`, and `a`
+- All 4 hard registers interfere with each other.
+
+Now we'll try to k-color this graph, where k is the number of
+hard registers in the graph. In this small example, k is 4.
+
+After we color the graph, we'll replace each pseudoregister with the hard register that received the same color.
+
+One of the possible solution is:
+
+```asm
+divide_and_subtract:
+   movl %edi, %edx
+   movl %esi, %edi
+   movl %edx, %eax
+   cdq
+   idivl %edi
+   movl %eax, %eax
+   subl %edi, %eax
+   movl %eax, %eax
+   ret
+```
+
+Note that coloring the graph produces two different mappings:
+one from all registers to colors and one from colors to hard registers.
+Conceptually, each color is a hard register, but we don't know which hard register until after we've colored the graph.
+
+### Detecting Interference
+
+I said that two registers interfered if we updated one while the other was alive.
+There are something to note.
+
+**1. Two registers only interfere only if one is _live immediately_ after we update the other.**
+
+Here is a short example:
+
+```asm
+# before the first instruction , rdi is live. Right after this instruction, it's dead. rdi and x don't interferee
+movl 4(%rdi), %x
+movl %x, %eax
+ret
+```
+
+**2. Two registers interfere only if they have different values**
+
+```asm
+# x and y don't interfere
+movl $1, %y
+movl %y, %x
+addl %x, %ecx
+addl %y, %eax
+```
+
+Two registers connected by a _mov_ instruction could still interfere with other reasons.
+
+```asm
+movl $1, %y
+movl %y, %x    # this second mov doens't make x and y interfere
+addl $1, %y    # but this add does because it updates y while x is live, so putting x and y in the same register is unsafe
+addl %x, %y
+```
+
+### Spilling Registers
+
+We can't always k-color the interference graph.
+Let's consider this snippet which calculate 10 / arg1 + arg1 / arg2.
+
+```asm
+uncolorable:
+   movl %edi, %arg1
+   movl %esi, %arg2
+   movl $10, %eax
+   cdq
+   idivl %arg1
+   movl %eax, %tmp
+   movl %arg1, %eax
+   cdq
+   idivl %arg2
+   addl %tmp, %eax
+   ret
+```
+
+Let's pretend that our architecture has only 4 hard registers: ESI, EDI, EDX, and EAX.
+// TODO Draw Figure 20-4: The interference graph
+
+Note that `EAX`, `EDX`, `arg1`, `arg2`, and `tmp` all interfere with each other.
+That means each of them must receive a different color, so they require 5 distinct colors in total.
+We have only 4 registers, so we'll spill a register.
+In other words, we'll remove a register from the graph instead of coloring it.
+If we spill `tmp`, we'll hav the coloring like this
+
+// TODO Draw Figure 20-5: Coloring the interference graph after spilling tmp
+
+Then we'll have
+
+```asm
+uncolorable:
+   movl %edi, %edi      # arg1
+   movl %esi, %esi      # arg2
+   movl $10, %eax
+   cdq
+   idivl %edi           # arg1
+   movl %eax, %tmp
+   movl %edi, %eax      # arg1
+   cdq
+   idivl %esi           # arg2
+   addl %tmp, %eax
+   ret
+```
+
+Note that we've made the first two instructions in the asm code redundant.
+We could optimize the code further by deleting them, but we won't worry about this optimization for now.
+
+After the `arg1` and `arg2` are allocated their own registers, the pseudo-operand replacement pass will put `tmp` on the stack.
+
+```asm
+uncolorable:
+   #--snip--
+   movl %edi, %edi
+   movl %esi, %esi
+   movl $10, %eax
+   cdq
+   idivl %edi
+   movl %eax, -4(%rbp)     # tmp
+   movl %edi, %eax
+   cdq
+   idivl %esi
+   addl -4(%rbp), %eax     # tmp
+   #--snip--
+   ret
+```
+
+Spilling one pseudoregister made it possible to replace all the others with hard registers.
+How do we decide which one to spill?
+That's a tough question, and a very important one.
+
+The more frequently a pseudoregister is accessed, the more it will hurt the performance to spill that pseudoregister.
+Our allocator will calculate a _spill cost_ for each register in the interference graph before coloring the graph.
+
+## The Basic Register Allocator
+
+Here is how to implement to allocate registers for a single function.
+
+```
+allocate_registers(instructions):
+   interference_graph = build_graph(instructions)
+   add_spill_costs(interference_graph, instructions)
+   color_graph(interference_graph)
+   register_map = create_register_map(interference_graph)
+   transformed_instructions = replace_pseudoregs(instructions, register_map)
+   return transformed_instructions
+```
+
+In the `color_graph` function, if we can't color every node, we'll use the spill costs we calculated in `add_spill_costs`
+to decide what to spill. To spill a node, just leave it uncolored.
+
+### Handling Multiple Types During Register Allocation
+
+For Part II, we'll need to run the `allocate_registers` twice,
+one for general-purpose registers and one for XMM registers.
+The other functions look exactly the same whether we're dealing with floating-point or general-purpose registers.
+
+### Defining the Interference Graph
+
+We need a structure for our interference graph.
+
+```
+node = Node(operand id, operand* neighbors, double spill_cost, int? color, bool pruned)
+graph = Graph(node* nodes)
+```
+
+Each node represents a Pseudo or Register in Assembly AST.
+Each node keeps track of its neighbors, spill cost, and color.
+Color is numbers from 1 to k, where k is the number of available registers.
+The color field is optional, as we can spill the node.
+I'll explain pruned field later.
+
+Initialy set `spill_cost` to 0.0, `color` to null, and `pruned` to false.
+
+### Building the Interference Graph
+
+Let's first tackle the Part I.
+
+```
+build_graph(instructions):
+   interference_graph = base_graph // 1. start with a graph that includes every hard register, called base graph
+   add_pseudoregisters(interference_graph, instructions) // 2. insert a node for each pseudoregister that appears in the function
+   cfg = make_control_flow_graph(instructions)
+   analyze_liveness(cfg) // 3. take a control-flow graph and annotate it with liveness information
+   add_edges(cfg, interference_graph) // 4. figure out which edges to add to the interference graph
+   return interference_grap
+```
+
+#### The Base Graph
+
+// TODO: Figure 20-6: The base register interference graph
+
+We'll exclude RSP and RBP as they're used to manage the stack frame, R10 and R11 for instruction fix-up pass.
+
+#### Adding Pseudoregisters to the Graph
+
+We jút loop over every operand in every intruction and decide whether to add it to the graph.
+Every pseudoregister that appears in the assembly funciton should go in the graph, unless it has static storage duraiton.
+
+#### Liveness Analysis
+
+We can reuse some of our algorithm in Chapter 19.
+
+First, we construct a control-flow graph. Instead of TACKY's Label, Return, Jump, JumpIfZero and JumpIfNotZero, we'll have Assembly's Label, Ret, Jmp and JmpCC.
+Next, we can use the same 3 components:
+
+- The iterative algorithm: exactly the same
+- The meet operator: minor changes
+- The transfer operator: major changes
+
+For the meet operator, we don't care about static variables because they're not in the
+interference graph. Instead, we have to worry about hard registers, specifically EAX as it holds the function's return value.
+
+```
+meet(block):
+   live_registers = {}
+   for succ_id in block.successors:
+      match succ_id with
+      | EXIT -> live_registers.add(Reg(AX)) // Handled differently here
+      | ENTRY -> fail("Malformed control-flow graph")
+      | BlockId(id) ->
+         succ_live_registers = get_block_annotation(succ_id)
+         live_registers.add_all(succ_live_registers)
+
+   return live_registers
+```
+
+For the transfer function, we add registers to the live set when they're used and remove them
+when they're updated.
+
+We'll define a helper function `find_used_and_updated`. The function tells us whichj operands each instruction uses and updates.
+Both the transfer function and our upcoming `add_edges` function will use this helper function.
+Note that the following pseudocod4e only covers the assembly instructions from Part I.
+
+```
+find_used_and_updated(instruction):
+   match instruction with
+   | Mov(src, dst) -> // mov uses its source and updates its destination
+      used = [src]
+      updated = [dst]
+   | Binary(op, src, dst) -> // binary uses both source and destination, and updates only the destination
+      used = [src, dst]
+      updated = [dst]
+   | Unary(op, dst) ->
+      used = [dst]
+      updated = [dst]
+   | Cmp(v1, v2) ->
+      used = [v1, v2]
+      updated = []
+   | SetCC(cond, dst) ->
+      used = []
+      updated = [dst]
+   | Push(v) ->
+      used = [v]
+      updated = []
+   | Idiv(divisor) ->
+      used = [ divisor, Reg(AX), Reg(DX) ]
+      updated = [ Reg(AX), Reg(DX) ]
+   | Cdq ->
+      used = [ Reg(AX) ]
+      updated = [ Reg(DX) ]
+   | Call(f) ->
+      used = <look up parameter passing registers in the backend symbol table> // Call uses registers that hold the callee's parameters.
+      updated = [ Reg(DI), Reg(SI), Reg(DX), Reg(CX), Reg(R8), Reg(R9), Reg(AX) ] // updates all the caller-saved registers whether we're passing the callee's parameters in them or not.
+   | _ ->
+      used = []
+      updated = []
+   return (used, updated)
+```
+
+```
+transfer(block, end_live_registers):
+   current_live_registers = end_live_registers
+
+   for instruction in reverse(block.instructions):
+      annotate_instruction(instruction, current_live_registers) // first record which registers are live immediately after it
+      used, updated = find_used_and_updated(instruction) // then calculate which registers are live just before it.
+
+   for v in updated:
+      if v is a register:
+         current_live_registers.remove(v)
+
+   for v in used:
+      if v is a register:
+         current_live_registers.add(v)
+
+   annotate_block(block.id, current_live_registers) // record which registers are live at the start of the block
+```
+
+#### Adding Edges
+
+```
+add_edges(liveness_cfg, interference_graph):
+   for node in liveness_cfg.nodes:
+      if node is EntryNode or ExitNode:
+         continue
+
+      for instr in node.instructions:
+         used, updated = find_used_and_updated(instr)
+
+         live_registers = get_instruction_annotation(instr) // look up which registers are live immediately after the instruction
+
+         for l in live_registers:
+            if (instr is Mov) and (l == instr.src): // if inst is a Move, we'll skip over its source during iteration over the live registers so we don't add an edge between its source and destination
+               continue
+
+         for u in updated:
+            if (l and u are in interference_graph) and (l != u): // ensure both nodes are already in the interference graph and we don't want to add an edge from a node to itself
+               add_edge(interference_graph, l, u)
+```
+
+#### Handling Other Types While Constructing the Graph
+
+Now, we'll deal with all the features we added in Part II.
+We build 2 interfence graphs for XMM and general-purpose registers separately.
+
+We start with a separate base graph for each register class.
+The base graph for XMM registers should have 14 nodes: XMM0 -> XMM13. That means we'll exclude XMM14 and XMM15 as scratch registers.
+
+In `add_pseudoregisters`, we'll check that a pseudoregister has the correct type before adding it to the graph.
+When we allocate XMM registers, we'll add only pseudoregisters of Double type to the graph.
+When we allocate general-purpose registers, we'll exclude Double psuedoregisters and include all the other scalar types: Longword, Quadword, and Byte.
+
+There are a some other details we need to change.
+We'll exclude aliased pseudoregisters from the graph, since they shouldn't be assigned to registers.
+We can reuse the previous chapter's address-taken, rerun it right before converting TACKY to Assembly to check if a variable was aliased in TACKY. If so, it will still be in assembly.
+
+Liveness analysis should relfect the new calling conventions as we can't assume EAX is live when the function exits. Instead,
+we need to check the backend symbol table to see which registers are used for its return value.
+These registers will all be live at EXIT.
+
+The `find_used_and_updated` should, firstly, handle Memory and Indexed operands correctly.
+These operands designate locations in memory, but use registers in their address calculations.
+When we use one of these operands, we _read_ any registers it refers to, even if we _write_ to the memory location it designates.
+For example, the instruction `movl $1, 4(%rax)` uses RAX instead of updating it.
+And `leaq (%rax, %rcx, 4), %rdi` uses both RAX and RCX, but updates RDI.
+Secondly, the `find_used_and_updated` should also recognize that all XMM registers are caller-saved and therefore updated by Call instructions.
+Finally, this function will need to handle all the new assembly instructions added in Part II, but this is not much tricky.
+
+### Calculating Spill Costs
+
+After constructing the graph, we annotate each register with a spill cost.
+If we can't color every node, these costs will help us decide which node(s) to spill.
+
+Hard registers can't be spilled, so we assign them an infinite spill cost.
+To estimate the spill cost of each pseudoregister, we just count up the number of times it appears in our assembly code.
+For example:
+`movl $1, %x` -> increase x's spill cost by one
+`addl %x, %x` -> increase x's spill cost by twp
+
+However, this ignores the fact that some instructions are executed more frequently than others, such as a pseudoregister inside a loop.
+It's hard to predict how many times a particular instruction will execute, but we can use loop nesting depth as a rough proxy for execution frequency.
+
+Unfortunately, discovering loops would require us to implement a whole new type of analysis.
+
+### Coloring the Interference Graph
+
+Exact graph coloring algorithms are too slow to use in practice.
+We'll use an approximate algorithm, which may not find the best coloring, but it can usually find a pretty good one.
+
+We have a simple observation: you can always color a node with fewer than _k_ neighbors because there's always at least one color that none of its neighbors uses. This observation is called _degree < k rule_. The number of neighbors a node has is called its _degree_, we say that a node has significant degree if it has k or more neighbors.
+
+The degree < k rule helps us break down the problem:
+
+- First, we temporarily remove any node with fewer than k neighbors. This is called _pruning_ the graph.
+- Then, we color the rest of the graph somehow.
+- Finally, we put back the nodes that we pruned, one at a time. We'll assign it some color that doens't conflict with any neighbors that we've already colored. There will always be at least one availabel color, since each node has fewer than k neighbors.
+
+Here is an example of the whole process.
+
+// TODO: Figure 20-7: A graph that hasn’t been colored yet
+
+We find out that B, C, F and H are nodes with fewer than 3 neighbors. We'll prune them from the graph, and figure out how to color the smaller graph. We'll also define a stack to keep track of the pruned nodes that we'll eventually need to put back in the graph.
+
+// TODO: Figure 20-8: The graph from Figure 20-7 with low-degree nodes removed
+
+In this pruned graph, A and G both have fewer than 3 neighbors. We can apply the same trick to prune the graph again. So we push A and G onto the top of the stack; later on, we'll pop them off and color them before we color B, C, F, and H.
+
+// TODO: Figure 20-9: The graph from Figure 20-7 after two rounds of pruning
+
+Our two remaining nodes each have fewer than 3 neighbors, we could just color them. But we'll take a slightly different approach to accomplish the same thing: we'll prune them from the graph. Now the graph is empty.
+
+// TODO: Figure 20-10: The graph from Figure 20-7 after pruning every node
+
+We've done pruning the graph, and there's no nodes left ot color. We now take each node from the stack, assign it a color, and put it back in the graph.
+
+// TODO: Figure 20-11: Adding nodes back to the graph and assigning colors
+
+When we add E back to the graph, it has no neighbors, so we can assign it any color. Let's color it white.
+Then when we add D, its only neigyhbor is E, so we can assign it either black or gray. When we add G, we find that it has a white neighbor and a gray neighbor, so we must color it black. We continue until the stack is empty and every node in the graph has been assigned a color.
+
+### Dealing with Spills
+
+There are graphs where every node has k or more neighbors.
+
+// TODO: Figure 20-12: A graph where every
+node has three or more neighbors
+
+To get unstuck, we'll choose a node to prune anyway, and continue our usual algorithm. This node is a spill candidate because we might not be able to color it when we put it back in the graph.
+
+We need to choose a spill candidate with a low spill cost. But we also want to choose a spill candidate with lots of neighbors that haven't pruned yet. We'll choose the node with the smallest value of _spill cost / degree_, where degree is the number of neighbors that haven't been pruned.
+
+Note that we'll never choose a hard register as a spill candidate, because spill cost / degree for each is always infinity.
+
+First attempt:
+// TODO: Figure 20-13: A first attempt to color Figure 20-12
+
+When we reach C in the end, all its neighbors are already using all three colors, so we'll be forced to spill it.
+
+However, if we change the colors if we prune F, then E then D.
+
+Second attempt:
+// TODO: Figure 20-14: A more successful attempt to color Figure 20-12
+
+We don't need to spill any node. There is no rule that lets us avoid unneccessary spills like the one in the first attempt. This is why we call it an approximate algorithm.
+
+### Implementing the Graph Coloring Algorithm
+
+```
+color_graph(g):
+   remaining = <unpruned nodes in g>
+      if remaining is empty: // 1
+         return
+
+   // choose next node to prune
+   chosen_node = null
+
+   for node in remaining:
+      degree = length(<unpruned neighbors of node>)
+      if degree < k:
+         chosen_node = node	// 2
+         break
+
+   if chosen_node is null:
+      // choose a spill candidate
+      best_spill_metric = infinity
+      for node in remaining:
+         degree = length(<unpruned neighbors of node>)
+         spill_metric = node.spill_cost / degree
+         if spill_metric < best_spill_metric:
+            chosen_node = node // 3
+            best_spill_metric = spill_metric
+
+   chosen_node.pruned = True
+
+   // color the rest of the graph
+   color_graph(g) // 4
+
+   // color this node
+   colors = [ 1, 2,..., k ]
+   for neighbor_id in chosen_node.neighbors:
+      neighbor = get_node_by_id(g, neighbor_id)
+      if neighbor.color is not null:
+         colors.remove(neighbor.color)
+
+   if colors is not empty: // 5
+      if chosen_node is a callee-saved hard register:
+         chosen _node.color = max(colors)
+      else:
+         chosen _node.color = min(colors)
+      chosen_node.pruned = False
+
+   return
+```
+
+We'll color the graph recursively. We'll prune a node, make a recursive call to color the rest of the graph, then put the node back and assign it a color.
+
+The base case is when we've pruned every node, so we have nothing left (1).
+
+We choose a node to prune by finding a node with fewer than k unprune neighbors (2).
+
+If the search comes up empty, we'll pick the node with minimum value of spill cost / degree (3).
+
+Then, we'll call color_graph recursively to color the remaining nodes in the graph (4).
+
+The list of colors is integers 1 through k. Some of chosen_node's neighbors may not have a color, either because we spilled them or because we prune dthem before chosen_node. If any color left, we'll assign one of them to chosen_node (5).
+
+There is a general goal in mind: assigning pseudoregisters to caller-saved rather than callee-saved hard registers as we'ld like to use as few callee-saved registers as possible.
+
+When chosen_node represents a callee-saved hard register, we’ll assign it the available color with the highest number. Otherwise, we assign it the lowest-numbered available color. Using this strategy, the coloring algorithm will tend to assign higher-numbered colors to callee-saved registers and lower-numbered colors to caller-saved registers and pseudoregisters. A pseu- doregister will end up with a higher-numbered color only when there are no lower-numbered colors available (for example, because it conflicts with every caller-saved register).
+
+If there are no colors left in the list, we'll have to spill chosen_node. So we don't update its pruned attribute, put into or retrieve it from the stack.
+
+### Building the Register Map and Rewriting the Function Body
+
+We’ll build a map from pseudoregisters to hard registers, which we’ll use to replace the pseudoregisters in our assembly code. As we build this map, we’ll also keep track of which callee-saved registers we’ve allocated so that we can save and restore them in the instruction fix-up pass.
+
+```
+create_register_map(colored_graph):
+
+   // build map from colors to hard registers
+   color_map = <empty map>
+   for node in colored_graph.nodes:
+      match node.id with
+      | Reg(r) ->
+         color _map .add(node .color, r)
+      | Pseudo(p) -> continue
+
+   // build map from pseudoregisters to hard registers
+   register_map = <empty map>
+   callee_saved_regs = {}
+   for node in colored_graph.nodes:
+      match node.id with
+      | Pseudo(p) ->
+         if node .color is not null:
+            hardreg = color_map.get(node .color) // 1
+            register_map.add(p, hardreg)
+            if hardreg is callee saved:
+               callee_saved_regs.add(hardreg) // 2
+      | Reg(r) -> continue
+
+   record_callee_saved_regs(<current function name>, callee_saved_regs) // 3
+
+   return register_map
+```
+
+We have a 1:1 mapping between colors and hard registers.
+If a pseudoregister was assigned a color, we'll map it to the hard register with the same color, which we can find in color_map (1).
+
+Whenever we add a mapping from a pseudoregister to a callee-saved hard register, we'll add the hard register to the set of callee-saved registers (2).
+
+We record each function's callee_saved_regs set so we can use it in the instruction fix-up pass (3). None of the XMM registers is a callee-saved register.
+
+Finally, we rewrite the assembly code by replacing each pseudoregister with the corresponding hard register from the map. If the map doesn't have the pseudoregister, skip the replacement. If any mov instruction has both source and destination in the same hard register, remove it.
+
+```asm
+my_fun:
+   movl %edi, %tmp1
+   addl $5, %tmp1
+   movl %tmp1, %tmp2 	# movl %eax, %eax
+   movl %tmp2, %eax 	# movl %eax, %eax
+   ret
+```
+
+is rewritten as:
+
+```asm
+my_fun:
+   movl %edi, %eax
+   addl $5, %eax
+   ret
+```
+
+## Instruction Fix-Up with Callee-Saved Registers
+
+If a function uses any callee-saved registers, we need to save their values at the start of the function and restore them at the end.
+
+Assume a function needs 16 bytes of stack space for local variables and uses R12 and R13, this is the start of the function:
+
+```
+Binary(Sub, Quadword, Imm(16), Reg(SP))
+Push(Reg(R12))
+Push(Reg(R13))
+```
+
+And we pop them in the end:
+
+```
+popq %r13
+popq %r12
+movq %rbp, %rsp
+popq %rbp
+ret
+```
+
+Suppose the pseudo-operand replacement pass has allocated 20 bytes of stack space to store local variables in a particular function. We'd normally subtract 32 bytes from RSP. Buf if the funcitons uses one callee-saved register, we should subtract 24 bytes instead. Here is why:
+
+```
+Binary(Sub, Quadword, Imm(24), Reg(SP))
+Push(Reg(BX))
+```
+
+We subtract 24 bytes from RSP, and subtract another 8 bytes by pushing RBX, we still end up being proper in stack alignment.
+
+```
+calculate_stack_adjustment(bytes_for_locals, callee_saved_count):
+   callee_saved_bytes = 8 * callee_saved_count
+   total_stack_bytes = callee_saved_bytes + bytes_for_locals
+   adjusted_stack_bytes = round_up(total_stack_bytes, 16)
+   stack_adjustment = adjusted_stack_bytes - callee_saved_bytes
+   return stack_adjustment
+```
+
+## Code Emission
+
+### Formatting Assembly Instructions
+
+| Assembly Instruction | Output       |
+| -------------------- | ------------ |
+| Pop(reg)             | `popq <reg>` |
+
+### Formatting Assembly Operands
+
+| Assembly Operand | Output         |
+| ---------------- | -------------- |
+| Reg(BX)          | 8-byte `%rbx`  |
+|                  | 4-byte `%ebx`  |
+|                  | 1-byte `%bl`   |
+| Reg(R12)         | 8-byte `%r12`  |
+|                  | 4-byte `%r12d` |
+|                  | 1-byte `%r12b` |
+| Reg(R13)         | 8-byte `%r13`  |
+|                  | 4-byte `%r13d` |
+|                  | 1-byte `%r13b` |
+| Reg(R14)         | 8-byte `%r14`  |
+|                  | 4-byte `%r14d` |
+|                  | 1-byte `%r14b` |
+| Reg(R15)         | 8-byte `%r15`  |
+|                  | 4-byte `%r15d` |
+|                  | 1-byte `%r15b` |
+| Reg(XMM8)        | `%xmm8`        |
+| Reg(XMM9)        | `%xmm9`        |
+| Reg(XMM10)       | `%xmm10`       |
+| Reg(XMM11)       | `%xmm11`       |
+| Reg(XMM12)       | `%xmm12`       |
+| Reg(XMM13)       | `%xmm13`       |
+
+## Register Coalescing
+
+Our register allocator already works correctly.
+With register coalescing, it will be even more efficient.
+Our sense of how this works is:
+
+- Look at each _mov_ instruction that copies from one register to another.
+- Decide to coalesce its source and destination or not.
+- Rewrite the assembly code, replacing the registers and deleting unneccessary _mov_.
+
+To decide which registers to coalesce, we'll consult the inteference graph, and check 2 conditions:
+
+- [x] The registers can't interfere with each other
+- [x] The coalescing won't force us to spill more registers
+
+Here is an example illustrating the first condition:
+
+```asm
+movl 	$1, %y
+movl 	%y, %x
+addl 	$1, %y
+addl 	%x, %y
+```
+
+We `addl $1, %y` while `x` is still live, these two registers interfere.
+If we coalesced them, the first `add` instruction would clobber x, and we'd end up calculating 2 + 2 instead of 1 + 2.
+
+And here is an example for the second condition:
+
+```asm
+f:
+   movl 	%edi, %arg
+   movl 	%arg, %tmp
+   addl 	$1, %tmp
+   imull 	%arg, %tmp
+   movl 	$10, %eax
+   subl 	%tmp, %eax
+   ret
+```
+
+This calculates 10 - (arg + 1 ) \* arg.
+Let's pretend we have only 2 hard register EDI and EAX, so k is 2.
+
+// TODO: Figure 20-15: The interference graph for Listing 20-27
+
+The first _mov_ instruction looks like a possible candidate for coalescing. The second is not as `arg` and `tmp` interfere.
+But if we coalesce the first instruction, we'll be in trouble.
+
+```
+f:
+   movl 	%edi, %tmp
+   addl 	$1, %tmp
+   imull 	%edi, %tmp
+   movl 	$10, %eax
+   subl 	%tmp, %eax
+   ret
+```
+
+// TODO: Figure 20-16: The interference graph for Listing 20-28
+
+Now `tmp` interferes with our only both registers, so we'll have to spill it.
+Thus, this hurts performance more than improving it.
+To avoid this, we'll use a strategy called _conservative coalescing_.
+Before jumping into the strategy, we'll learn how to keep the graph up to date.
+
+### Updating the Interference Graph
+
+There are 2 ways to update the graph:
+
+- Rewrite the assembly code immediately and rebuild the graph from scratch. This is extremely slow.
+- Merge two nodes together in the existing interference graph without referring back to the assembly code.
+
+// TODO: Figure 20-17: Updating the interference graph to reflect coalescing decisions
+
+In the example, we coalesce the pseudoregister `tmp2` into `EAX`.
+We assume that any register, originally intererring with `tmp2`, now interferes with `EAX`.
+This make the graph relfect this chanage, we just add an edge from each of `tmp2`'s neighbors to `EAX` and remove `tmp2`.
+However, this is not always accurate. It might include some extra edges between registers
+that don't really interfere.
+For example:
+
+```asm
+f:
+   movl  	%edi, %tmp1
+   movl  	%edi, %tmp2
+   addl 	%tmp1, %tmp2
+   movl 	%tmp2, %eax
+   re
+```
+
+Note that `tmp1` and `tmp2` interfere. The second _mov_ instruction updates `tmp2` while `tmp1` is still live.
+Let's try coalesce `tmp1` into `EDI`.
+
+// TODO: Figure 20-18: Updating the interference graph for Listing 20-29
+
+But when we actually replace `tmp1` with `EDI`, we find out that the interference with `tmp2` goes away.
+
+```asm
+f:
+   movl 	%edi, %tmp2
+   addl 	%edi, %tmp2
+   movl 	%tmp2, %eax
+   ret
+```
+
+We learned that `mov src, dst` never makes `src` and `dst` interfere.
+Initially, the instruction `movl %edi, %tmp2` caused an interference between `tmp1` and `tmp2`.
+Merging `tmp1` into `EDI` doesn't cause the interference anymore.
+
+Despite not being completely accurate, this quick update method is still useful.
+The graph tells us that two registers are safe to coalesce, and we can be sure they really are.
+But we can't rely on this method solely as some coalescing chances will be missed.
+
+We'll mix both approaches. Each time we decide to coalesce a pair of registers, we'll perform a quick update
+by merging their nodes together. After looking at every _mov_ instruction and rewritten the assembly code,
+we'll rebuild the graph from scratch. We'll repeat this build-coalesce loop until we can't find any more registers to
+coalesce.
+
+### Conservative Coalescing
+
+When we coalesce two nodes, the merged node will have a higher degree than either of them. This makes it more difficult to prune.
+It's also likely to have a higher spill cost than either of the original nodes since it's used more frequently.
+
+We use 2 tests to ensure the merged node doesn't cause problems when we color the graph:
+
+- The Briggs tests to guarantee we won't spill the merged node
+- The George test to guarantee that we won't spill any other nodes unless they were already potential spill candidates in the original graph.
+
+We'll only coalesce two pseudoregisters if they pass the Briggs test.
+We'll coalesce a pseudoregister into a hard register if the two registers pass either test. We can be more permissive because we know that hard registers won't spill.
+
+#### The Briggs Test
+
+The test allows us to merge two nodes if the merged node will have fewer
+than k neighbors with significant degree.
+
+// TODO: Figure 20-19: An interference graph before coalescing
+
+Our coloring algorithm can prune this entire graph without any difficulty.
+
+What if we coalesce x into y?
+
+// TODO: Figure 20-20: The graph in Figure 20-19 after merging x into y
+
+After coalescing, y will have 4 neighbors: a, z, ESI, and EDI.
+Only two of them, ESI and EDI, have significant degree, and k is 3.
+So this example passes the Briggs test.
+In fact, we'll be able to prune y after we've pruned a and z.
+
+The below is a case that fails the Briggs test.
+
+// TODO: Figure 20-21: A variation on the graph in Figure 20-19 where x and y can no longer be coalesced
+
+We have an extra edge from a to EDI.
+
+What happens when we coalesce x into y this time?
+
+// TODO: Figure 20-22: The graph in Figure 20-21 after merging x into y
+
+Now y has 3 neighbors with significant degree: ESI, EDI, and a.
+This fails the test, and y really is impossible to prune. After pruning z and EAX, we'll get stuck,
+and be forced to choose y or a as a spill candidate.
+
+This gives us another guarantee: we'll never coalesce two nodes if the resulting node might spill.
+
+// TODO: Figure 20-23: An interference graph where we can’t coalesce tmp1 and tmp2
+
+In this last example, note that we won't be able to color `tmp1` already. So coalescing `tmp2` into `tmp1` also fails the test.
+However, if we merge `tmp2` into EDI. We know EDI can't spill as a hard register, and it won't make other nodes harder to color either.
+In cases like this, we'll use the George test to find coalescing opportunities that the Briggs test misses.
+
+#### The George Test
+
+When coalescing a pseudoregister with a hard register, we know the hard register can't spill.
+We worry a different outcome: if the hard register becomes harder to prune, its neighbors might be harder to prune too.
+This change could force us to spill nodes that we were able to color before.
+
+The Briggs test proves that we can prune the merged node, so it won't interfere with attempts to color other nodes.
+The George test proves that we won't make the merged node's neighbors harder to prune.
+
+The George test says we can coalesce a pseudoregsiter _p_ into a hard register _h_, if _p_'s neighbors meets either of the 2 conditions:
+
+1. It has fewer than k neighbors.
+2. It already interferes with _h_.
+
+If a neighbor meets the first condition, we'll definitely be able to prune it when we color
+the graph. If it meets the second condition, it will have exactly the same neighbors as before (except for _p_) after coalescing.
+So we won't make it any harder to prune. In fact, we have made it easier.
+
+Let resume our last example from the Briggs test.
+We decided to coalesce `tmp2` into EDI as it was safe because EDI couldn't spill.
+However, this still failed the Briggs test because EDI then had 3 neighbors with significant degree.
+
+Now, we'll try the George test instead. This test passes because both neighbors of `tmp2` already interfere with EDI.
+Our allocator will coalesce `tmp2` into EDI, since it passes either of our two tests.
+
+### Implementing Register Coalescing
+
+```
+allocate_registers(instructions):
+   // Updated with the while loop
+   while True:
+      interference_graph = build_graph(instructions)
+      coalesced_regs = coalesce(interference_graph, instructions)
+      if nothing_was_coalesced(coalesced_regs):
+         break
+      instructions = rewrite_coalesced(instructions, coalesced_regs)
+   add_spill_costs(interference_graph, instructions)
+   color_graph(interference_graph)
+   register_map = create_register_map(interference_graph)
+   transformed_instructions = replace_pseudoregs(instructions, register_map)
+   return transformed_instructions
+```
+
+We build the interference graph, look for registers to coalesce.
+If any found, we rewrite the assembly code and start the whole process again.
+We record which registers coalesced in `coalesced_regs`, which is a _disjoin-set_ data structure.
+
+#### Disjoint Sets
+
+The sets support 2 operations:
+
+- union: merges two sets
+- find: looks up the representative member of a set
+
+```
+init_disjoint_sets():
+   return <empty map> // the map is empty at first
+
+union(x, y, reg_map):
+   reg_map.add(x, y) // inserts a mapping from x to y -> y is the representative member of the new set
+
+find(r, reg_map):
+   if r is in reg_map: // checks if r maps to some other register
+      result = reg_map.get(r)
+      return find(result, reg_map) // call find recursively to lead us up the chain of mappings from r to its representative member
+   return r
+
+nothing_was_coalesced(reg_map):
+   if reg_map is empty: // checks whether the map is empty
+      return True
+   return False
+```
+
+#### The coalesce Function
+
+The function looks at each mov instruction in the assembly code and decides which registers to coalesce.
+We keep track of the decisions in the disjoin-set structure we just defined.
+
+```
+coalesce(graph, instructions):
+   coalesced_regs = init_disjoint_sets()
+
+   for i in instructions:
+      match i with
+      | Mov(src, dst) ->
+         src = find(src, coalesced_regs) // look up the mov's current source and destinaion
+         dst = find(dst, coalesced_regs)
+
+         if (src is in graph // decide to coalesce the isntruction's source and destination
+            and dst is in graph
+            and src != dst
+            and (not are_neighbors(graph, src, dst))  // src and dst must not interfere
+            and conservative_coalesceable(graph, src, dst)):   // and coalescing them must not make the graph harder to color
+
+               if src is a hard register:
+                  to_keep = src
+                  to_merge = dst
+               else:
+                  to_keep = dst
+                  to_merge = src
+
+            union(to_merge, to_keep, coalesced_regs)  // actually coalesce these registers, update the inteference graph.
+            update_graph(graph, to_merge, to_keep)
+
+      | _ -> continue
+
+   return coalesced_regs
+```
+
+```
+update_graph(graph, x, y):
+
+   node_to_remove = get_node_by_id(graph, x)
+   for neighbor in node_to_remove.neighbors:
+      add_edge(graph, y, neighbor)
+      remove_edge(graph, x, neighbor)
+
+   remove_node_by_id(graph, x)
+```
+
+This `update_graph` simply takes each of x's neighbors, removes its edge to x, and adds and edge to y.
+Then it removes x from the graph.
+
+#### The conservative_coalesceable Function
+
+```
+conservative_coalesceable(graph, src, dst):
+   if briggs_test(graph, src, dst): // try the Briggs test first
+      return True
+   if src is a hard register: // if it fails, try the George test
+      return george_test(graph, src, dst)
+   if dst is a hard register:
+      return george_test(graph, dst, src)
+   return False
+
+briggs_test(graph, x, y):
+   significant_neighbors = 0
+
+   x_node = get_node_by_id(graph, x)
+   y_node = get_node_by_id(graph, y)
+
+   combined_neighbors = set(x_node.neighbors)
+   combined_neighbors.add_all(y_node.neighbors)
+   for n in combined_neighbors:
+      neighbor_node = get_node_by_id(graph, n)
+      degree = length(neighbor_node.neighbors) // look up ecah neighbor's degree
+      if are_neighbors(graph, n, x) and are_neighbors(graph, n, y):
+         degree -= 1 // if a node interferes with both of them, coalescing x and y would decrease its degree by one
+      if degree >= k:
+         significant_neighbors += 1
+
+   return (significant_neighbors < k) // return if fewer than k of the nodes in the combined_neighbors have significant degree
+
+george_test(graph, hardreg, pseudoreg):
+   pseudo_node = get_node_by_id(graph, pseudoreg)
+   for n in pseudo_node.neighbors:
+      if are_neighbors(graph, n, hardreg): // iterate through the pseudoregsiter's neighbors, making surea each one either interferes with the hard register
+         continue
+
+      neighbor_node = get_node_by_id(graph, n)
+      if length(neighbor_node.neighbors) < k: // or has insignificant degree
+         continue
+
+      return False
+   return True
+```
+
+#### The rewrite_coalesced Function
+
+```
+rewrite_coalesced(instructions, coalesced_regs):
+   new_instructions = []
+   for i in instructions:
+      match i with
+      | Mov(src, dst) ->
+         src = find(src, coalesced_regs)
+         dst = find(dst, coalesced_regs)
+         if src != dst: // if both src and dst of an updated mov are the same, omit the instruction
+            new_instructions.append(Mov(src, dst))
+      | Binary(op, src, dst) ->
+         src = find(src, coalesced_regs)
+         dst = find(dst, coalesced_regs)
+         new_instructions.append(Binary(op, src, dst))
+      | --snip--
+
+   return new_instructions
+```
+
+And that's our register allocator with register coalescing!
+
+## Summary
+
+We built a register allocator. We applied the knowledge of liveness analysis to build an interference graph.
+We also implemented a classic graph coloring algorithm.
+We introduced callee-saved registers and learned how to save and restore them.
+
+Our register coalescing cleans up the mess that eariler stages left us.
+
+**CONGRATULATIONS!**
+You've completed the book through all 3 parts, 20 chapters.
+Our compiler now works for a substantial chunk of the C language.
+Please have a break, take a sip of hot cacao, and come back to review the knowledge and implementation.
+
+## Additional Resources
+
+### Key papers
+- [Register Allocation via Coloring (Chaitin et al., 1981)](https://doi.org/10.1016/0096-0551(81)90048-5)
+- [Register Allocation & Spilling via Graph Coloring (Chaitin, 1982)](https://doi.org/10.1145/872726.806984)
+- [Improvements to Graph Coloring Register Allocation (Briggs et al., 1994)](https://doi.org/10.1145/177492.177575)
+
+### Textbook chapters
+- Muchnick, Advanced Compiler Design and Implementation, Ch. 16
+- Cooper & Torczon, Engineering a Compiler, Ch. 13
+
+### Conservative coalescing
+- [Iterated Register Coalescing (George & Appel)](https://doi.org/10.1145/229542.229546)
+- [Register Coalescing slides (Phillip Gibbons, CMU)](https://www.cs.cmu.edu/afs/cs/academic/class/15745-s19/www/lectures/L23-Register-Coalescing.pdf)
+- [Comparing Conservative Coalescing Criteria (Hailperin)](https://doi.org/10.1145/1065887.1065894)
+
+### Identifying loops
+- Aho et al., Compilers: Principles, Techniques, and Tools, 2nd ed., Ch. 9.6
+- [Induction Variables slides (Phillip Gibbons, CMU)](https://www.cs.cmu.edu/afs/cs/academic/class/15745-s19/www/lectures/L8-Induction-Variables.pdf)
+
+## Reference Implementation Analysis
+
+[Chapter 20 Code Analysis](./code_analysis/chapter_20.md)

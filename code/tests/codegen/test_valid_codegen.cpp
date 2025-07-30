@@ -1093,36 +1093,55 @@ TEST_CASE(Chapter18ValidCodeGenExtraCredit, "chapter_18", "--codegen")
     }
 }
 
-// // Chapter 19
-// TEST_CASE(Chapter19ValidCodeGen, "chapter_19", "--codegen")
-// {
-//     std::vector<std::string> srcFiles = {
-
-//     };
-//     Settings settings;
-
-//     for (const auto &srcFile : srcFiles)
-//     {
-//         Compiler compiler(settings);
-//         try
-//         {
-//             int status = compiler.compile(Stage::CodeGen, std::vector<std::string>{srcFile});
-//             // Check that the compilation succeeded
-//             ASSERT_TRUE(status == 0);
-//         }
-//         catch (const std::exception &e)
-//         {
-//             std::cerr << "Error compiling file " << srcFile << ": " << e.what() << std::endl;
-//             throw;
-//         }
-//     }
-// }
-
-// TEST_CASE(Chapter19ValidCodeGenExtraCredit, "chapter_19", "--codegen")
-// {
-//     std::vector<std::string> srcFiles = {
-
-//     };
-//     Settings settings;
-
-//     for (const auto &srcFile : srcFiles)
+// Chapter 20
+TEST_CASE(RegAllocWithoutCoalescing, "chapter_20", "--codegen")
+{
+    std::vector<std::string> srcFiles = {
+        "../tests/chapter_20/all_types/no_coalescing/dbl_fun_call.c",
+        "../tests/chapter_20/all_types/no_coalescing/dbl_trivially_colorable.c",
+        "../tests/chapter_20/all_types/no_coalescing/div_interference.c",
+        "../tests/chapter_20/all_types/no_coalescing/force_spill_doubles.c",
+        "../tests/chapter_20/all_types/no_coalescing/force_spill_mixed_ints.c",
+        "../tests/chapter_20/all_types/no_coalescing/fourteen_pseudos_interfere.c",
+        "../tests/chapter_20/all_types/no_coalescing/mixed_type_stack_alignment.c",
+        "../tests/chapter_20/all_types/no_coalescing/store_pointer_in_register.c",
+        "../tests/chapter_20/all_types/no_coalescing/track_dbl_arg_registers.c",
+        "../tests/chapter_20/int_only/no_coalescing/many_pseudos_fewer_conflicts.c",
+        "../tests/chapter_20/int_only/no_coalescing/bin_uses_operands.c",
+        "../tests/chapter_20/int_only/no_coalescing/callee_saved_stack_alignment.c",
+        "../tests/chapter_20/int_only/no_coalescing/cdq_interference.c",
+        "../tests/chapter_20/int_only/no_coalescing/cmp_generates_operands.c",
+        "../tests/chapter_20/int_only/no_coalescing/cmp_no_updates.c",
+        "../tests/chapter_20/int_only/no_coalescing/copy_no_interference.c",
+        "../tests/chapter_20/int_only/no_coalescing/division_uses_ax.c",
+        "../tests/chapter_20/int_only/no_coalescing/eax_live_at_exit.c",
+        "../tests/chapter_20/int_only/no_coalescing/force_spill.c",
+        "../tests/chapter_20/int_only/no_coalescing/funcall_generates_args.c",
+        "../tests/chapter_20/int_only/no_coalescing/idiv_interference.c",
+        "../tests/chapter_20/int_only/no_coalescing/loop.c",
+        "../tests/chapter_20/int_only/no_coalescing/optimistic_coloring.c",
+        "../tests/chapter_20/int_only/no_coalescing/preserve_across_fun_call.c",
+        "../tests/chapter_20/int_only/no_coalescing/rewrite_regression_test.c",
+        "../tests/chapter_20/int_only/no_coalescing/same_instr_interference.c",
+        "../tests/chapter_20/int_only/no_coalescing/same_instr_no_interference.c",
+        "../tests/chapter_20/int_only/no_coalescing/test_spill_metric.c",
+        "../tests/chapter_20/int_only/no_coalescing/test_spill_metric_2.c",
+        "../tests/chapter_20/int_only/no_coalescing/track_arg_registers.c",
+        "../tests/chapter_20/int_only/no_coalescing/trivially_colorable.c",
+        "../tests/chapter_20/int_only/no_coalescing/unary_interference.c",
+        "../tests/chapter_20/int_only/no_coalescing/unary_uses_operand.c",
+        "../tests/chapter_20/int_only/no_coalescing/use_all_hardregs.c",
+    };
+    for (const auto &srcFile : srcFiles)
+    {
+        std::cout << "Compiling: " << srcFile << std::endl;
+        std::string cmd = "..\\bin\\compiler.exe " + srcFile + " --codegen --optimize";
+        if (!g_redirectToFile.empty()) {
+            cmd += " >" + g_redirectToFile + " 2>&1";
+        } else if (g_redirectOutput) {
+            cmd += " >nul 2>&1";
+        }
+        int result = std::system(cmd.c_str());
+        ASSERT_EQ(result, 0);
+    }
+}

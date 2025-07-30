@@ -63,7 +63,11 @@
         "stop_token": "cpp",
         "thread": "cpp",
         "map": "cpp",
-        "set": "cpp"
+        "set": "cpp",
+        "cstring": "cpp",
+        "unordered_set": "cpp",
+        "cinttypes": "cpp",
+        "util.h": "c"
     },
     "C_Cpp.errorSquiggles": "disabled"
 }
