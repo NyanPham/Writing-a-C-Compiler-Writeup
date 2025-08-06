@@ -181,7 +181,7 @@ CodeGen::classifyNewType(const std::string &tag)
         else if (auto structType = Types::getStructType(type))
         {
             // fold over members, updating offsets
-            auto members = _typeTable.getMembers(unionType->tag);
+            auto members = _typeTable.getMembers(structType->tag);
             for (const auto &member : members)
             {
                 auto memberInfo = member.second;

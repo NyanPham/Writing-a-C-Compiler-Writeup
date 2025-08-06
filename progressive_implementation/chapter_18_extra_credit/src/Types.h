@@ -292,6 +292,10 @@ namespace Types
                     {
                         return static_cast<bool>(left.tag == right.tag);
                     }
+                    else if constexpr (std::is_same_v<LeftType, Types::UnionType>)
+                    {
+                        return static_cast<bool>(left.tag == right.tag);
+                    }
                     else
                     {
                         return true;

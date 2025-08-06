@@ -7,17 +7,31 @@
 // Use these globals from test_compiler.cpp
 extern bool g_redirectOutput;
 extern std::string g_redirectToFile;
+extern bool g_printProcess;
+
+inline void print_compile_process(const char *stage, const char *validity, const std::string &srcFile)
+{
+    if (g_printProcess)
+    {
+        std::cout << stage << " " << validity << " compiler on: " << srcFile << '\n';
+    }
+}
 
 // Helper to run compiler.exe on a source file with --lex and expect failure
-inline void lex_run_compiler_on_invalid(const std::string& srcFile) {
+inline void lex_run_compiler_on_invalid(const std::string &srcFile)
+{
     std::string cmd = "..\\bin\\compiler.exe " + srcFile + " --lex";
-    if (!g_redirectToFile.empty()) {
+    if (!g_redirectToFile.empty())
+    {
         cmd += " >" + g_redirectToFile + " 2>&1";
-    } else if (g_redirectOutput) {
+    }
+    else if (g_redirectOutput)
+    {
         cmd += " >nul 2>&1";
     }
     int result = std::system(cmd.c_str());
-    if (result == 0) {
+    if (result == 0)
+    {
         std::cerr << "Expected error compiling file " << srcFile << std::endl;
     }
     ASSERT_TRUE(result != 0);
@@ -35,6 +49,7 @@ TEST_CASE(Chapter1InvalidLex, "chapter_1", "--lex")
     };
     for (const auto &srcFile : srcFiles)
     {
+        print_compile_process("Lex", "invalid", srcFile);
         lex_run_compiler_on_invalid(srcFile);
     }
 }
@@ -45,6 +60,7 @@ TEST_CASE(Chapter6InvalidLexExtraCredit, "chapter_6", "--lex")
         "../tests/chapter_6/invalid_lex/extra_credit/bad_label.c"};
     for (const auto &srcFile : srcFiles)
     {
+        print_compile_process("Lex", "invalid", srcFile);
         lex_run_compiler_on_invalid(srcFile);
     }
 }
@@ -57,6 +73,7 @@ TEST_CASE(Chapter11InvalidLex, "chapter_11", "--lex")
     };
     for (const auto &srcFile : srcFiles)
     {
+        print_compile_process("Lex", "invalid", srcFile);
         lex_run_compiler_on_invalid(srcFile);
     }
 }
@@ -70,6 +87,7 @@ TEST_CASE(Chapter12InvalidLex, "chapter_12", "--lex")
     };
     for (const auto &srcFile : srcFiles)
     {
+        print_compile_process("Lex", "invalid", srcFile);
         lex_run_compiler_on_invalid(srcFile);
     }
 }
@@ -88,6 +106,7 @@ TEST_CASE(Chapter13InvalidLex, "chapter_13", "--lex")
     };
     for (const auto &srcFile : srcFiles)
     {
+        print_compile_process("Lex", "invalid", srcFile);
         lex_run_compiler_on_invalid(srcFile);
     }
 }
@@ -107,6 +126,7 @@ TEST_CASE(Chapter16InvalidLex, "chapter_12", "--lex")
     };
     for (const auto &srcFile : srcFiles)
     {
+        print_compile_process("Lex", "invalid", srcFile);
         lex_run_compiler_on_invalid(srcFile);
     }
 }
@@ -148,6 +168,7 @@ TEST_CASE(Chapter18InvalidLex, "chapter_18", "--lex")
     };
     for (const auto &srcFile : srcFiles)
     {
+        print_compile_process("Lex", "invalid", srcFile);
         lex_run_compiler_on_invalid(srcFile);
     }
 }

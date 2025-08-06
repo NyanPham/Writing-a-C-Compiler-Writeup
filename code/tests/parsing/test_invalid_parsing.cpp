@@ -7,17 +7,31 @@
 // Use these globals from test_compiler.cpp
 extern bool g_redirectOutput;
 extern std::string g_redirectToFile;
+extern bool g_printProcess;
+
+inline void print_compile_process(const char *stage, const char *validity, const std::string &srcFile)
+{
+    if (g_printProcess)
+    {
+        std::cout << stage << " " << validity << " compiler on: " << srcFile << '\n';
+    }
+}
 
 // Helper to run compiler.exe on a source file with --parse and expect failure
-inline void parse_run_compiler_on_invalid(const std::string& srcFile) {
+inline void parse_run_compiler_on_invalid(const std::string &srcFile)
+{
     std::string cmd = "..\\bin\\compiler.exe " + srcFile + " --parse";
-    if (!g_redirectToFile.empty()) {
+    if (!g_redirectToFile.empty())
+    {
         cmd += " >" + g_redirectToFile + " 2>&1";
-    } else if (g_redirectOutput) {
+    }
+    else if (g_redirectOutput)
+    {
         cmd += " >nul 2>&1";
     }
     int result = std::system(cmd.c_str());
-    if (result == 0) {
+    if (result == 0)
+    {
         std::cerr << "Expected error compiling file " << srcFile << std::endl;
     }
     ASSERT_TRUE(result != 0);
@@ -42,6 +56,7 @@ TEST_CASE(Chapter1InvalidParse, "chapter_1", "--parse")
     };
     for (const auto &srcFile : srcFiles)
     {
+        print_compile_process("Parse", "invalid", srcFile);
         parse_run_compiler_on_invalid(srcFile);
     }
 }
@@ -59,6 +74,7 @@ TEST_CASE(Chapter2InvalidParse, "chapter_2", "--parse")
     };
     for (const auto &srcFile : srcFiles)
     {
+        print_compile_process("Parse", "invalid", srcFile);
         parse_run_compiler_on_invalid(srcFile);
     }
 }
@@ -77,6 +93,7 @@ TEST_CASE(Chapter3InvalidParse, "chapter_3", "--parse")
     };
     for (const auto &srcFile : srcFiles)
     {
+        print_compile_process("Parse", "invalid", srcFile);
         parse_run_compiler_on_invalid(srcFile);
     }
 }
@@ -88,6 +105,7 @@ TEST_CASE(Chapter3InvalidParseExtraCredit, "chapter_3", "--parse")
     };
     for (const auto &srcFile : srcFiles)
     {
+        print_compile_process("Parse", "invalid", srcFile);
         parse_run_compiler_on_invalid(srcFile);
     }
 }
@@ -104,6 +122,7 @@ TEST_CASE(Chapter4InvalidParse, "chapter_4", "--parse")
     };
     for (const auto &srcFile : srcFiles)
     {
+        print_compile_process("Parse", "invalid", srcFile);
         parse_run_compiler_on_invalid(srcFile);
     }
 }
@@ -126,6 +145,7 @@ TEST_CASE(Chapter5InvalidParse, "chapter_5", "--parse")
     };
     for (const auto &srcFile : srcFiles)
     {
+        print_compile_process("Parse", "invalid", srcFile);
         parse_run_compiler_on_invalid(srcFile);
     }
 }
@@ -140,6 +160,7 @@ TEST_CASE(Chapter5InvalidParseExtraCredit, "chapter_5", "--parse")
     };
     for (const auto &srcFile : srcFiles)
     {
+        print_compile_process("Parse", "invalid", srcFile);
         parse_run_compiler_on_invalid(srcFile);
     }
 }
@@ -159,6 +180,7 @@ TEST_CASE(Chapter6InvalidParse, "chapter_6", "--parse")
     };
     for (const auto &srcFile : srcFiles)
     {
+        print_compile_process("Parse", "invalid", srcFile);
         parse_run_compiler_on_invalid(srcFile);
     }
 }
@@ -176,6 +198,7 @@ TEST_CASE(Chapter6InvalidParseExtraCredit, "chapter_6", "--parse")
     };
     for (const auto &srcFile : srcFiles)
     {
+        print_compile_process("Parse", "invalid", srcFile);
         parse_run_compiler_on_invalid(srcFile);
     }
 }
@@ -190,6 +213,7 @@ TEST_CASE(Chapter7InvalidParse, "chapter_7", "--parse")
     };
     for (const auto &srcFile : srcFiles)
     {
+        print_compile_process("Parse", "invalid", srcFile);
         parse_run_compiler_on_invalid(srcFile);
     }
 }
@@ -210,6 +234,7 @@ TEST_CASE(Chapter8InvalidParse, "chapter_8", "--parse")
     };
     for (const auto &srcFile : srcFiles)
     {
+        print_compile_process("Parse", "invalid", srcFile);
         parse_run_compiler_on_invalid(srcFile);
     }
 }
@@ -229,6 +254,7 @@ TEST_CASE(Chapter8InvalidParseExtraCredit, "chapter_8", "--parse")
     };
     for (const auto &srcFile : srcFiles)
     {
+        print_compile_process("Parse", "invalid", srcFile);
         parse_run_compiler_on_invalid(srcFile);
     }
 }
@@ -250,6 +276,7 @@ TEST_CASE(Chapter9InvalidParse, "chapter_9", "--parse")
     };
     for (const auto &srcFile : srcFiles)
     {
+        print_compile_process("Parse", "invalid", srcFile);
         parse_run_compiler_on_invalid(srcFile);
     }
 }
@@ -267,6 +294,7 @@ TEST_CASE(Chapter10InvalidParse, "chapter_10", "--parse")
     };
     for (const auto &srcFile : srcFiles)
     {
+        print_compile_process("Parse", "invalid", srcFile);
         parse_run_compiler_on_invalid(srcFile);
     }
 }
@@ -280,6 +308,7 @@ TEST_CASE(Chapter10InvalidParseExtraCredit, "chapter_10", "--parse")
     };
     for (const auto &srcFile : srcFiles)
     {
+        print_compile_process("Parse", "invalid", srcFile);
         parse_run_compiler_on_invalid(srcFile);
     }
 }
@@ -298,6 +327,7 @@ TEST_CASE(Chapter11InvalidParse, "chapter_11", "--parse")
     };
     for (const auto &srcFile : srcFiles)
     {
+        print_compile_process("Parse", "invalid", srcFile);
         parse_run_compiler_on_invalid(srcFile);
     }
 }
@@ -311,6 +341,7 @@ TEST_CASE(Chapter12InvalidParse, "chapter_12", "--parse")
     };
     for (const auto &srcFile : srcFiles)
     {
+        print_compile_process("Parse", "invalid", srcFile);
         parse_run_compiler_on_invalid(srcFile);
     }
 }
@@ -324,6 +355,7 @@ TEST_CASE(Chapter13InvalidParse, "chapter_13", "--parse")
     };
     for (const auto &srcFile : srcFiles)
     {
+        print_compile_process("Parse", "invalid", srcFile);
         parse_run_compiler_on_invalid(srcFile);
     }
 }
@@ -341,6 +373,7 @@ TEST_CASE(Chapter14InvalidParse, "chapter_14", "--parse")
     };
     for (const auto &srcFile : srcFiles)
     {
+        print_compile_process("Parse", "invalid", srcFile);
         parse_run_compiler_on_invalid(srcFile);
     }
 }
@@ -370,6 +403,7 @@ TEST_CASE(Chapter15InvalidParse, "chapter_15", "--parse")
     };
     for (const auto &srcFile : srcFiles)
     {
+        print_compile_process("Parse", "invalid", srcFile);
         parse_run_compiler_on_invalid(srcFile);
     }
 }
@@ -385,6 +419,7 @@ TEST_CASE(Chapter16InvalidParse, "chapter_16", "--parse")
     };
     for (const auto &srcFile : srcFiles)
     {
+        print_compile_process("Parse", "invalid", srcFile);
         parse_run_compiler_on_invalid(srcFile);
     }
 }
@@ -400,6 +435,7 @@ TEST_CASE(Chapter16InvalidParseExtraCredit, "chapter_16", "--parse")
     };
     for (const auto &srcFile : srcFiles)
     {
+        print_compile_process("Parse", "invalid", srcFile);
         parse_run_compiler_on_invalid(srcFile);
     }
 }
@@ -415,6 +451,7 @@ TEST_CASE(Chapter17InvalidParse, "chapter_17", "--parse")
     };
     for (const auto &srcFile : srcFiles)
     {
+        print_compile_process("Parse", "invalid", srcFile);
         parse_run_compiler_on_invalid(srcFile);
     }
 }
@@ -452,6 +489,7 @@ TEST_CASE(Chapter18InvalidParse, "chapter_18", "--parse")
     };
     for (const auto &srcFile : srcFiles)
     {
+        print_compile_process("Parse", "invalid", srcFile);
         parse_run_compiler_on_invalid(srcFile);
     }
 }
@@ -484,6 +522,7 @@ TEST_CASE(Chapter18InvalidParseExtraCredit, "chapter_18", "--parse")
     };
     for (const auto &srcFile : srcFiles)
     {
+        print_compile_process("Parse", "invalid", srcFile);
         parse_run_compiler_on_invalid(srcFile);
     }
 }

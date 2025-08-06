@@ -7,20 +7,34 @@
 // Use these globals from test_compiler.cpp
 extern bool g_redirectOutput;
 extern std::string g_redirectToFile;
+extern bool g_printProcess;
 
 // Helper to run compiler.exe on a source file with --tacky and expect success
-inline void tacky_run_compiler_on(const std::string& srcFile) {
+inline void tacky_run_compiler_on(const std::string &srcFile)
+{
     std::string cmd = "..\\bin\\compiler.exe " + srcFile + " --tacky";
-    if (!g_redirectToFile.empty()) {
+    if (!g_redirectToFile.empty())
+    {
         cmd += " >" + g_redirectToFile + " 2>&1";
-    } else if (g_redirectOutput) {
+    }
+    else if (g_redirectOutput)
+    {
         cmd += " >nul 2>&1";
     }
     int result = std::system(cmd.c_str());
-    if (result != 0) {
+    if (result != 0)
+    {
         std::cerr << "Error compiling file " << srcFile << std::endl;
     }
     ASSERT_TRUE(result == 0);
+}
+
+inline void print_compile_process(const char *stage, const char *validity, const std::string &srcFile)
+{
+    if (g_printProcess)
+    {
+        std::cout << stage << " " << validity << " compiler on: " << srcFile << '\n';
+    }
 }
 
 TEST_CASE(Chapter2ValidTackyGen, "chapter_2", "--tacky")
@@ -41,6 +55,7 @@ TEST_CASE(Chapter2ValidTackyGen, "chapter_2", "--tacky")
     };
     for (const auto &srcFile : srcFiles)
     {
+        print_compile_process("TackyGen", "valid", srcFile);
         tacky_run_compiler_on(srcFile);
     }
 }
@@ -66,6 +81,7 @@ TEST_CASE(Chapter3ValidTackyGen, "chapter_3", "--tacky")
     };
     for (const auto &srcFile : srcFiles)
     {
+        print_compile_process("TackyGen", "valid", srcFile);
         tacky_run_compiler_on(srcFile);
     }
 }
@@ -87,6 +103,7 @@ TEST_CASE(Chapter3ValidTackyGenExtraCredit, "chapter_3", "--tacky")
     };
     for (const auto &srcFile : srcFiles)
     {
+        print_compile_process("TackyGen", "valid", srcFile);
         tacky_run_compiler_on(srcFile);
     }
 }
@@ -130,6 +147,7 @@ TEST_CASE(Chapter4ValidTackyGen, "chapter_4", "--tacky")
     };
     for (const auto &srcFile : srcFiles)
     {
+        print_compile_process("TackyGen", "valid", srcFile);
         tacky_run_compiler_on(srcFile);
     }
 }
@@ -144,6 +162,7 @@ TEST_CASE(Chapter4ValidTackyGenExtraCredit, "chapter_4", "--tacky")
     };
     for (const auto &srcFile : srcFiles)
     {
+        print_compile_process("TackyGen", "valid", srcFile);
         tacky_run_compiler_on(srcFile);
     }
 }
@@ -173,6 +192,7 @@ TEST_CASE(Chapter5ValidTackyGen, "chapter_5", "--tacky")
     };
     for (const auto &srcFile : srcFiles)
     {
+        print_compile_process("TackyGen", "valid", srcFile);
         tacky_run_compiler_on(srcFile);
     }
 }
@@ -208,6 +228,7 @@ TEST_CASE(Chapter5ValidTackyGenExtraCredit, "chapter_5", "--tacky")
     };
     for (const auto &srcFile : srcFiles)
     {
+        print_compile_process("TackyGen", "valid", srcFile);
         tacky_run_compiler_on(srcFile);
     }
 }
@@ -242,6 +263,7 @@ TEST_CASE(Chapter6ValidTackyGen, "chapter_6", "--tacky")
     };
     for (const auto &srcFile : srcFiles)
     {
+        print_compile_process("TackyGen", "valid", srcFile);
         tacky_run_compiler_on(srcFile);
     }
 }
@@ -271,6 +293,7 @@ TEST_CASE(Chapter6ValidTackyGenExtraCredit, "chapter_6", "--tacky")
     };
     for (const auto &srcFile : srcFiles)
     {
+        print_compile_process("TackyGen", "valid", srcFile);
         tacky_run_compiler_on(srcFile);
     }
 }
@@ -292,6 +315,7 @@ TEST_CASE(Chapter7ValidTackyGen, "chapter_7", "--tacky")
     };
     for (const auto &srcFile : srcFiles)
     {
+        print_compile_process("TackyGen", "valid", srcFile);
         tacky_run_compiler_on(srcFile);
     }
 }
@@ -307,6 +331,7 @@ TEST_CASE(Chapter7ValidTackyGenExtraCredit, "chapter_7", "--tacky")
     };
     for (const auto &srcFile : srcFiles)
     {
+        print_compile_process("TackyGen", "valid", srcFile);
         tacky_run_compiler_on(srcFile);
     }
 }
@@ -339,6 +364,7 @@ TEST_CASE(Chapter8ValidTackyGen, "chapter_8", "--tacky")
     };
     for (const auto &srcFile : srcFiles)
     {
+        print_compile_process("TackyGen", "valid", srcFile);
         tacky_run_compiler_on(srcFile);
     }
 }
@@ -381,6 +407,7 @@ TEST_CASE(Chapter8ValidTackyGenExtraCredit, "chapter_8", "--tacky")
     };
     for (const auto &srcFile : srcFiles)
     {
+        print_compile_process("TackyGen", "valid", srcFile);
         tacky_run_compiler_on(srcFile);
     }
 }
@@ -427,6 +454,7 @@ TEST_CASE(Chapter9ValidTackyGen, "chapter_9", "--tacky")
     };
     for (const auto &srcFile : srcFiles)
     {
+        print_compile_process("TackyGen", "valid", srcFile);
         tacky_run_compiler_on(srcFile);
     }
 }
@@ -442,6 +470,7 @@ TEST_CASE(Chapter9ValidTackyGenExtraCredit, "chapter_9", "--tacky")
     };
     for (const auto &srcFile : srcFiles)
     {
+        print_compile_process("TackyGen", "valid", srcFile);
         tacky_run_compiler_on(srcFile);
     }
 }
@@ -481,6 +510,7 @@ TEST_CASE(Chapter10ValidTackyGen, "chapter_10", "--tacky")
     };
     for (const auto &srcFile : srcFiles)
     {
+        print_compile_process("TackyGen", "valid", srcFile);
         tacky_run_compiler_on(srcFile);
     }
 }
@@ -502,6 +532,7 @@ TEST_CASE(Chapter10ValidTackyGenExtraCredit, "chapter_10", "--tacky")
     };
     for (const auto &srcFile : srcFiles)
     {
+        print_compile_process("TackyGen", "valid", srcFile);
         tacky_run_compiler_on(srcFile);
     }
 }
@@ -544,6 +575,7 @@ TEST_CASE(Chapter11ValidTackyGen, "chapter_11", "--tacky")
     };
     for (const auto &srcFile : srcFiles)
     {
+        print_compile_process("TackyGen", "valid", srcFile);
         tacky_run_compiler_on(srcFile);
     }
 }
@@ -564,6 +596,7 @@ TEST_CASE(Chapter11ValidTackyGenExtraCredit, "chapter_11", "--tacky")
     };
     for (const auto &srcFile : srcFiles)
     {
+        print_compile_process("TackyGen", "valid", srcFile);
         tacky_run_compiler_on(srcFile);
     }
 }
@@ -603,6 +636,7 @@ TEST_CASE(Chapter12ValidTackyGen, "chapter_12", "--tacky")
     };
     for (const auto &srcFile : srcFiles)
     {
+        print_compile_process("TackyGen", "valid", srcFile);
         tacky_run_compiler_on(srcFile);
     }
 }
@@ -621,6 +655,7 @@ TEST_CASE(Chapter12ValidTackyGenExtraCredit, "chapter_12", "--tacky")
     };
     for (const auto &srcFile : srcFiles)
     {
+        print_compile_process("TackyGen", "valid", srcFile);
         tacky_run_compiler_on(srcFile);
     }
 }
@@ -674,6 +709,7 @@ TEST_CASE(Chapter13ValidTackyGen, "chapter_13", "--tacky")
     };
     for (const auto &srcFile : srcFiles)
     {
+        print_compile_process("TackyGen", "valid", srcFile);
         tacky_run_compiler_on(srcFile);
     }
 }
@@ -688,6 +724,7 @@ TEST_CASE(Chapter13ValidTackyGenExtraCredit, "chapter_13", "--tacky")
     };
     for (const auto &srcFile : srcFiles)
     {
+        print_compile_process("TackyGen", "valid", srcFile);
         tacky_run_compiler_on(srcFile);
     }
 }
@@ -723,6 +760,7 @@ TEST_CASE(Chapter14ValidTackyGen, "chapter_14", "--tacky")
     };
     for (const auto &srcFile : srcFiles)
     {
+        print_compile_process("TackyGen", "valid", srcFile);
         tacky_run_compiler_on(srcFile);
     }
 }
@@ -741,6 +779,7 @@ TEST_CASE(Chapter14ValidTackyGenExtraCredit, "chapter_14", "--tacky")
     };
     for (const auto &srcFile : srcFiles)
     {
+        print_compile_process("TackyGen", "valid", srcFile);
         tacky_run_compiler_on(srcFile);
     }
 }
@@ -785,6 +824,7 @@ TEST_CASE(Chapter15ValidTackyGen, "chapter_15", "--tacky")
     };
     for (const auto &srcFile : srcFiles)
     {
+        print_compile_process("TackyGen", "valid", srcFile);
         tacky_run_compiler_on(srcFile);
     }
 }
@@ -809,6 +849,7 @@ TEST_CASE(Chapter15ValidTackyGenExtraCredit, "chapter_15", "--tacky")
     };
     for (const auto &srcFile : srcFiles)
     {
+        print_compile_process("TackyGen", "valid", srcFile);
         tacky_run_compiler_on(srcFile);
     }
 }
@@ -866,6 +907,7 @@ TEST_CASE(Chapter16ValidTackyGen, "chapter_16", "--tacky")
     };
     for (const auto &srcFile : srcFiles)
     {
+        print_compile_process("TackyGen", "valid", srcFile);
         tacky_run_compiler_on(srcFile);
     }
 }
@@ -887,6 +929,7 @@ TEST_CASE(Chapter16ValidTackyGenExtraCredit, "chapter_16", "--tacky")
     };
     for (const auto &srcFile : srcFiles)
     {
+        print_compile_process("TackyGen", "valid", srcFile);
         tacky_run_compiler_on(srcFile);
     }
 }
@@ -922,6 +965,7 @@ TEST_CASE(Chapter17ValidTackyGen, "chapter_17", "--tacky")
     };
     for (const auto &srcFile : srcFiles)
     {
+        print_compile_process("TackyGen", "valid", srcFile);
         tacky_run_compiler_on(srcFile);
     }
 }
@@ -936,6 +980,7 @@ TEST_CASE(Chapter17ValidTackyGenExtraCredit, "chapter_17", "--tacky")
     };
     for (const auto &srcFile : srcFiles)
     {
+        print_compile_process("TackyGen", "valid", srcFile);
         tacky_run_compiler_on(srcFile);
     }
 }
@@ -1047,6 +1092,7 @@ TEST_CASE(Chapter18ValidTackyGen, "chapter_18", "--tacky")
     };
     for (const auto &srcFile : srcFiles)
     {
+        print_compile_process("TackyGen", "valid", srcFile);
         tacky_run_compiler_on(srcFile);
     }
 }
@@ -1097,6 +1143,7 @@ TEST_CASE(Chapter18ValidTackyGenExtraCredit, "chapter_18", "--tacky")
     };
     for (const auto &srcFile : srcFiles)
     {
+        print_compile_process("TackyGen", "valid", srcFile);
         tacky_run_compiler_on(srcFile);
     }
 }

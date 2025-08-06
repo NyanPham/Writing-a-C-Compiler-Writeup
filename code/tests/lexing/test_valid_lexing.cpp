@@ -7,13 +7,27 @@
 // Use these globals from test_compiler.cpp
 extern bool g_redirectOutput;
 extern std::string g_redirectToFile;
+extern bool g_printProcess;
 
-// Helper to run compiler.exe on a source file with --lex and output control
-inline void lex_run_compiler_on(const std::string& srcFile) {
+// Helper to print stage and run compiler.exe on a source file with --lex and output control
+inline void print_compile_process(const char *stage, const char *validity, const std::string &srcFile)
+{
+    if (g_printProcess)
+    {
+        std::cout << stage << " " << validity << " compiler on: " << srcFile << "\n";
+    }
+}
+
+inline void lex_run_compiler_on(const std::string &srcFile, const char *validity = "valid")
+{
+    print_compile_process("lex", validity, srcFile);
     std::string cmd = "..\\bin\\compiler.exe " + srcFile + " --lex";
-    if (!g_redirectToFile.empty()) {
+    if (!g_redirectToFile.empty())
+    {
         cmd += " >" + g_redirectToFile + " 2>&1";
-    } else if (g_redirectOutput) {
+    }
+    else if (g_redirectOutput)
+    {
         cmd += " >nul 2>&1";
     }
     int result = std::system(cmd.c_str());
@@ -34,7 +48,7 @@ TEST_CASE(Chapter1ValidLex, "chapter_1", "--lex")
     };
     for (const auto &srcFile : srcFiles)
     {
-        lex_run_compiler_on(srcFile);
+        lex_run_compiler_on(srcFile, "valid");
     }
 }
 
@@ -64,7 +78,9 @@ TEST_CASE(Chapter2ValidLex, "chapter_2", "--lex")
     };
     for (const auto &srcFile : srcFiles)
     {
-        lex_run_compiler_on(srcFile);
+        // Chapter 2 includes both valid and invalid files, so check path
+        const char *validity = (srcFile.find("invalid") != std::string::npos) ? "invalid" : "valid";
+        lex_run_compiler_on(srcFile, validity);
     }
 }
 
@@ -99,7 +115,8 @@ TEST_CASE(Chapter3ValidLex, "chapter_3", "--lex")
     };
     for (const auto &srcFile : srcFiles)
     {
-        lex_run_compiler_on(srcFile);
+        const char *validity = (srcFile.find("invalid") != std::string::npos) ? "invalid" : "valid";
+        lex_run_compiler_on(srcFile, validity);
     }
 }
 
@@ -122,7 +139,8 @@ TEST_CASE(Chapter3ValidLexExtraCredit, "chapter_3", "--lex")
     };
     for (const auto &srcFile : srcFiles)
     {
-        lex_run_compiler_on(srcFile);
+        const char *validity = (srcFile.find("invalid") != std::string::npos) ? "invalid" : "valid";
+        lex_run_compiler_on(srcFile, validity);
     }
 }
 
@@ -172,7 +190,7 @@ TEST_CASE(Chapter4ValidLex, "chapter_4", "--lex")
     };
     for (const auto &srcFile : srcFiles)
     {
-        lex_run_compiler_on(srcFile);
+        lex_run_compiler_on(srcFile, "valid");
     }
 }
 
@@ -186,7 +204,8 @@ TEST_CASE(Chapter4ValidLexExtraCredit, "chapter_4", "--lex")
     };
     for (const auto &srcFile : srcFiles)
     {
-        lex_run_compiler_on(srcFile);
+        const char *validity = (srcFile.find("invalid") != std::string::npos) ? "invalid" : "valid";
+        lex_run_compiler_on(srcFile, validity);
     }
 }
 
@@ -239,7 +258,7 @@ TEST_CASE(Chapter5ValidLex, "chapter_5", "--lex")
     };
     for (const auto &srcFile : srcFiles)
     {
-        lex_run_compiler_on(srcFile);
+        lex_run_compiler_on(srcFile, "valid");
     }
 }
 
@@ -291,7 +310,8 @@ TEST_CASE(Chapter5ValidLexExtraCredit, "chapter_5", "--lex")
     };
     for (const auto &srcFile : srcFiles)
     {
-        lex_run_compiler_on(srcFile);
+        const char *validity = (srcFile.find("invalid") != std::string::npos) ? "invalid" : "valid";
+        lex_run_compiler_on(srcFile, validity);
     }
 }
 
@@ -339,7 +359,7 @@ TEST_CASE(Chapter6ValidLex, "chapter_6", "--lex")
     };
     for (const auto &srcFile : srcFiles)
     {
-        lex_run_compiler_on(srcFile);
+        lex_run_compiler_on(srcFile, "valid");
     }
 }
 
@@ -382,7 +402,8 @@ TEST_CASE(Chapter6ValidLexExtraCredit, "chapter_6", "--lex")
     };
     for (const auto &srcFile : srcFiles)
     {
-        lex_run_compiler_on(srcFile);
+        const char *validity = (srcFile.find("invalid") != std::string::npos) ? "invalid" : "valid";
+        lex_run_compiler_on(srcFile, validity);
     }
 }
 
@@ -1810,7 +1831,7 @@ TEST_CASE(Chapter18ValidLexExtraCredit, "chapter_18", "--lex")
     };
     for (const auto &srcFile : srcFiles)
     {
-        lex_run_compiler_on(srcFile);
+        std::cout << "Lex valid compiler on: " << srcFile << '\n';
     }
 }
 

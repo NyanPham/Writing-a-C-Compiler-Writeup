@@ -7,13 +7,26 @@
 // Use these globals from test_compiler.cpp
 extern bool g_redirectOutput;
 extern std::string g_redirectToFile;
+extern bool g_printProcess;
+
+inline void print_compile_process(const char *stage, const char *validity, const std::string &srcFile)
+{
+    if (g_printProcess)
+    {
+        std::cout << stage << " " << validity << " compiler on: " << srcFile << '\n';
+    }
+}
 
 // Helper to run compiler.exe on a source file with --codegen and output control
-inline void codegen_run_compiler_on(const std::string& srcFile) {
-    std::string cmd = "..\\bin\\compiler.exe " + srcFile + " --codegen";
-    if (!g_redirectToFile.empty()) {
+inline void codegen_run_compiler_on(const std::string &srcFile, const bool optimize = false)
+{
+    std::string cmd = "..\\bin\\compiler.exe " + srcFile + " --codegen" + (optimize ? " --optimize" : "");
+    if (!g_redirectToFile.empty())
+    {
         cmd += " >" + g_redirectToFile + " 2>&1";
-    } else if (g_redirectOutput) {
+    }
+    else if (g_redirectOutput)
+    {
         cmd += " >nul 2>&1";
     }
     int result = std::system(cmd.c_str());
@@ -38,6 +51,7 @@ TEST_CASE(Chapter2ValidCodeGen, "chapter_2", "--codegen")
     };
     for (const auto &srcFile : srcFiles)
     {
+        print_compile_process("Codegen", "valid", srcFile);
         codegen_run_compiler_on(srcFile);
     }
 }
@@ -63,6 +77,7 @@ TEST_CASE(Chapter3ValidCodeGen, "chapter_3", "--codegen")
     };
     for (const auto &srcFile : srcFiles)
     {
+        print_compile_process("Codegen", "valid", srcFile);
         codegen_run_compiler_on(srcFile);
     }
 }
@@ -84,6 +99,7 @@ TEST_CASE(Chapter3ValidCodeGenExraCredit, "chapter_3", "--codegen")
     };
     for (const auto &srcFile : srcFiles)
     {
+        print_compile_process("Codegen", "valid", srcFile);
         codegen_run_compiler_on(srcFile);
     }
 }
@@ -127,6 +143,7 @@ TEST_CASE(Chapter4ValidCodeGen, "chapter_4", "--codegen")
     };
     for (const auto &srcFile : srcFiles)
     {
+        print_compile_process("Codegen", "valid", srcFile);
         codegen_run_compiler_on(srcFile);
     }
 }
@@ -141,6 +158,7 @@ TEST_CASE(Chapter4ValidCodeGenExraCredit, "chapter_4", "--codegen")
     };
     for (const auto &srcFile : srcFiles)
     {
+        print_compile_process("Codegen", "valid", srcFile);
         codegen_run_compiler_on(srcFile);
     }
 }
@@ -170,6 +188,7 @@ TEST_CASE(Chapter5ValidCodeGen, "chapter_5", "--codegen")
     };
     for (const auto &srcFile : srcFiles)
     {
+        print_compile_process("Codegen", "valid", srcFile);
         codegen_run_compiler_on(srcFile);
     }
 }
@@ -205,6 +224,7 @@ TEST_CASE(Chapter5ValidCodeGenExtraCredit, "chapter_5", "--codegen")
     };
     for (const auto &srcFile : srcFiles)
     {
+        print_compile_process("Codegen", "valid", srcFile);
         codegen_run_compiler_on(srcFile);
     }
 }
@@ -239,6 +259,7 @@ TEST_CASE(Chapter6ValidCodeGen, "chapter_6", "--codegen")
     };
     for (const auto &srcFile : srcFiles)
     {
+        print_compile_process("Codegen", "valid", srcFile);
         codegen_run_compiler_on(srcFile);
     }
 }
@@ -268,6 +289,7 @@ TEST_CASE(Chapter6ValidCodeGenExtraCredit, "chapter_6", "--codegen")
     };
     for (const auto &srcFile : srcFiles)
     {
+        print_compile_process("Codegen", "valid", srcFile);
         codegen_run_compiler_on(srcFile);
     }
 }
@@ -289,6 +311,7 @@ TEST_CASE(Chapter7ValidCodeGen, "chapter_7", "--codegen")
     };
     for (const auto &srcFile : srcFiles)
     {
+        print_compile_process("Codegen", "valid", srcFile);
         codegen_run_compiler_on(srcFile);
     }
 }
@@ -304,6 +327,7 @@ TEST_CASE(Chapter7ValidCodeGenExtraCredit, "chapter_7", "--codegen")
     };
     for (const auto &srcFile : srcFiles)
     {
+        print_compile_process("Codegen", "valid", srcFile);
         codegen_run_compiler_on(srcFile);
     }
 }
@@ -336,6 +360,7 @@ TEST_CASE(Chapter8ValidCodeGen, "chapter_8", "--codegen")
     };
     for (const auto &srcFile : srcFiles)
     {
+        print_compile_process("Codegen", "valid", srcFile);
         codegen_run_compiler_on(srcFile);
     }
 }
@@ -378,6 +403,7 @@ TEST_CASE(Chapter8ValidCodeGenExtraCredit, "chapter_8", "--codegen")
     };
     for (const auto &srcFile : srcFiles)
     {
+        print_compile_process("Codegen", "valid", srcFile);
         codegen_run_compiler_on(srcFile);
     }
 }
@@ -424,6 +450,7 @@ TEST_CASE(Chapter9ValidCodeGen, "chapter_9", "--codegen")
     };
     for (const auto &srcFile : srcFiles)
     {
+        print_compile_process("Codegen", "valid", srcFile);
         codegen_run_compiler_on(srcFile);
     }
 }
@@ -439,6 +466,7 @@ TEST_CASE(Chapter9ValidCodeGenExtraCredit, "chapter_9", "--codegen")
     };
     for (const auto &srcFile : srcFiles)
     {
+        print_compile_process("Codegen", "valid", srcFile);
         codegen_run_compiler_on(srcFile);
     }
 }
@@ -478,6 +506,7 @@ TEST_CASE(Chapter10ValidCodeGen, "chapter_10", "--codegen")
     };
     for (const auto &srcFile : srcFiles)
     {
+        print_compile_process("Codegen", "valid", srcFile);
         codegen_run_compiler_on(srcFile);
     }
 }
@@ -499,6 +528,7 @@ TEST_CASE(Chapter10ValidCodeGenExtraCredit, "chapter_10", "--codegen")
     };
     for (const auto &srcFile : srcFiles)
     {
+        print_compile_process("Codegen", "valid", srcFile);
         codegen_run_compiler_on(srcFile);
     }
 }
@@ -540,6 +570,7 @@ TEST_CASE(Chapter11ValidCodeGen, "chapter_11", "--codegen")
     };
     for (const auto &srcFile : srcFiles)
     {
+        print_compile_process("Codegen", "valid", srcFile);
         codegen_run_compiler_on(srcFile);
     }
 }
@@ -559,6 +590,7 @@ TEST_CASE(Chapter11ValidCodeGenExtraCredit, "chapter_11", "--codegen")
     };
     for (const auto &srcFile : srcFiles)
     {
+        print_compile_process("Codegen", "valid", srcFile);
         codegen_run_compiler_on(srcFile);
     }
 }
@@ -597,6 +629,7 @@ TEST_CASE(Chapter12ValidCodeGen, "chapter_12", "--codegen")
     };
     for (const auto &srcFile : srcFiles)
     {
+        print_compile_process("Codegen", "valid", srcFile);
         codegen_run_compiler_on(srcFile);
     }
 }
@@ -615,6 +648,7 @@ TEST_CASE(Chapter12ValidCodeGenExtraCredit, "chapter_12", "--codegen")
     };
     for (const auto &srcFile : srcFiles)
     {
+        print_compile_process("Codegen", "valid", srcFile);
         codegen_run_compiler_on(srcFile);
     }
 }
@@ -667,6 +701,7 @@ TEST_CASE(Chapter13ValidCodeGen, "chapter_13", "--codegen")
     };
     for (const auto &srcFile : srcFiles)
     {
+        print_compile_process("Codegen", "valid", srcFile);
         codegen_run_compiler_on(srcFile);
     }
 }
@@ -681,6 +716,7 @@ TEST_CASE(Chapter13ValidCodeGenExtraCredit, "chapter_13", "--codegen")
     };
     for (const auto &srcFile : srcFiles)
     {
+        print_compile_process("Codegen", "valid", srcFile);
         codegen_run_compiler_on(srcFile);
     }
 }
@@ -716,6 +752,7 @@ TEST_CASE(Chapter14ValidCodeGen, "chapter_14", "--codegen")
     };
     for (const auto &srcFile : srcFiles)
     {
+        print_compile_process("Codegen", "valid", srcFile);
         codegen_run_compiler_on(srcFile);
     }
 }
@@ -734,6 +771,7 @@ TEST_CASE(Chapter14ValidCodeGenExtraCredit, "chapter_14", "--codegen")
     };
     for (const auto &srcFile : srcFiles)
     {
+        print_compile_process("Codegen", "valid", srcFile);
         codegen_run_compiler_on(srcFile);
     }
 }
@@ -778,6 +816,7 @@ TEST_CASE(Chapter15ValidCodeGen, "chapter_15", "--codegen")
     };
     for (const auto &srcFile : srcFiles)
     {
+        print_compile_process("Codegen", "valid", srcFile);
         codegen_run_compiler_on(srcFile);
     }
 }
@@ -801,6 +840,7 @@ TEST_CASE(Chapter15ValidCodeGenExtraCredit, "chapter_15", "--codegen")
     };
     for (const auto &srcFile : srcFiles)
     {
+        print_compile_process("Codegen", "valid", srcFile);
         codegen_run_compiler_on(srcFile);
     }
 }
@@ -858,6 +898,7 @@ TEST_CASE(Chapter16ValidCodeGen, "chapter_16", "--codegen")
     };
     for (const auto &srcFile : srcFiles)
     {
+        print_compile_process("Codegen", "valid", srcFile);
         codegen_run_compiler_on(srcFile);
     }
 }
@@ -879,6 +920,7 @@ TEST_CASE(Chapter16ValidCodeGenExtraCredit, "chapter_16", "--codegen")
     };
     for (const auto &srcFile : srcFiles)
     {
+        print_compile_process("Codegen", "valid", srcFile);
         codegen_run_compiler_on(srcFile);
     }
 }
@@ -914,6 +956,7 @@ TEST_CASE(Chapter17ValidCodeGen, "chapter_17", "--codegen")
     };
     for (const auto &srcFile : srcFiles)
     {
+        print_compile_process("Codegen", "valid", srcFile);
         codegen_run_compiler_on(srcFile);
     }
 }
@@ -928,6 +971,7 @@ TEST_CASE(Chapter17ValidCodeGenExtraCredit, "chapter_17", "--codegen")
     };
     for (const auto &srcFile : srcFiles)
     {
+        print_compile_process("Codegen", "valid", srcFile);
         codegen_run_compiler_on(srcFile);
     }
 }
@@ -1039,6 +1083,7 @@ TEST_CASE(Chapter18ValidCodeGen, "chapter_18", "--codegen")
     };
     for (const auto &srcFile : srcFiles)
     {
+        print_compile_process("Codegen", "valid", srcFile);
         codegen_run_compiler_on(srcFile);
     }
 }
@@ -1089,6 +1134,7 @@ TEST_CASE(Chapter18ValidCodeGenExtraCredit, "chapter_18", "--codegen")
     };
     for (const auto &srcFile : srcFiles)
     {
+        print_compile_process("Codegen", "valid", srcFile);
         codegen_run_compiler_on(srcFile);
     }
 }
@@ -1134,14 +1180,27 @@ TEST_CASE(RegAllocWithoutCoalescing, "chapter_20", "--codegen")
     };
     for (const auto &srcFile : srcFiles)
     {
-        std::cout << "Compiling: " << srcFile << std::endl;
-        std::string cmd = "..\\bin\\compiler.exe " + srcFile + " --codegen --optimize";
-        if (!g_redirectToFile.empty()) {
-            cmd += " >" + g_redirectToFile + " 2>&1";
-        } else if (g_redirectOutput) {
-            cmd += " >nul 2>&1";
-        }
-        int result = std::system(cmd.c_str());
-        ASSERT_EQ(result, 0);
+        print_compile_process("Codegen", "valid", srcFile);
+        codegen_run_compiler_on(srcFile, true);
+    }
+}
+
+TEST_CASE(RegAllocWithCoalescing, "chapter_20", "--codegen")
+{
+    std::vector<std::string> srcFiles = {
+        "../tests/chapter_20/int_only/with_coalescing/briggs_coalesce.c",
+        "../tests/chapter_20/int_only/with_coalescing/briggs_coalesce_hardreg.c",
+        "../tests/chapter_20/int_only/with_coalescing/briggs_dont_coalesce.c",
+        "../tests/chapter_20/int_only/with_coalescing/coalesce_prevents_spill.c",
+        "../tests/chapter_20/int_only/with_coalescing/george_coalesce.c",
+        "../tests/chapter_20/int_only/with_coalescing/george_dont_coalesce.c",
+        "../tests/chapter_20/int_only/with_coalescing/george_dont_coalesce_2.c",
+        "../tests/chapter_20/int_only/with_coalescing/george_off_by_one.c",
+        "../tests/chapter_20/int_only/with_coalescing/no_george_test_for_pseudos.c",
+    };
+    for (const auto &srcFile : srcFiles)
+    {
+        print_compile_process("Codegen", "valid", srcFile);
+        codegen_run_compiler_on(srcFile, true);
     }
 }

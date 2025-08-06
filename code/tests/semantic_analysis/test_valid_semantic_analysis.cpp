@@ -7,20 +7,34 @@
 // Use these globals from test_compiler.cpp
 extern bool g_redirectOutput;
 extern std::string g_redirectToFile;
+extern bool g_printProcess;
 
 // Helper to run compiler.exe on a source file with --validate and expect success
-inline void typecheck_run_compiler_on(const std::string& srcFile) {
+inline void typecheck_run_compiler_on(const std::string &srcFile)
+{
     std::string cmd = "..\\bin\\compiler.exe " + srcFile + " --validate";
-    if (!g_redirectToFile.empty()) {
+    if (!g_redirectToFile.empty())
+    {
         cmd += " >" + g_redirectToFile + " 2>&1";
-    } else if (g_redirectOutput) {
+    }
+    else if (g_redirectOutput)
+    {
         cmd += " >nul 2>&1";
     }
     int result = std::system(cmd.c_str());
-    if (result != 0) {
+    if (result != 0)
+    {
         std::cerr << "Error compiling file " << srcFile << std::endl;
     }
     ASSERT_TRUE(result == 0);
+}
+
+inline void print_compile_process(const char *stage, const char *validity, const std::string &srcFile)
+{
+    if (g_printProcess)
+    {
+        std::cout << stage << " " << validity << " compiler on: " << srcFile << '\n';
+    }
 }
 
 // Example for one test case:
@@ -49,6 +63,7 @@ TEST_CASE(Chapter5ValidSemantic, "chapter_5", "--validate")
     };
     for (const auto &srcFile : srcFiles)
     {
+        print_compile_process("Validate", "valid", srcFile);
         typecheck_run_compiler_on(srcFile);
     }
 }
@@ -84,6 +99,7 @@ TEST_CASE(Chapter5ValidSemanticExtraCredit, "chapter_5", "--validate")
     };
     for (const auto &srcFile : srcFiles)
     {
+        print_compile_process("Validate", "valid", srcFile);
         typecheck_run_compiler_on(srcFile);
     }
 }
@@ -118,6 +134,7 @@ TEST_CASE(Chapter6ValidSemantic, "chapter_6", "--validate")
     };
     for (const auto &srcFile : srcFiles)
     {
+        print_compile_process("Validate", "valid", srcFile);
         typecheck_run_compiler_on(srcFile);
     }
 }
@@ -147,6 +164,7 @@ TEST_CASE(Chapter6ValidSemanticExtraCredit, "chapter_6", "--validate")
     };
     for (const auto &srcFile : srcFiles)
     {
+        print_compile_process("Validate", "valid", srcFile);
         typecheck_run_compiler_on(srcFile);
     }
 }
@@ -168,6 +186,7 @@ TEST_CASE(Chapter7ValidSemantic, "chapter_7", "--validate")
     };
     for (const auto &srcFile : srcFiles)
     {
+        print_compile_process("Validate", "valid", srcFile);
         typecheck_run_compiler_on(srcFile);
     }
 }
@@ -183,6 +202,7 @@ TEST_CASE(Chapter7ValidSemanticExtraCredit, "chapter_7", "--validate")
     };
     for (const auto &srcFile : srcFiles)
     {
+        print_compile_process("Validate", "valid", srcFile);
         typecheck_run_compiler_on(srcFile);
     }
 }
@@ -214,6 +234,7 @@ TEST_CASE(Chapter8ValidSemantic, "chapter_8", "--validate")
     };
     for (const auto &srcFile : srcFiles)
     {
+        print_compile_process("Validate", "valid", srcFile);
         typecheck_run_compiler_on(srcFile);
     }
 }
@@ -257,6 +278,7 @@ TEST_CASE(Chapter8ValidSemanticExtraCredit, "chapter_8", "--validate")
     };
     for (const auto &srcFile : srcFiles)
     {
+        print_compile_process("Validate", "valid", srcFile);
         typecheck_run_compiler_on(srcFile);
     }
 }
@@ -304,6 +326,7 @@ TEST_CASE(Chapter9ValidSemantic, "chapter_9", "--validate")
     };
     for (const auto &srcFile : srcFiles)
     {
+        print_compile_process("Validate", "valid", srcFile);
         typecheck_run_compiler_on(srcFile);
     }
 }
@@ -319,6 +342,7 @@ TEST_CASE(Chapter9ValidSemanticExtraCredit, "chapter_9", "--validate")
     };
     for (const auto &srcFile : srcFiles)
     {
+        print_compile_process("Validate", "valid", srcFile);
         typecheck_run_compiler_on(srcFile);
     }
 }
@@ -358,6 +382,7 @@ TEST_CASE(Chapter10ValidSemantic, "chapter_10", "--validate")
     };
     for (const auto &srcFile : srcFiles)
     {
+        print_compile_process("Validate", "valid", srcFile);
         typecheck_run_compiler_on(srcFile);
     }
 }
@@ -379,6 +404,7 @@ TEST_CASE(Chapter10ValidSemanticExtraCredit, "chapter_10", "--validate")
     };
     for (const auto &srcFile : srcFiles)
     {
+        print_compile_process("Validate", "valid", srcFile);
         typecheck_run_compiler_on(srcFile);
     }
 }
@@ -420,6 +446,7 @@ TEST_CASE(Chapter11ValidSemantic, "chapter_11", "--validate")
     };
     for (const auto &srcFile : srcFiles)
     {
+        print_compile_process("Validate", "valid", srcFile);
         typecheck_run_compiler_on(srcFile);
     }
 }
@@ -439,6 +466,7 @@ TEST_CASE(Chapter11ValidSemanticExtraCredit, "chapter_11", "--validate")
     };
     for (const auto &srcFile : srcFiles)
     {
+        print_compile_process("Validate", "valid", srcFile);
         typecheck_run_compiler_on(srcFile);
     }
 }
@@ -477,6 +505,7 @@ TEST_CASE(Chapter12ValidSemantic, "chapter_12", "--validate")
     };
     for (const auto &srcFile : srcFiles)
     {
+        print_compile_process("Validate", "valid", srcFile);
         typecheck_run_compiler_on(srcFile);
     }
 }
@@ -495,6 +524,7 @@ TEST_CASE(Chapter12ValidSemanticExtraCredit, "chapter_12", "--validate")
     };
     for (const auto &srcFile : srcFiles)
     {
+        print_compile_process("Validate", "valid", srcFile);
         typecheck_run_compiler_on(srcFile);
     }
 }
@@ -548,6 +578,7 @@ TEST_CASE(Chapter13ValidSemantic, "chapter_13", "--validate")
     };
     for (const auto &srcFile : srcFiles)
     {
+        print_compile_process("Validate", "valid", srcFile);
         typecheck_run_compiler_on(srcFile);
     }
 }
@@ -562,6 +593,7 @@ TEST_CASE(Chapter13ValidSemanticExtraCredit, "chapter_13", "--validate")
     };
     for (const auto &srcFile : srcFiles)
     {
+        print_compile_process("Validate", "valid", srcFile);
         typecheck_run_compiler_on(srcFile);
     }
 }
@@ -597,6 +629,7 @@ TEST_CASE(Chapter14ValidSemantic, "chapter_14", "--validate")
     };
     for (const auto &srcFile : srcFiles)
     {
+        print_compile_process("Validate", "valid", srcFile);
         typecheck_run_compiler_on(srcFile);
     }
 }
@@ -615,6 +648,7 @@ TEST_CASE(Chapter14ValidSemanticExtraCredit, "chapter_14", "--validate")
     };
     for (const auto &srcFile : srcFiles)
     {
+        print_compile_process("Validate", "valid", srcFile);
         typecheck_run_compiler_on(srcFile);
     }
 }
@@ -660,6 +694,7 @@ TEST_CASE(Chapter15ValidSemantic, "chapter_15", "--validate")
     };
     for (const auto &srcFile : srcFiles)
     {
+        print_compile_process("Validate", "valid", srcFile);
         typecheck_run_compiler_on(srcFile);
     }
 }
@@ -683,6 +718,7 @@ TEST_CASE(Chapter15ValidSemanticExtraCredit, "chapter_15", "--validate")
     };
     for (const auto &srcFile : srcFiles)
     {
+        print_compile_process("Validate", "valid", srcFile);
         typecheck_run_compiler_on(srcFile);
     }
 }
@@ -740,6 +776,7 @@ TEST_CASE(Chapter16ValidSemantic, "chapter_16", "--validate")
     };
     for (const auto &srcFile : srcFiles)
     {
+        print_compile_process("Validate", "valid", srcFile);
         typecheck_run_compiler_on(srcFile);
     }
 }
@@ -761,6 +798,7 @@ TEST_CASE(Chapter16ValidSemanticExtraCredit, "chapter_16", "--validate")
     };
     for (const auto &srcFile : srcFiles)
     {
+        print_compile_process("Validate", "valid", srcFile);
         typecheck_run_compiler_on(srcFile);
     }
 }
@@ -797,6 +835,7 @@ TEST_CASE(Chapter17ValidSemantic, "chapter_17", "--validate")
     };
     for (const auto &srcFile : srcFiles)
     {
+        print_compile_process("Validate", "valid", srcFile);
         typecheck_run_compiler_on(srcFile);
     }
 }
@@ -811,6 +850,7 @@ TEST_CASE(Chapter17ValidSemanticExtraCredit, "chapter_17", "--validate")
     };
     for (const auto &srcFile : srcFiles)
     {
+        print_compile_process("Validate", "valid", srcFile);
         typecheck_run_compiler_on(srcFile);
     }
 }
@@ -922,6 +962,8 @@ TEST_CASE(Chapter18ValidSemantic, "chapter_18", "--validate")
     };
     for (const auto &srcFile : srcFiles)
     {
+        std::cout << "Validate compiling: " << srcFile << '\n';
+        print_compile_process("Validate", "valid", srcFile);
         typecheck_run_compiler_on(srcFile);
     }
 }
@@ -972,6 +1014,8 @@ TEST_CASE(Chapter18ValidSemanticExtraCredit, "chapter_18", "--validate")
     };
     for (const auto &srcFile : srcFiles)
     {
+        std::cout << "Validate compiling: " << srcFile << '\n';
+        print_compile_process("Validate", "valid", srcFile);
         typecheck_run_compiler_on(srcFile);
     }
 }

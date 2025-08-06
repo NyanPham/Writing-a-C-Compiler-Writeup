@@ -1,20 +1,32 @@
 Table of Contents
 
-- [Compiler Driver](#compiler-driver)
-- [BackwardDataflow](#backwarddataflow)
-- [CFG](#cfg)
-- [AddressTaken](#addresstaken)
-- [DeadStoreElimination](#deadstoreelimination)
-- [Assembly](#assembly)
-- [AssemblySymbols](#assemblysymbols)
-- [CodeGen](#codegen)
-- [Instruction Fixup](#instruction-fixup)
-- [RegAlloc](#regalloc)
-- [ReplacePseudo](#replacepseudo)
-- [Emit](#emit)
-- [Output](#output)
+- [Phase 1](#phase-1-basic-register-allocator)
+  - [Compiler Driver](#compiler-driver)
+  - [BackwardDataflow](#backwarddataflow)
+  - [CFG](#cfg)
+  - [AddressTaken](#addresstaken)
+  - [DeadStoreElimination](#deadstoreelimination)
+  - [Assembly](#assembly)
+  - [AssemblySymbols](#assemblysymbols)
+  - [CodeGen](#codegen)
+  - [Instruction Fixup](#instruction-fixup)
+  - [RegAlloc](#regalloc)
+  - [ReplacePseudo](#replacepseudo)
+  - [Emit](#emit)
+  - [Output](#output)
+- [Phase 2](#phase-2-register-allocator-with-coalescing)
+  - [Compiler Driver](#compiler-driver-1)
+  - [DisjointSets](#disjointsets)
+  - [RegAlloc](#regalloc-1)
+  - [Output](#output-1)
 
-# Compiler Driver
+---
+
+# Phase 1 (Basic Register Allocator)
+
+---
+
+## Compiler Driver
 
 ```
 Settings = {
@@ -26,7 +38,7 @@ Settings = {
 }
 ```
 
-# BackwardDataflow
+## BackwardDataflow
 
 We define a generic backward dataflow analysis framework, parameterized by a control-flow graph (CFG) module.
 
@@ -64,7 +76,7 @@ Dataflow(G):
                         if pred is G.Entry:
                             continue
                         else if pred is G.Exit:
-                            error("Internal error: malformed CFG")
+                            fail("Internal error: malformed CFG")
                         else if pred is G.Block(n) and n not in new_worklist:
                             new_worklist = [(n, updated_cfg.basic_blocks[n])] + new_worklist
 
@@ -78,11 +90,11 @@ Dataflow(G):
 - `transfer_fn(blk, annotation)` computes the new annotation for the block given the annotation at its exit.
 - The analysis iterates until a fixed point is reached (no annotation changes).
 
-# CFG
+## CFG
 
 We define a generic control-flow graph (CFG) module, parameterized by an instruction type. This allows us to build CFGs for both TACKY and assembly instructions.
 
-## Simple Instruction Kind
+### Simple Instruction Kind
 
 A simplified instruction type is used to classify instructions for basic block boundaries:
 
@@ -95,7 +107,7 @@ simple_instr =
     | Other
 ```
 
-## Instruction Interface
+### Instruction Interface
 
 We require an interface for instructions:
 
@@ -107,7 +119,7 @@ INSTR = {
 }
 ```
 
-## CFG Types
+### CFG Types
 
 ```
 node_id = Entry | Block(int) | Exit
@@ -128,7 +140,7 @@ cfg<'v> = {
 }
 ```
 
-## CFG Construction
+### CFG Construction
 
 - **Partition into Basic Blocks:**  
   Split a list of instructions into basic blocks at labels and after jumps/returns.
@@ -147,7 +159,7 @@ cfg<'v> = {
 - **Entry/Exit:**  
   Add an edge from `Entry` to the first block.
 
-## CFG API
+### CFG API
 
 ```
 instructions_to_cfg(ctx, instructions) -> cfg<unit>
@@ -161,7 +173,7 @@ strip_annotations(cfg<'a>) -> cfg<unit>
 print_graphviz(tag, pp_val, cfg<'v>)
 ```
 
-## Example: TACKY and Assembly CFGs
+### Example: TACKY and Assembly CFGs
 
 We instantiate the generic CFG for TACKY and assembly instructions:
 
@@ -196,7 +208,7 @@ AsmCfg = Cfg({
 
 This abstraction allows us to build, analyze, and transform control-flow graphs for any instruction set that implements the `INSTR` interface.
 
-# AddressTaken
+## AddressTaken
 
 Given a TACKY program, we want to find all variables whose address is taken (i.e., variables that are potentially aliased).
 
@@ -218,11 +230,11 @@ Where:
 
 - `union_all(list_of_sets)` unions all sets in the list into
 
-# DeadStoreElimination
+## DeadStoreElimination
 
 We now implement dead store elimination using the generic backward dataflow framework.
 
-## Liveness Analysis with Backward Dataflow
+### Liveness Analysis with Backward Dataflow
 
 We instantiate the generic `Dataflow` module for liveness analysis on the TACKY CFG:
 
@@ -231,7 +243,7 @@ Liveness = Dataflow(G)
     // G is the TackyCfg module (see CFG section)
 ```
 
-## Transfer Function
+### Transfer Function
 
 The transfer function computes the set of live variables before each instruction, given the set of live variables at the end of the block:
 
@@ -298,7 +310,7 @@ transfer(static_and_aliased_vars, block, end_live_vars):
     )
 ```
 
-## Meet Function
+### Meet Function
 
 The meet function computes the union of live variable sets from all successors:
 
@@ -308,7 +320,7 @@ meet(static_vars, cfg, block):
     for succ in block.succs:
         switch succ:
             case Entry:
-                error("malformed CFG")
+                fail("malformed CFG")
             case Exit:
                 live = live ∪ static_vars
             case Block(n):
@@ -316,7 +328,7 @@ meet(static_vars, cfg, block):
     return live
 ```
 
-## Running Liveness Analysis
+### Running Liveness Analysis
 
 ```
 find_live_variables(static_vars, aliased_vars, cfg):
@@ -327,7 +339,7 @@ find_live_variables(static_vars, aliased_vars, cfg):
     return Liveness.analyze(debug_printer, meet_f, transfer_f, cfg)
 ```
 
-## Removing Dead Stores
+### Removing Dead Stores
 
 After liveness analysis, we remove instructions that write to variables which are not live:
 
@@ -342,7 +354,7 @@ is_dead_store((live_vars, instr)):
             return false
 ```
 
-## Full Optimization Pipeline
+### Full Optimization Pipeline
 
 ```
 optimize(aliased_vars, cfg):
@@ -356,7 +368,7 @@ optimize(aliased_vars, cfg):
     return G.strip_annotations(annotated_cfg)
 ```
 
-## Summary of Changes
+### Summary of Changes
 
 - Liveness analysis is now implemented using the generic `Dataflow` framework.
 - The transfer and meet functions are passed to `Liveness.analyze`.
@@ -365,7 +377,7 @@ optimize(aliased_vars, cfg):
 
 This approach makes it easy to implement other backward dataflow analyses in the future.
 
-# Assembly
+## Assembly
 
 Add all the registers left: BX, R12, R13, R14, R15, XMM8, XMM9, XMM10, XMM11, XMM12, XMM13
 And also add Pop instruction, which only takes a register as operand.
@@ -410,7 +422,7 @@ cond_code = E | NE | G | GE | L | LE | A | AE | B | BE
 reg = AX | BX | CX | DX | DI | SI | R8 | R9 | R10 | R11 | R12 | R13 | R14 | R15 | SP | BP | XMM0 | XMM1 | XMM2 | XMM3 | XMM4 | XMM5 | XMM6 | XMM7 | XMM8 | XMM9 | XMM10 | XMM11 | XMM12 | XMM13 | XMM14 | XMM15
 ```
 
-# AssemblySymbols
+## AssemblySymbols
 
 ```
 // Fun entry has 3 more fields: param_regs, return_args, callee_saved_regs_used
@@ -437,7 +449,7 @@ add_callee_saved_regs_used(fun_name, regs):
                 callee_saved_regs_used = f.callee_saved_regs_used ∪ regs
             })
         else if entry is Obj(_):
-            error("Internal error: not a function")
+            fail("Internal error: not a function")
 
     symbol_table[fun_name] = set_regs(symbol_table[fun_name])
 ```
@@ -449,7 +461,7 @@ get_callee_saved_regs_used(fun_name):
     if entry is Fun(f):
         return f.callee_saved_regs_used
     else if entry is Obj(_):
-        error("Internal error: not a function")
+        fail("Internal error: not a function")
 ```
 
 ```
@@ -459,7 +471,7 @@ param_regs_used(fun_name):
     if entry is Fun(f):
         return f.param_regs
     else if entry is Obj(_):
-        error("Internal error: not a function")
+        fail("Internal error: not a function")
 ```
 
 ```
@@ -469,10 +481,10 @@ return_regs_used(fun_name):
     if entry is Fun(f):
         return f.return_regs
     else if entry is Obj(_):
-        error("Internal error: not a function")
+        fail("Internal error: not a function")
 ```
 
-# CodeGen
+## CodeGen
 
 Remove the function `classify_tacky_val`.
 
@@ -722,7 +734,7 @@ convert_symbol(name, symbol):
         return asmSymbols.add_var(name, convert_var_type(symbol.t), false)
 ```
 
-# Instruction Fixup
+## Instruction Fixup
 
 ```
 // extend the added registers
@@ -850,7 +862,7 @@ fixup_instruction(Assembly.Instruction inst, callee_saved_regs):
         else:
             return [ inst ]
     case Div:
-        // Div can't operant on constants
+        // Div can't operate on constants
         if inst.operand is Imm:
             return [
                 Mov(inst.t, Imm(inst.operand.val), Reg(R10)),
@@ -1058,7 +1070,7 @@ fixup_top_level(Assembly.top_level top_level):
         return top_level
 ```
 
-# RegAlloc
+## RegAlloc
 
 ```
 get_operands(instr):
@@ -1077,7 +1089,7 @@ get_operands(instr):
         case SetCC(_, op): return [op]
         case Push(op): return [op]
         case Label(_), Call(_), Ret, Cdq(_), JmpCC(_), Jmp(_): return []
-        case Pop(_): error("Internal error")
+        case Pop(_): fail("Internal error")
 ```
 
 ```
@@ -1098,7 +1110,7 @@ replace_ops(f, instr):
         case SetCC(code, op): return SetCC(code, f(op))
         case Push(op): return Push(f(op))
         case Label(_), Call(_), Ret, Cdq(_), Jmp(_), JmpCC(_): return instr
-        case Pop(_): error("Internal error")
+        case Pop(_): fail("We shouldn't use this yet")
 ```
 
 ```
@@ -1174,7 +1186,7 @@ namespace Allocator(R: REG_TYPE):
             // hardregs used in address calculations
             case Lea(src, dst): ops_used = [src]; ops_written = [dst]
             case Jmp(_), JmpCC(_), Label(_), Ret: ops_used = []; ops_written = []
-            case Pop(_): error("Internal error")
+            case Pop(_): fail("Internal error")
 
         // convert list of operands read into list of hard/pseudoregs read
         regs_used_to_read(opr):
@@ -1246,9 +1258,9 @@ namespace Allocator(R: REG_TYPE):
                     // convert DOT file to png
                     cmd = "circo -Tpng " + filename + " -o " + remove_extension(filename) + ".png"
                     if system(cmd) != 0:
-                        error("graphviz fail: " + cmd)
+                        fail("graphviz fail: " + cmd)
                     else if system("rm " + filename) != 0:
-                        error("failed to remove DOT file")
+                        fail("failed to remove DOT file")
                 dump_helper(start_graph, end_graph, ".dot", edge_printer, post_processor, ctx, g)
 
         dump_ncol(ctx, g):
@@ -1372,7 +1384,7 @@ namespace Allocator(R: REG_TYPE):
         return graph
 
     add_spill_costs(graph, instructions):
-        // given map from pseudo names to counts, incremene map entry for pseudo, or set to 1 if not already present
+        // given map from pseudo names to counts, increment map entry for pseudo, or set to 1 if not already present
         incr_count(counts, pseudo):
             if pseudo in counts:
                 counts[pseudo] = counts[pseudo] + 1
@@ -1556,7 +1568,7 @@ allocateRegisters(src_file, aliased_pseudos, Program(toplevels)):
     return Program(map(alloc_in_tl, toplevels))
 ```
 
-# ReplacePseudo
+## ReplacePseudo
 
 ```
 // Add a case for Pop
@@ -1645,7 +1657,7 @@ replace_pseudos_in_instruction(Assembly.Instruction inst, state):
             fail("Internal error")
 ```
 
-# Emit
+## Emit
 
 ```
 // Add BX, R12, R13, R14, and R15
@@ -1833,7 +1845,7 @@ emit_instruction(inst):
             fail("Internal error: unknown instruction")
 ```
 
-# Output
+## Output
 
 ```C
 // Each variable below should be assigned a register
@@ -1902,6 +1914,523 @@ main:
 	movl	$7, %esi
 	call	add
 	movl	$0, %eax
+	movq	%rbp, %rsp
+	popq	%rbp
+	ret
+
+	.section .note.GNU-stack,"",@progbits
+```
+
+---
+
+# Phase 2 (Register Allocator with Coalescing)
+
+---
+
+## Compiler Driver
+
+```
+// spill_info is renamed to debug_msg
+Settings = {
+    --snip--
+    spill_info: bool;
+    interference_ncol: bool;
+    interference_graphviz: bool;
+    liveness: bool;
+}
+```
+
+## DisjointSets
+
+```
+// Create an empty disjoint-set map.
+init():
+    return {}
+```
+
+```
+/*
+Return a new map where x’s parent is set to y.
+disj_sets: current parent map
+x, y:      elements to link (x → y)
+copy-on-write: build a fresh map with the new binding
+*/
+union(disj_sets, x, y):
+    new_map = copy(disj_sets)
+    new_map[x] = y
+    return new_map
+```
+
+```
+// Recursively follow parent pointers until reaching a root.
+// If x is not in disj_sets, it’s its own root.
+find(disj_sets, x):
+    if x not in disj_sets:
+        return x
+    else:
+        parent = disj_sets[x]
+        return find(disj_sets, parent)
+```
+
+```
+// True if no links have been made yet.
+is_empty(disj_sets):
+    return size(disj_sets) == 0
+```
+
+-- Optional: pure functional find with path compression --
+
+```
+// Find with path compression in pure functional style.
+// Returns (root, new_map).
+find_pc(disj_sets, x):
+    if x not in disj_sets:
+        // x is its own root; no change to the map
+        return (x, disj_sets)
+    parent = disj_sets[x]
+    (root, updated_map) = find_pc(disj_sets, parent)
+    // redirect x straight to root in the updated map
+    new_map = copy(updated_map)
+    new_map[x] = root
+    return (root, new_map)
+```
+
+## RegAlloc
+
+```
+// updated comment, and pop case message
+// map function f over all the operands in an instruction
+replace_ops(f, instr):
+    match instr:
+        case Mov(t, src, dst): return Mov(t, f(src), f(dst))
+        case Movsx(i): return Movsx({ ...i, src: f(i.src), dst: f(i.dst) })
+        case MovZeroExtend(zx): return MovZeroExtend({ ...zx, src: f(zx.src), dst: f(zx.dst) })
+        case Lea(src, dst): return Lea(f(src), f(dst))
+        case Cvttsd2si(t, src, dst): return Cvttsd2si(t, f(src), f(dst))
+        case Cvtsi2sd(t, src, dst): return Cvtsi2sd(t, f(src), f(dst))
+        case Unary(op, t, operand): return Unary(op, t, f(operand))
+        case Binary(b): return Binary({ ...b, src: f(b.src), dst: f(b.dst) })
+        case Cmp(code, v1, v2): return Cmp(code, f(v1), f(v2))
+        case Idiv(t, op): return Idiv(t, f(op))
+        case Div(t, op): return Div(t, f(op))
+        case SetCC(code, op): return SetCC(code, f(op))
+        case Push(op): return Push(f(op))
+        case Label(_), Call(_), Ret, Cdq(_), Jmp(_), JmpCC(_): return instr
+        case Pop(_): fail("Shouldn't use this yet")
+```
+
+```
+// NEW
+get_node_by_id(graph, node_id):
+    return graph[node_id]
+```
+
+```
+// NEW
+remove_edge(g, nd_id1, nd_id2):
+    nd1 = get_node_by_id(g, nd_id1)
+    nd2 = get_node_by_id(g, nd_id2)
+
+    // won’t raise error if the neighbor isn’t present
+    nd1.neighbors.remove(nd_id2)
+    nd2.neighbors.remove(nd_id1)
+```
+
+```
+// NEW
+degree(graph, nd_id):
+    nd = get_node_by_id(graph, nd_id)
+    return length(nd.neighbors)
+```
+
+```
+// NEW
+are_neighbors(g, nd_id1, nd_id2):
+    nd1 = g[nd_id1]
+
+    if n1.neighbors has nd_id2:
+        return true
+    else:
+        return false
+```
+
+```
+// NEW
+george_test(graph, hardreg, pseudo):
+    pseudoreg_neighbors = get_node_by_id(graph, pseudo).neighbors
+
+    for pseudo_nghbor in pseudoneighbors:
+        /*
+            a neighbor of the pseudo won't interfere with coalescing
+            if it has insignificant degree or it already interferes with hardreg
+        */
+        ok = are_neighbors(graph, pseudo_nghbor, hardreg)
+                  OR degree(graph, pseudo_nghbor) < k;
+
+        if (!ok):
+            return false;
+
+    return true;
+```
+
+```
+// NEW
+briggs_test(graph, x, y):
+    x_nd = get_node_by_id(graph, x)
+    y_nd = get_node_by_id(graph, y)
+    neighbors = [...x_nd.neighbors, ...y_nd.neighbors]
+
+    significant_count = 0
+    for nghborId in neighbors:
+        deg = degree(graph, nghborId)
+
+        if are_neighbors(graph, x, y) AND are_neighbors(graph, y, nghborId):
+            deg -= 1
+
+        if def >= k:
+            significant_count += 1
+            if significant_count >= k:
+                return false
+
+    return true
+```
+
+```
+// NEW
+conservative_coalescable(graph, src, dst):
+    if briggs_test(graph, src, dst):
+        return true
+
+    if src is Reg:
+        return george_test(graph, src, dst)
+
+    if dst is Reg:
+        return george_test(graph, dst, src)
+
+    return false
+```
+
+```
+// NEW
+debug output
+print_coalesce_msg(ctx, src, dst):
+    if R.debug_settings().debug_msg AND Debug.is_dump_target(ctx):
+        print("Coalescing {show_node_id(src)} into {show_node_id(dst)}\n")
+```
+
+```
+// NEW
+update_graph(ctx, g, to_merge, to_keep):
+    print_coalesce_msg(ctx, to_merge, to_keep)
+
+    for nghbor_id in get_node_by_id(g, to_merge).neighbors:
+        // update neighbor
+        add_edge(g, nghbor_id, to_keep)
+        remove_edge(g, nghbor_id, to_merge)
+
+    g.remove(to_merge)
+```
+
+```
+// NEW
+coalesce(ctx, graph, insts):
+    if R.debug_settings().debug_msg AND Debug.is_dump_target(ctx):
+        print("Coalescing round\n=============\n")
+
+    reg_map = DisjointSets.init()
+    for inst in insts:
+        if inst is Move(_, src, dst):
+            src' = DisjointSets.find(reg_map, src)
+            dst' = DisjointSets.find(reg_map, dst)
+
+            if (
+                graph has src'
+                AND g has dst'
+                AND src' != dst'
+                AND not are_neighbors(g, src', dst')
+                AND conservative_coalescable(g, src', dst')
+            ):
+                if src' is Reg:
+                    update_graph(ctx, g, to_merge=dst', to_keep=src')
+                    DisjoinSets.union(reg_map, dst', src')
+                else:
+                    update_graph(ctx, g, to_merge=src', to_keep=dst')
+                    DisjoinSets.union(reg_map, src', dst')
+            else:
+                // do nothing
+        else:
+            /// do nothing
+
+    return reg_map
+```
+
+```
+// NEW
+rewrite_coalesced(insts, coalesced_regs):
+    new_insts = []
+
+    f = (r):
+        return DisjointSets.find(coalesced_regs, r)
+
+    for inst in insts:
+        if inst is Mov(t, src, dst):
+            new_src = f(src)
+            new_dst = f(dst)
+
+            if new_src == new_dst:
+                // do nothing
+            else:
+                new_insts.append(Mov(t, new_src, new_dst))
+        else:
+            new_insts.append(replace_ops(f, inst))
+```
+
+```
+// Move the build_interference_graph and add coalescing logic
+allocate(ctx, aliased_pseudos, insts):
+    curr_insts = [...insts]
+    while true:
+        graph = build_interference_graph(ctx, aliased_pseudos, curr_insts)
+
+        DumpGraph.dump_graphviz(ctx, graph)
+        DumpGraph.dump_ncol(ctx, graph)
+
+        coalesced_regs = coalesce(ctx, graph, curr_insts)
+        if DisjoinSets.is_empty(coalesced_regs):
+            break
+        else:
+            curr_insts = rewrite_coalesced(curr_insts, coalesced_regs)
+
+    coalesced_insts = curr_insts
+    coalesced_graph = graph
+
+    graph_with_spill_costs = add_spill_costs(coalesced_graph, coalesced_insts)
+    colored_graph = color_graph(ctx, graph_with_spill_costs)
+    register_map = make_register_map(ctx, colored_graph)
+    return replace_pseudoregs(coalesced_insts, register_map)
+```
+
+## Output
+
+From C:
+
+```C
+// Test that we can use coalescing to prevent spills. In particular,
+// this tests that we rebuild the interference graph after each coalescing
+// loop, allowing us to find new coalescing opportunities and ultimately
+// color an up-to-date graph.
+int glob = 5;
+int flag = 0;
+
+int validate(int a, int b, int c, int d, int e, int f, int g, int h, int i,
+             int j, int k, int l, int m);
+
+int target(int arg) {
+    // declare some pseudoregisters but don't initialize them yet
+    int a;
+    int b;
+    int c;
+    int d;
+    int e;
+    int f;
+    int g;
+    int h;
+    int i;
+    int j;
+    int k;
+    int l;
+    int m;
+    // a-m all appear to conflict, which would require us to spill one of them,
+    // but they actually have the same value.
+    if (flag) {
+        // This branch isn't taken; only included to prevent copy propagation.
+        // It creates conflict between a-m, which will go away as we perform coalescing.
+        // the same value
+        a = arg;
+        b = arg;
+        c = arg;
+        d = arg;
+        e = arg;
+        f = arg;
+        g = arg;
+        h = arg;
+        i = arg;
+        j = arg;
+        k = arg;
+        l = arg;
+        m = arg;
+    } else {
+        // This branch creates conflicts between a-m, which will go away as we perform coalescing.
+        a = glob * 2;  // 10
+        b = a;
+        c = a;
+        d = a;
+        e = a;
+        f = a;
+        g = a;
+        h = a;
+        i = a;
+        j = a;
+        k = a;
+        l = a;
+        m = a;
+    }
+    // We'll first coalesce a-f into param-passing registers.
+    // After rebuilding interference graph, we'll recognize that g-m don't
+    // conflict with these registers despite originally conflicting with a-f,
+    // so we'll be able to coalesce them into DI.
+    return validate(a, b, c, d, e, f, g, h, i, j, k, l, m);
+}
+```
+
+Without Coalescing
+To x64 Assembly on Linux:
+
+```asm
+	.global glob
+	.data
+	.align 4
+glob:
+	.long 5
+
+	.global flag
+	.bss
+	.align 4
+flag:
+	.zero 4
+
+	.global target
+target:
+	pushq	%rbp
+	movq	%rsp, %rbp
+	subq	$8, %rsp
+	pushq	%rbx
+	pushq	%r12
+	pushq	%r13
+	pushq	%r14
+	pushq	%r15
+	movl	%edi, %eax
+	cmpl	$0, flag(%rip)
+	je	.Lif_else.27
+	movl	%eax, %ebx
+	movl	%eax, %edi
+	movl	%eax, %r15d
+	movl	%eax, %r12d
+	movl	%eax, %esi
+	movl	%eax, %ecx
+	movl	%eax, -4(%rbp)
+	movl	%eax, %edx
+	movl	%eax, %r8d
+	movl	%eax, %r9d
+	movl	%eax, %r14d
+	movl	%eax, %r13d
+	jmp	.Lif_end.28
+.Lif_else.27:
+	movl	glob(%rip), %eax
+	imull	$2, %eax
+	movl	%eax, %ebx
+	movl	%eax, %edi
+	movl	%eax, %r15d
+	movl	%eax, %r12d
+	movl	%eax, %esi
+	movl	%eax, %ecx
+	movl	%eax, -4(%rbp)
+	movl	%eax, %edx
+	movl	%eax, %r8d
+	movl	%eax, %r9d
+	movl	%eax, %r14d
+	movl	%eax, %r13d
+.Lif_end.28:
+	subq	$8, %rsp
+	movl	%ebx, %edi
+	movl	%edi, %esi
+	movl	%r15d, %edx
+	movl	%r12d, %ecx
+	movl	%esi, %r8d
+	movl	%ecx, %r9d
+	movl	%r13d, %eax
+	pushq	%rax
+	movl	%r14d, %eax
+	pushq	%rax
+	movl	%r9d, %eax
+	pushq	%rax
+	movl	%r8d, %eax
+	pushq	%rax
+	movl	%edx, %eax
+	pushq	%rax
+	movl	-4(%rbp), %eax
+	pushq	%rax
+	pushq	%rax
+	call	validate@PLT
+	addq	$64, %rsp
+	popq	%r15
+	popq	%r14
+	popq	%r13
+	popq	%r12
+	popq	%rbx
+	movq	%rbp, %rsp
+	popq	%rbp
+	ret
+
+	.section .note.GNU-stack,"",@progbits
+```
+
+With Coalescing
+To x64 Assembly on Linux:
+
+```asm
+	.global glob
+	.data
+	.align 4
+glob:
+	.long 5
+
+	.global flag
+	.bss
+	.align 4
+flag:
+	.zero 4
+
+	.global target
+target:
+	pushq	%rbp
+	movq	%rsp, %rbp
+	subq	$0, %rsp
+	cmpl	$0, flag(%rip)
+	je	.Lif_else.27
+	movl	%edi, %esi
+	movl	%edi, %edx
+	movl	%edi, %ecx
+	movl	%edi, %r8d
+	movl	%edi, %r9d
+	movl	%edi, %eax
+	jmp	.Lif_end.28
+.Lif_else.27:
+	movl	glob(%rip), %edi
+	imull	$2, %edi
+	movl	%edi, %esi
+	movl	%edi, %edx
+	movl	%edi, %ecx
+	movl	%edi, %r8d
+	movl	%edi, %r9d
+	movl	%edi, %eax
+.Lif_end.28:
+	subq	$8, %rsp
+	pushq	%rax
+	movl	%edi, %eax
+	pushq	%rax
+	movl	%edi, %eax
+	pushq	%rax
+	movl	%edi, %eax
+	pushq	%rax
+	movl	%edi, %eax
+	pushq	%rax
+	movl	%edi, %eax
+	pushq	%rax
+	movl	%edi, %eax
+	pushq	%rax
+	call	validate@PLT
+	addq	$64, %rsp
 	movq	%rbp, %rsp
 	popq	%rbp
 	ret

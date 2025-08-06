@@ -286,11 +286,7 @@ void TypeChecker::validateTypeDefinition(const std::shared_ptr<AST::TypeDeclarat
 
     // first check for conflicting definition in type table
     auto entry = _typeTable.findOpt(tag);
-    if (!entry.has_value())
-    {
-        return; // No previous declaration of this tag
-    }
-    else
+    if (entry.has_value())
     {
         auto kind = entry->kind;
         auto contents = entry->optTypeDef;
@@ -302,31 +298,31 @@ void TypeChecker::validateTypeDefinition(const std::shared_ptr<AST::TypeDeclarat
         // Did we include a member list both times?
         if (!members.empty() && contents.has_value())
             throw std::runtime_error("Contents of tag {tag} defined twice");
+    }
 
-        // check for duplicate number names
-        std::unordered_set<std::string> memberNames{};
-        for (const auto &member : members)
+    // check for duplicate number names
+    std::unordered_set<std::string> memberNames{};
+    for (const auto &member : members)
+    {
+        auto memberName = member->getMemberName();
+        auto memberType = member->getMemberType();
+        if (memberNames.count(memberName))
+            throw std::runtime_error("Duplicate declaration of member " + memberName + " in structure " + tag);
+        else
+            memberNames.insert(memberName);
+        // validate member type
+        validateType(memberType);
+        if (Types::isFunType(*memberType))
         {
-            auto memberName = member->getMemberName();
-            auto memberType = member->getMemberType();
-            if (memberNames.count(memberName))
-                throw std::runtime_error("Duplicate declaration of member " + memberName + " in structure " + tag);
+            // this is redundant, we'd already reject this in parser
+            throw std::runtime_error("Can't declare structure member with function type");
+        }
+        else
+        {
+            if (Types::isComplete(*memberType, _typeTable))
+                ; // Do nothing
             else
-                memberNames.insert(memberName);
-            // validate member type
-            validateType(memberType);
-            if (Types::isFunType(*memberType))
-            {
-                // this is redundant, we'd already reject this in parser
-                throw std::runtime_error("Can't declare structure member with function type");
-            }
-            else
-            {
-                if (Types::isComplete(*memberType, _typeTable))
-                    ; // Do nothing
-                else
-                    throw std::runtime_error("Cannot declare structure member with incomplete type");
-            }
+                throw std::runtime_error("Cannot declare structure member with incomplete type");
         }
     }
 }

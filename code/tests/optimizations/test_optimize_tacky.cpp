@@ -7,17 +7,31 @@
 // Use these globals from test_compiler.cpp
 extern bool g_redirectOutput;
 extern std::string g_redirectToFile;
+extern bool g_printProcess;
+
+inline void print_compile_process(const char *stage, const char *validity, const std::string &srcFile)
+{
+    if (g_printProcess)
+    {
+        std::cout << stage << " valid compiler on: " << srcFile << '\n';
+    }
+}
 
 // Helper to run compiler.exe on a source file with the given optimization flag
-inline void run_tacky_optimization(const std::string& srcFile, const std::string& optFlag) {
+inline void run_tacky_optimization(const std::string &srcFile, const std::string &optFlag)
+{
     std::string cmd = "..\\bin\\compiler.exe " + srcFile + " --tacky --" + optFlag;
-    if (!g_redirectToFile.empty()) {
+    if (!g_redirectToFile.empty())
+    {
         cmd += " >" + g_redirectToFile + " 2>&1";
-    } else if (g_redirectOutput) {
+    }
+    else if (g_redirectOutput)
+    {
         cmd += " >nul 2>&1";
     }
     int result = std::system(cmd.c_str());
-    if (result != 0) {
+    if (result != 0)
+    {
         std::cerr << "Error optimizing file " << srcFile << " with --" << optFlag << std::endl;
     }
     ASSERT_TRUE(result == 0);
@@ -38,9 +52,10 @@ TEST_CASE(ConstantFolding_AllTypes, "chapter_19", "constant_folding")
         "../tests/chapter_19/constant_folding/all_types/fold_truncate.c",
         "../tests/chapter_19/constant_folding/all_types/fold_uint.c",
         "../tests/chapter_19/constant_folding/all_types/fold_ulong.c",
-        "../tests/chapter_19/constant_folding/all_types/negative_zero.c"
-    };
-    for (const auto& file : files) {
+        "../tests/chapter_19/constant_folding/all_types/negative_zero.c"};
+    for (const auto &file : files)
+    {
+        print_compile_process("Optimize", "valid", file);
         run_tacky_optimization(file, "constant_folding");
     }
 }
@@ -52,9 +67,10 @@ TEST_CASE(ConstantFolding_AllTypes_ExtraCredit, "chapter_19", "constant_folding_
         "../tests/chapter_19/constant_folding/all_types/extra_credit/fold_bitwise_long.c",
         "../tests/chapter_19/constant_folding/all_types/extra_credit/fold_bitwise_unsigned.c",
         "../tests/chapter_19/constant_folding/all_types/extra_credit/fold_nan.c",
-        "../tests/chapter_19/constant_folding/all_types/extra_credit/return_nan.c"
-    };
-    for (const auto& file : files) {
+        "../tests/chapter_19/constant_folding/all_types/extra_credit/return_nan.c"};
+    for (const auto &file : files)
+    {
+        print_compile_process("Optimize", "valid", file);
         run_tacky_optimization(file, "constant_folding");
     }
 }
@@ -66,9 +82,10 @@ TEST_CASE(ConstantFolding_IntOnly, "chapter_19", "constant_folding_int_only")
         "../tests/chapter_19/constant_folding/int_only/fold_conditional_jump.c",
         "../tests/chapter_19/constant_folding/int_only/fold_control_flow.c",
         "../tests/chapter_19/constant_folding/int_only/fold_exception.c",
-        "../tests/chapter_19/constant_folding/int_only/fold_unary.c"
-    };
-    for (const auto& file : files) {
+        "../tests/chapter_19/constant_folding/int_only/fold_unary.c"};
+    for (const auto &file : files)
+    {
+        print_compile_process("Optimize", "valid", file);
         run_tacky_optimization(file, "constant_folding");
     }
 }
@@ -76,9 +93,10 @@ TEST_CASE(ConstantFolding_IntOnly, "chapter_19", "constant_folding_int_only")
 TEST_CASE(ConstantFolding_IntOnly_ExtraCredit, "chapter_19", "constant_folding_int_only_extra_credit")
 {
     std::vector<std::string> files = {
-        "../tests/chapter_19/constant_folding/int_only/extra_credit/fold_bitwise.c"
-    };
-    for (const auto& file : files) {
+        "../tests/chapter_19/constant_folding/int_only/extra_credit/fold_bitwise.c"};
+    for (const auto &file : files)
+    {
+        print_compile_process("Optimize", "valid", file);
         run_tacky_optimization(file, "constant_folding");
     }
 }
@@ -104,9 +122,10 @@ TEST_CASE(CopyPropagation_AllTypes, "chapter_19", "copy_propagation")
         "../tests/chapter_19/copy_propagation/all_types/dont_propagate/static_are_aliased.c",
         "../tests/chapter_19/copy_propagation/all_types/dont_propagate/store_kills_aliased.c",
         "../tests/chapter_19/copy_propagation/all_types/dont_propagate/type_conversion.c",
-        "../tests/chapter_19/copy_propagation/all_types/dont_propagate/zero_neg_zero_different.c"
-    };
-    for (const auto& file : files) {
+        "../tests/chapter_19/copy_propagation/all_types/dont_propagate/zero_neg_zero_different.c"};
+    for (const auto &file : files)
+    {
+        print_compile_process("Optimize", "valid", file);
         run_tacky_optimization(file, "copy_propagation");
     }
 }
@@ -120,9 +139,10 @@ TEST_CASE(CopyPropagation_AllTypes_ExtraCredit, "chapter_19", "copy_propagation_
         "../tests/chapter_19/copy_propagation/all_types/extra_credit/redundant_nan_copy.c",
         "../tests/chapter_19/copy_propagation/all_types/extra_credit/redundant_union_copy.c",
         "../tests/chapter_19/copy_propagation/all_types/extra_credit/dont_propagate/update_union_member.c",
-        "../tests/chapter_19/copy_propagation/all_types/extra_credit/dont_propagate/update_union_member_2.c"
-    };
-    for (const auto& file : files) {
+        "../tests/chapter_19/copy_propagation/all_types/extra_credit/dont_propagate/update_union_member_2.c"};
+    for (const auto &file : files)
+    {
+        print_compile_process("Optimize", "valid", file);
         run_tacky_optimization(file, "copy_propagation");
     }
 }
@@ -154,9 +174,10 @@ TEST_CASE(CopyPropagation_IntOnly, "chapter_19", "copy_propagation_int_only")
         "../tests/chapter_19/copy_propagation/int_only/dont_propagate/source_killed.c",
         "../tests/chapter_19/copy_propagation/int_only/dont_propagate/source_killed_on_one_path.c",
         "../tests/chapter_19/copy_propagation/int_only/dont_propagate/static_dst_killed.c",
-        "../tests/chapter_19/copy_propagation/int_only/dont_propagate/static_src_killed.c"
-    };
-    for (const auto& file : files) {
+        "../tests/chapter_19/copy_propagation/int_only/dont_propagate/static_src_killed.c"};
+    for (const auto &file : files)
+    {
+        print_compile_process("Optimize", "valid", file);
         run_tacky_optimization(file, "copy_propagation");
     }
 }
@@ -169,9 +190,10 @@ TEST_CASE(CopyPropagation_IntOnly_ExtraCredit, "chapter_19", "copy_propagation_i
         "../tests/chapter_19/copy_propagation/int_only/extra_credit/propagate_from_default.c",
         "../tests/chapter_19/copy_propagation/int_only/extra_credit/propagate_into_case.c",
         "../tests/chapter_19/copy_propagation/int_only/extra_credit/dont_propagate/decr_kills_dest.c",
-        "../tests/chapter_19/copy_propagation/int_only/extra_credit/dont_propagate/switch_fallthrough.c"
-    };
-    for (const auto& file : files) {
+        "../tests/chapter_19/copy_propagation/int_only/extra_credit/dont_propagate/switch_fallthrough.c"};
+    for (const auto &file : files)
+    {
+        print_compile_process("Optimize", "valid", file);
         run_tacky_optimization(file, "copy_propagation");
     }
 }
@@ -190,9 +212,10 @@ TEST_CASE(DeadStoreElimination_AllTypes, "chapter_19", "dead_store_elimination")
         "../tests/chapter_19/dead_store_elimination/all_types/dont_elim/load_generates_aliased.c",
         "../tests/chapter_19/dead_store_elimination/all_types/dont_elim/never_kill_store.c",
         "../tests/chapter_19/dead_store_elimination/all_types/dont_elim/recognize_all_uses.c",
-        "../tests/chapter_19/dead_store_elimination/all_types/dont_elim/use_and_update.c"
-    };
-    for (const auto& file : files) {
+        "../tests/chapter_19/dead_store_elimination/all_types/dont_elim/use_and_update.c"};
+    for (const auto &file : files)
+    {
+        print_compile_process("Optimize", "valid", file);
         run_tacky_optimization(file, "dead_store_elimination");
     }
 }
@@ -205,9 +228,10 @@ TEST_CASE(DeadStoreElimination_AllTypes_ExtraCredit, "chapter_19", "dead_store_e
         "../tests/chapter_19/dead_store_elimination/all_types/extra_credit/decr_struct_member.c",
         "../tests/chapter_19/dead_store_elimination/all_types/extra_credit/dont_elim/copy_generates_union.c",
         "../tests/chapter_19/dead_store_elimination/all_types/extra_credit/dont_elim/incr_through_pointer.c",
-        "../tests/chapter_19/dead_store_elimination/all_types/extra_credit/dont_elim/type_punning.c"
-    };
-    for (const auto& file : files) {
+        "../tests/chapter_19/dead_store_elimination/all_types/extra_credit/dont_elim/type_punning.c"};
+    for (const auto &file : files)
+    {
+        print_compile_process("Optimize", "valid", file);
         run_tacky_optimization(file, "dead_store_elimination");
     }
 }
@@ -231,9 +255,10 @@ TEST_CASE(DeadStoreElimination_IntOnly, "chapter_19", "dead_store_elimination_in
         "../tests/chapter_19/dead_store_elimination/int_only/dont_elim/self_copy.c",
         "../tests/chapter_19/dead_store_elimination/int_only/dont_elim/static_vars_at_exit.c",
         "../tests/chapter_19/dead_store_elimination/int_only/dont_elim/static_vars_fun.c",
-        "../tests/chapter_19/dead_store_elimination/int_only/dont_elim/used_one_path.c"
-    };
-    for (const auto& file : files) {
+        "../tests/chapter_19/dead_store_elimination/int_only/dont_elim/used_one_path.c"};
+    for (const auto &file : files)
+    {
+        print_compile_process("Optimize", "valid", file);
         run_tacky_optimization(file, "dead_store_elimination");
     }
 }
@@ -243,9 +268,10 @@ TEST_CASE(DeadStoreElimination_IntOnly_ExtraCredit, "chapter_19", "dead_store_el
     std::vector<std::string> files = {
         "../tests/chapter_19/dead_store_elimination/int_only/extra_credit/dead_compound_assignment.c",
         "../tests/chapter_19/dead_store_elimination/int_only/extra_credit/dead_incr_decr.c",
-        "../tests/chapter_19/dead_store_elimination/int_only/extra_credit/dont_elim/incr_and_dead_store.c"
-    };
-    for (const auto& file : files) {
+        "../tests/chapter_19/dead_store_elimination/int_only/extra_credit/dont_elim/incr_and_dead_store.c"};
+    for (const auto &file : files)
+    {
+        print_compile_process("Optimize", "valid", file);
         run_tacky_optimization(file, "dead_store_elimination");
     }
 }
@@ -269,9 +295,10 @@ TEST_CASE(UnreachableCodeElimination, "chapter_19", "unreachable_code_eliminatio
         "../tests/chapter_19/unreachable_code_elimination/or_clause.c",
         "../tests/chapter_19/unreachable_code_elimination/remove_conditional_jumps.c",
         "../tests/chapter_19/unreachable_code_elimination/remove_jump_keep_label.c",
-        "../tests/chapter_19/unreachable_code_elimination/remove_useless_starting_label.c"
-    };
-    for (const auto& file : files) {
+        "../tests/chapter_19/unreachable_code_elimination/remove_useless_starting_label.c"};
+    for (const auto &file : files)
+    {
+        print_compile_process("Optimize", "valid", file);
         run_tacky_optimization(file, "unreachable_code_elimination");
     }
 }
@@ -283,9 +310,10 @@ TEST_CASE(UnreachableCodeElimination_ExtraCredit, "chapter_19", "unreachable_cod
         "../tests/chapter_19/unreachable_code_elimination/extra_credit/dead_in_switch_body.c",
         "../tests/chapter_19/unreachable_code_elimination/extra_credit/goto_skips_over_code.c",
         "../tests/chapter_19/unreachable_code_elimination/extra_credit/remove_unused_label.c",
-        "../tests/chapter_19/unreachable_code_elimination/extra_credit/unreachable_switch_body.c"
-    };
-    for (const auto& file : files) {
+        "../tests/chapter_19/unreachable_code_elimination/extra_credit/unreachable_switch_body.c"};
+    for (const auto &file : files)
+    {
+        print_compile_process("Optimize", "valid", file);
         run_tacky_optimization(file, "unreachable_code_elimination");
     }
 }
@@ -309,10 +337,11 @@ TEST_CASE(WholePipeline_AllTypes, "chapter_19", "whole_pipeline")
         "../tests/chapter_19/whole_pipeline/all_types/propagate_into_copytooffset.c",
         "../tests/chapter_19/whole_pipeline/all_types/propagate_into_load.c",
         "../tests/chapter_19/whole_pipeline/all_types/propagate_into_store.c",
-        "../tests/chapter_19/whole_pipeline/all_types/signed_unsigned_conversion.c"
-    };
-    for (const auto& file : files) {
-         run_tacky_optimization(file, "optimize");
+        "../tests/chapter_19/whole_pipeline/all_types/signed_unsigned_conversion.c"};
+    for (const auto &file : files)
+    {
+        print_compile_process("Optimize", "valid", file);
+        run_tacky_optimization(file, "optimize");
     }
 }
 
@@ -326,10 +355,11 @@ TEST_CASE(WholePipeline_AllTypes_ExtraCredit, "chapter_19", "whole_pipeline_extr
         "../tests/chapter_19/whole_pipeline/all_types/extra_credit/fold_incr_decr_doubles.c",
         "../tests/chapter_19/whole_pipeline/all_types/extra_credit/fold_incr_decr_unsigned.c",
         "../tests/chapter_19/whole_pipeline/all_types/extra_credit/fold_negative_long_bitshift.c",
-        "../tests/chapter_19/whole_pipeline/all_types/extra_credit/nan.c"
-    };
-    for (const auto& file : files) {
-         run_tacky_optimization(file, "optimize");
+        "../tests/chapter_19/whole_pipeline/all_types/extra_credit/nan.c"};
+    for (const auto &file : files)
+    {
+        print_compile_process("Optimize", "valid", file);
+        run_tacky_optimization(file, "optimize");
     }
 }
 
@@ -340,10 +370,11 @@ TEST_CASE(WholePipeline_IntOnly, "chapter_19", "whole_pipeline_int_only")
         "../tests/chapter_19/whole_pipeline/int_only/elim_and_copy_prop.c",
         "../tests/chapter_19/whole_pipeline/int_only/int_min.c",
         "../tests/chapter_19/whole_pipeline/int_only/listing_19_5.c",
-        "../tests/chapter_19/whole_pipeline/int_only/remainder_test.c"
-    };
-    for (const auto& file : files) {
-         run_tacky_optimization(file, "optimize");
+        "../tests/chapter_19/whole_pipeline/int_only/remainder_test.c"};
+    for (const auto &file : files)
+    {
+        print_compile_process("Optimize", "valid", file);
+        run_tacky_optimization(file, "optimize");
     }
 }
 
@@ -355,9 +386,10 @@ TEST_CASE(WholePipeline_IntOnly_ExtraCredit, "chapter_19", "whole_pipeline_int_o
         "../tests/chapter_19/whole_pipeline/int_only/extra_credit/fold_bitwise_compound_assignment.c",
         "../tests/chapter_19/whole_pipeline/int_only/extra_credit/fold_compound_assignment.c",
         "../tests/chapter_19/whole_pipeline/int_only/extra_credit/fold_incr_and_decr.c",
-        "../tests/chapter_19/whole_pipeline/int_only/extra_credit/fold_negative_bitshift.c"
-    };
-    for (const auto& file : files) {
-         run_tacky_optimization(file, "optimize");
+        "../tests/chapter_19/whole_pipeline/int_only/extra_credit/fold_negative_bitshift.c"};
+    for (const auto &file : files)
+    {
+        print_compile_process("Optimize", "valid", file);
+        run_tacky_optimization(file, "optimize");
     }
 }
