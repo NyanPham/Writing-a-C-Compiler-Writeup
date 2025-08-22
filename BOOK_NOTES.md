@@ -14249,7 +14249,7 @@ We'll exclude RSP and RBP as they're used to manage the stack frame, R10 and R11
 #### Adding Pseudoregisters to the Graph
 
 We just loop over every operand in every instruction and decide whether to add it to the graph.
-Every pseudoregister that appears in the assembly funciton should go in the graph, unless it has static storage duration.
+Every pseudoregister that appears in the assembly function should go in the graph, unless it has static storage duration.
 
 #### Liveness Analysis
 
@@ -14265,20 +14265,18 @@ Next, we can use the same 3 components:
 For the meet operator, we don't care about static variables because they're not in the
 interference graph. Instead, we have to worry about hard registers, specifically EAX as it holds the function's return value.
 
-````
-
+```
 meet(block):
-live_registers = {}
-for succ_id in block.successors:
-match succ_id with
-| EXIT -> live_registers.add(Reg(AX)) // Handled differently here
-| ENTRY -> fail("Malformed control-flow graph")
-| BlockId(id) ->
-succ_live_registers = get_block_annotation(succ_id)
-live_registers.add_all(succ_live_registers)
+	live_registers = {}
+	for succ_id in block.successors:
+		match succ_id with
+		| EXIT -> live_registers.add(Reg(AX)) // Handled differently here
+		| ENTRY -> fail("Malformed control-flow graph")
+		| BlockId(id) ->
+			succ_live_registers = get_block_annotation(succ_id)
+			live_registers.add_all(succ_live_registers)
 
-return live_registers
-
+	return live_registers
 ```
 
 For the transfer function, we add registers to the live set when they're used and remove them
@@ -14289,86 +14287,80 @@ Both the transfer function and our upcoming `add_edges` function will use this h
 Note that the following pseudocod4e only covers the assembly instructions from Part I.
 
 ```
-
-find*used_and_updated(instruction):
-match instruction with
-| Mov(src, dst) -> // mov uses its source and updates its destination
-used = [src]
-updated = [dst]
-| Binary(op, src, dst) -> // binary uses both source and destination, and updates only the destination
-used = [src, dst]
-updated = [dst]
-| Unary(op, dst) ->
-used = [dst]
-updated = [dst]
-| Cmp(v1, v2) ->
-used = [v1, v2]
-updated = []
-| SetCC(cond, dst) ->
-used = []
-updated = [dst]
-| Push(v) ->
-used = [v]
-updated = []
-| Idiv(divisor) ->
-used = [ divisor, Reg(AX), Reg(DX) ]
-updated = [ Reg(AX), Reg(DX) ]
-| Cdq ->
-used = [ Reg(AX) ]
-updated = [ Reg(DX) ]
-| Call(f) ->
-used = <look up parameter passing registers in the backend symbol table> // Call uses registers that hold the callee's parameters.
-updated = [ Reg(DI), Reg(SI), Reg(DX), Reg(CX), Reg(R8), Reg(R9), Reg(AX) ] // updates all the caller-saved registers whether we're passing the callee's parameters in them or not.
-| * ->
-used = []
-updated = []
-return (used, updated)
-
+find_used_and_updated(instruction):
+	match instruction with
+	| Mov(src, dst) -> // mov uses its source and updates its destination
+		used = [src]
+		updated = [dst]
+	| Binary(op, src, dst) -> // binary uses both source and destination, and updates only the destination
+		used = [src, dst]
+		updated = [dst]
+	| Unary(op, dst) ->
+		used = [dst]
+		updated = [dst]
+	| Cmp(v1, v2) ->
+		used = [v1, v2]
+		updated = []
+	| SetCC(cond, dst) ->
+		used = []
+		updated = [dst]
+	| Push(v) ->
+		used = [v]
+		updated = []
+	| Idiv(divisor) ->
+		used = [ divisor, Reg(AX), Reg(DX) ]
+		updated = [ Reg(AX), Reg(DX) ]
+	| Cdq ->
+		used = [ Reg(AX) ]
+		dated = [ Reg(DX) ]
+	| Call(f) ->
+		used = <look up parameter passing registers in the backend symbol table> // Call uses registers that hold the callee's parameters.
+		updated = [ Reg(DI), Reg(SI), Reg(DX), Reg(CX), Reg(R8), Reg(R9), Reg(AX) ] // updates all the caller-saved registers whether we're passing the callee's parameters in them or not.
+	| * ->
+		used = []
+		updated = []
+	return (used, updated)
 ```
 
 ```
-
 transfer(block, end_live_registers):
-current_live_registers = end_live_registers
+	current_live_registers = end_live_registers
 
-for instruction in reverse(block.instructions):
-annotate_instruction(instruction, current_live_registers) // first record which registers are live immediately after it
-used, updated = find_used_and_updated(instruction) // then calculate which registers are live just before it.
+	for instruction in reverse(block.instructions):
+		annotate_instruction(instruction, current_live_registers) // first record which registers are live immediately after it
+		used, updated = find_used_and_updated(instruction) // then calculate which registers are live just before it.
 
-for v in updated:
-if v is a register:
-current_live_registers.remove(v)
+		for v in updated:
+			if v is a register:
+				current_live_registers.remove(v)
 
-for v in used:
-if v is a register:
-current_live_registers.add(v)
+		for v in used:
+			if v is a register:
+				current_live_registers.add(v)
 
-annotate_block(block.id, current_live_registers) // record which registers are live at the start of the block
-
+	annotate_block(block.id, current_live_registers) // record which registers are live at the start of the block
 ```
 
 #### Adding Edges
 
 ```
-
 add_edges(liveness_cfg, interference_graph):
-for node in liveness_cfg.nodes:
-if node is EntryNode or ExitNode:
-continue
+	for node in liveness_cfg.nodes:
+		if node is EntryNode or ExitNode:
+			continue
 
-      for instr in node.instructions:
-         used, updated = find_used_and_updated(instr)
+		for instr in node.instructions:
+			used, updated = find_used_and_updated(instr)
 
-         live_registers = get_instruction_annotation(instr) // look up which registers are live immediately after the instruction
+			live_registers = get_instruction_annotation(instr) // look up which registers are live immediately after the instruction
 
-         for l in live_registers:
-            if (instr is Mov) and (l == instr.src): // if inst is a Move, we'll skip over its source during iteration over the live registers so we don't add an edge between its source and destination
-               continue
+			for l in live_registers:
+				if (instr is Mov) and (l == instr.src): // if inst is a Move, we'll skip over its source during iteration over the live registers so we don't add an edge between its source and destination
+					continue
 
-         for u in updated:
-            if (l and u are in interference_graph) and (l != u): // ensure both nodes are already in the interference graph and we don't want to add an edge from a node to itself
-               add_edge(interference_graph, l, u)
-
+			for u in updated:
+				if (l and u are in interference_graph) and (l != u): // ensure both nodes are already in the interference graph and we don't want to add an edge from a node to itself
+					add_edge(interference_graph, l, u)
 ```
 
 #### Handling Other Types While Constructing the Graph
@@ -14478,70 +14470,60 @@ We don't need to spill any node. There is no rule that lets us avoid unnecessary
 ### Implementing the Graph Coloring Algorithm
 
 ```
-
 color_graph(g):
-remaining = <unpruned nodes in g>
-if remaining is empty: // 1
-return
+	remaining = <unpruned nodes in g>
+	if remaining is empty: // 1
+		return
 
-// choose next node to prune
-chosen_node = null
+	// choose next node to prune
+	chosen_node = null
 
-for node in remaining:
-degree = length(<unpruned neighbors of node>)
-if degree < k:
-chosen_node = node // 2
-break
+	for node in remaining:
+		degree = length(<unpruned neighbors of node>)
+		if degree < k:
+			chosen_node = node // 2
+			break
 
-if chosen_node is null:
-// choose a spill candidate
-best_spill_metric = infinity
-for node in remaining:
-degree = length(<unpruned neighbors of node>)
-spill_metric = node.spill_cost / degree
-if spill_metric < best_spill_metric:
-chosen_node = node // 3
-best_spill_metric = spill_metric
+	if chosen_node is null:
+		// choose a spill candidate
+		best_spill_metric = infinity
+		for node in remaining:
+			degree = length(<unpruned neighbors of node>)
+			spill_metric = node.spill_cost / degree
+			if spill_metric < best_spill_metric:
+				chosen_node = node // 3
+				best_spill_metric = spill_metric
 
-chosen_node.pruned = True
+	chosen_node.pruned = True
 
-// color the rest of the graph
-color_graph(g) // 4
+	// color the rest of the graph
+	color_graph(g) // 4
 
-// color this node
-colors = [ 1, 2,..., k ]
-for neighbor_id in chosen_node.neighbors:
-neighbor = get_node_by_id(g, neighbor_id)
-if neighbor.color is not null:
-colors.remove(neighbor.color)
+	// color this node
+	colors = [ 1, 2,..., k ]
+	for neighbor_id in chosen_node.neighbors:
+		neighbor = get_node_by_id(g, neighbor_id)
+		if neighbor.color is not null:
+			colors.remove(neighbor.color)
 
-if colors is not empty: // 5
-if chosen_node is a callee-saved hard register:
-chosen \_node.color = max(colors)
-else:
-chosen \_node.color = min(colors)
-chosen_node.pruned = False
+	if colors is not empty: // 5
+		if chosen_node is a callee-saved hard register:
+			chosen \_node.color = max(colors)
+		else:
+			chosen \_node.color = min(colors)
+		chosen_node.pruned = False
 
-return
-
+	return
 ```
 
 We'll color the graph recursively. We'll prune a node, make a recursive call to color the rest of the graph, then put the node back and assign it a color.
-
 The base case is when we've pruned every node, so we have nothing left (1).
-
 We choose a node to prune by finding a node with fewer than k unprune neighbors (2).
-
 If the search comes up empty, we'll pick the node with minimum value of spill cost / degree (3).
-
 Then, we'll call color_graph recursively to color the remaining nodes in the graph (4).
-
 The list of colors is integers 1 through k. Some of chosen_node's neighbors may not have a color, either because we spilled them or because we pruned them before chosen_node. If any color left, we'll assign one of them to chosen_node (5).
-
 There is a general goal in mind: assigning pseudoregisters to caller-saved rather than callee-saved hard registers as we'd like to use as few callee-saved registers as possible.
-
 When chosen_node represents a callee-saved hard register, we’ll assign it the available color with the highest number. Otherwise, we assign it the lowest-numbered available color. Using this strategy, the coloring algorithm will tend to assign higher-numbered colors to callee-saved registers and lower-numbered colors to caller-saved registers and pseudoregisters. A pseudoregister will end up with a higher-numbered color only when there are no lower-numbered colors available (for example, because it conflicts with every caller-saved register).
-
 If there are no colors left in the list, we'll have to spill chosen_node. So we don't update its pruned attribute, put into or retrieve it from the stack.
 
 ### Building the Register Map and Rewriting the Function Body
@@ -14552,32 +14534,31 @@ We’ll build a map from pseudoregisters to hard registers, which we’ll use to
 
 create_register_map(colored_graph):
 
-// build map from colors to hard registers
-color_map = <empty map>
-for node in colored_graph.nodes:
-match node.id with
-| Reg(r) ->
-color \_map .add(node.color, r)
-| Pseudo(p) -> continue
+	// build map from colors to hard registers
+	color_map = <empty map>
+	for node in colored_graph.nodes:
+		match node.id with
+		| Reg(r) ->
+			color_map.add(node.color, r)
+		| Pseudo(p) -> continue
 
-// build map from pseudoregisters to hard registers
-register_map = <empty map>
-callee_saved_regs = {}
-for node in colored_graph.nodes:
-match node.id with
-| Pseudo(p) ->
-if node.color is not null:
-hardreg = color_map.get(node.color) // 1
-register_map.add(p, hardreg)
-if hardreg is callee saved:
-callee_saved_regs.add(hardreg) // 2
-| Reg(r) -> continue
+	// build map from pseudoregisters to hard registers
+	register_map = <empty map>
+	callee_saved_regs = {}
+	for node in colored_graph.nodes:
+		match node.id with
+		| Pseudo(p) ->
+			if node.color is not null:
+				hardreg = color_map.get(node.color) // 1
+				register_map.add(p, hardreg)
+				if hardreg is callee saved:
+					callee_saved_regs.add(hardreg) // 2
+		| Reg(r) -> continue
 
-record_callee_saved_regs(<current function name>, callee_saved_regs) // 3
+	record_callee_saved_regs(<current function name>, callee_saved_regs) // 3
 
-return register_map
-
-````
+	return register_map
+```
 
 We have a 1:1 mapping between colors and hard registers.
 If a pseudoregister was assigned a color, we'll map it to the hard register with the same color, which we can find in color_map (1).
@@ -14595,7 +14576,7 @@ my_fun:
    movl %tmp1, %tmp2 	# movl %eax, %eax
    movl %tmp2, %eax 	# movl %eax, %eax
    ret
-````
+```
 
 is rewritten as:
 
