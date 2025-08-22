@@ -14282,9 +14282,9 @@ meet(block):
 For the transfer function, we add registers to the live set when they're used and remove them
 when they're updated.
 
-We'll define a helper function `find_used_and_updated`. The function tells us whichj operands each instruction uses and updates.
+We'll define a helper function `find_used_and_updated`. The function tells us which operands each instruction uses and updates.
 Both the transfer function and our upcoming `add_edges` function will use this helper function.
-Note that the following pseudocod4e only covers the assembly instructions from Part I.
+Note that the following pseudocode only covers the assembly instructions from Part I.
 
 ```
 find_used_and_updated(instruction):
@@ -14355,12 +14355,12 @@ add_edges(liveness_cfg, interference_graph):
 			live_registers = get_instruction_annotation(instr) // look up which registers are live immediately after the instruction
 
 			for l in live_registers:
-				if (instr is Mov) and (l == instr.src): // if inst is a Move, we'll skip over its source during iteration over the live registers so we don't add an edge between its source and destination
+				if (instr is Mov) and (l == instr.src): // if inst is a Mov, we'll skip over its source during iteration over the live registers so we don't add an edge between its source and destination
 					continue
 
-			for u in updated:
-				if (l and u are in interference_graph) and (l != u): // ensure both nodes are already in the interference graph and we don't want to add an edge from a node to itself
-					add_edge(interference_graph, l, u)
+				for u in updated:
+					if (l and u are in interference_graph) and (l != u): // ensure both nodes are already in the interference graph and we don't want to add an edge from a node to itself
+						add_edge(interference_graph, l, u)
 ```
 
 #### Handling Other Types While Constructing the Graph
@@ -14508,9 +14508,9 @@ color_graph(g):
 
 	if colors is not empty: // 5
 		if chosen_node is a callee-saved hard register:
-			chosen \_node.color = max(colors)
+			chosen_node.color = max(colors)
 		else:
-			chosen \_node.color = min(colors)
+			chosen_node.color = min(colors)
 		chosen_node.pruned = False
 
 	return
